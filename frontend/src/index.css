@@ -1,16 +1,12 @@
-@import url('https://fonts.googleapis.com/css2?family=Caveat:wght@700&display=swap');
+/* Import Google Fonts: Playfair for Headings, Jakarta for Body, Caveat for Signature */
+@import url('https://fonts.googleapis.com/css2?family=Caveat:wght@700&family=Playfair+Display:ital,wght@0,900;1,900&family=Plus+Jakarta+Sans:wght@400;700;800&display=swap');
 @import "tailwindcss";
 
 @source "../index.html";
 @source "./**/*.{js,ts,jsx,tsx}";
 
-/* Import the handwritten font from Google */
-
 @theme {
-  /* This creates the .font-signature utility class */
   --font-signature: "Caveat", cursive;
-  
-  /* Adding a custom animation for the logo sparkle */
   --animate-float: float 3s ease-in-out infinite;
 
   @keyframes float {
@@ -19,13 +15,61 @@
   }
 }
 
+/* --- Global Styles --- */
 body {
   overflow-x: hidden;
   background-color: #ffffff;
   transition: background-color 0.5s ease;
+  font-family: 'Plus Jakarta Sans', sans-serif; /* Applied Jakarta Sans globally */
+  color: #111827;
 }
 
-/* Optional: Add a custom cursor to match the doll vibe */
+h1, h2, h3 {
+  font-family: 'Playfair Display', serif; /* Applied Playfair to all headings */
+}
+
+/* Optional: Cookie cursor for a fun kitchen vibe */
 .cursor-toy {
   cursor: url('https://img.icons8.com/color/24/cookie.png'), auto;
+}
+
+/* --- Recipe Card Glassmorphism --- */
+.recipe-card-glass {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.recipe-card-glass:hover {
+  transform: translateY(-15px) scale(1.02);
+  box-shadow: 0 25px 50px -12px rgba(249, 115, 22, 0.15);
+}
+
+/* --- Smooth Image Zoom Effects --- */
+.img-reveal-container {
+  overflow: hidden;
+  border-radius: 3rem;
+}
+
+.img-reveal-container img {
+  transition: transform 1.2s cubic-bezier(0.2, 1, 0.3, 1);
+}
+
+.img-reveal-container:hover img {
+  transform: scale(1.08);
+}
+
+/* --- Custom Orange Scrollbar --- */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #f97316;
+  border-radius: 10px;
 }

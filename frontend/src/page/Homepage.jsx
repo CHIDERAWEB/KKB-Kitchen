@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Flame, ArrowRight, Trophy, Clock, User, Zap, Star, Search } from 'lucide-react';
+import { Flame, ArrowRight, Trophy, Clock, Zap, Star, Search, MapPin, Truck, Utensils, Heart } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import PopularRecipes from '../Components/PopularRecipes';
+import ScrollToTop from '../Components/ScrollToTop';
 
 const Homepage = () => {
     const [recipes, setRecipes] = useState([]);
@@ -36,13 +37,9 @@ const Homepage = () => {
         { name: 'Desserts', icon: '🍰', color: 'bg-pink-100' },
     ];
 
-    // Animation Variants
     const containerVariants = {
         hidden: { opacity: 0 },
-        visible: {
-            opacity: 1,
-            transition: { staggerChildren: 0.1 }
-        }
+        visible: { opacity: 1, transition: { staggerChildren: 0.1 } }
     };
 
     const itemVariants = {
@@ -51,9 +48,9 @@ const Homepage = () => {
     };
 
     return (
-        <div className="space-y-16 pb-20 overflow-hidden bg-white">
+        <div className="space-y-24 pb-20 overflow-hidden bg-white">
 
-            {/* --- HERO SECTION: PERSONALIZED & VISUAL --- */}
+            {/* --- HERO SECTION --- */}
             <section className="pt-24 px-6 max-w-7xl mx-auto">
                 <div className="flex flex-col lg:flex-row items-center justify-between gap-12">
                     <motion.div
@@ -78,7 +75,6 @@ const Homepage = () => {
                             </span>
                         </div>
 
-                        {/* Search Bar - Makes it functional and fills space */}
                         <div className="relative max-w-md group">
                             <div className="absolute inset-y-0 left-4 flex items-center text-gray-400 group-focus-within:text-orange-500 transition-colors">
                                 <Search size={20} />
@@ -91,7 +87,6 @@ const Homepage = () => {
                         </div>
                     </motion.div>
 
-                    {/* NEW: Floating Hero Image */}
                     <motion.div
                         initial={{ opacity: 0, scale: 0.8 }}
                         animate={{ opacity: 1, scale: 1 }}
@@ -104,7 +99,6 @@ const Homepage = () => {
                                 className="w-full h-full object-cover rounded-[4rem] shadow-2xl rotate-3 hover:rotate-0 transition-transform duration-700 border-[12px] border-white"
                                 alt="Chef's Special"
                             />
-                            {/* Floating "Live" badge */}
                             <motion.div
                                 animate={{ y: [0, -10, 0] }}
                                 transition={{ repeat: Infinity, duration: 3 }}
@@ -118,7 +112,7 @@ const Homepage = () => {
                 </div>
             </section>
 
-            {/* --- SECTION 1: CATEGORY PILLS (STAGGERED) --- */}
+            {/* --- CATEGORY PILLS --- */}
             <motion.div
                 variants={containerVariants}
                 initial="hidden"
@@ -138,10 +132,36 @@ const Homepage = () => {
                 ))}
             </motion.div>
 
-            {/* --- SECTION 2: POPULAR (THE SIZZLING SECTION) --- */}
+            {/* --- POPULAR RECIPES SECTION --- */}
             <PopularRecipes />
 
-            {/* --- SECTION 3: RECENT DISCOVERIES --- */}
+            {/* --- FEATURES SECTION (WHY CHOOSE US) --- */}
+            <section className="px-6 max-w-7xl mx-auto py-10">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    {[
+                        { icon: <Truck className="text-orange-500" />, title: "Fast Delivery", desc: "Hot meals at your door in 30 mins." },
+                        { icon: <Utensils className="text-orange-500" />, title: "Authentic Taste", desc: "Recipes passed down through generations." },
+                        { icon: <Heart className="text-orange-500" />, title: "Made with Love", desc: "No preservatives, just pure home cooking." }
+                    ].map((feature, i) => (
+                        <motion.div
+                            key={i}
+                            initial={{ opacity: 0, y: 30 }}
+                            whileInView={{ opacity: 1, y: 0 }}
+                            transition={{ delay: i * 0.2 }}
+                            viewport={{ once: true }}
+                            className="p-10 bg-gray-50 rounded-[3rem] space-y-4 hover:bg-orange-50 transition-colors group"
+                        >
+                            <div className="bg-white w-14 h-14 rounded-2xl flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
+                                {feature.icon}
+                            </div>
+                            <h3 className="text-2xl font-black italic tracking-tighter">{feature.title}</h3>
+                            <p className="text-gray-500 font-medium">{feature.desc}</p>
+                        </motion.div>
+                    ))}
+                </div>
+            </section>
+
+            {/* --- RECENT DISCOVERIES SECTION --- */}
             <section className="px-6 max-w-7xl mx-auto">
                 <div className="flex justify-between items-end mb-12">
                     <div>
@@ -152,47 +172,30 @@ const Homepage = () => {
                         View All <ArrowRight className="group-hover:translate-x-2 transition-transform" />
                     </Link>
                 </div>
-
                 {loading ? (
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10">
-                        {[1, 2, 3].map(n => (
-                            <div key={n} className="h-96 bg-gray-50 animate-pulse rounded-[3rem]"></div>
-                        ))}
+                        {[1, 2, 3].map(n => <div key={n} className="h-96 bg-gray-50 animate-pulse rounded-[3rem]"></div>)}
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10">
                         {recipes.slice(0, 6).map((recipe) => (
                             <Link to={`/Recipejollofdetail/${recipe.id}`} key={recipe.id}>
-                                <motion.div
-                                    whileHover={{ y: -15 }}
-                                    className="bg-white rounded-[3.5rem] overflow-hidden border border-gray-100 shadow-sm hover:shadow-2xl transition-all h-full relative group"
-                                >
+                                <motion.div whileHover={{ y: -15 }} className="bg-white rounded-[3.5rem] overflow-hidden border border-gray-100 shadow-sm hover:shadow-2xl transition-all h-full relative group">
                                     <div className="h-80 overflow-hidden relative">
-                                        <img
-                                            src={recipe.imageUrl || 'https://via.placeholder.com/400x300'}
-                                            alt={recipe.title}
-                                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000"
-                                        />
+                                        <img src={recipe.imageUrl || 'https://via.placeholder.com/400x300'} alt={recipe.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000" />
                                         <div className="absolute top-6 right-6 bg-white/90 backdrop-blur-md h-12 w-12 flex items-center justify-center rounded-2xl shadow-lg text-orange-500 opacity-0 group-hover:opacity-100 transition-all">
                                             <Flame size={20} fill="currentColor" />
                                         </div>
                                     </div>
                                     <div className="p-10">
-                                        <span className="text-[10px] font-black uppercase tracking-[0.2em] text-orange-500 mb-4 block">
-                                            {recipe.category || 'Secret Recipe'}
-                                        </span>
+                                        <span className="text-[10px] font-black uppercase tracking-[0.2em] text-orange-500 mb-4 block">{recipe.category || 'Secret Recipe'}</span>
                                         <h3 className="text-3xl font-black text-gray-900 mb-6 italic leading-tight">{recipe.title}</h3>
-
                                         <div className="flex items-center justify-between border-t border-gray-50 pt-6">
                                             <div className="flex items-center gap-3">
-                                                <div className="h-10 w-10 rounded-full bg-orange-100 flex items-center justify-center text-orange-600 font-black text-xs">
-                                                    {recipe.author?.name?.charAt(0) || 'C'}
-                                                </div>
+                                                <div className="h-10 w-10 rounded-full bg-orange-100 flex items-center justify-center text-orange-600 font-black text-xs">{recipe.author?.name?.charAt(0) || 'C'}</div>
                                                 <span className="text-xs font-black text-gray-700 uppercase tracking-widest">{recipe.author?.name?.split(' ')[0] || 'Chef'}</span>
                                             </div>
-                                            <div className="flex items-center gap-2 text-xs font-black text-gray-400">
-                                                <Clock size={16} /> {recipe.cookTime || '30m'}
-                                            </div>
+                                            <div className="flex items-center gap-2 text-xs font-black text-gray-400"><Clock size={16} /> {recipe.cookTime || '30m'}</div>
                                         </div>
                                     </div>
                                 </motion.div>
@@ -202,33 +205,49 @@ const Homepage = () => {
                 )}
             </section>
 
-            {/* --- SECTION 4: COMMUNITY CHALLENGE --- */}
+            {/* --- LOCATION SECTION (GOOGLE MAPS) --- */}
             <motion.section
-                initial={{ y: 50, opacity: 0 }}
-                whileInView={{ y: 0, opacity: 1 }}
+                initial={{ opacity: 0 }}
+                whileInView={{ opacity: 1 }}
                 viewport={{ once: true }}
-                className="mx-6 max-w-7xl lg:mx-auto bg-gray-900 rounded-[5rem] p-16 text-white relative overflow-hidden shadow-2xl"
+                className="px-6 max-w-7xl mx-auto"
             >
-                <div className="relative z-10 lg:w-1/2">
-                    <div className="inline-flex items-center gap-2 bg-orange-500 px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-[0.2em] mb-10 shadow-lg">
-                        <Trophy size={16} /> The Jollof Wars 2026
+                <div className="bg-gray-50 rounded-[4rem] p-12 flex flex-col lg:flex-row gap-12 items-center">
+                    <div className="flex-1 space-y-6">
+                        <div className="h-14 w-14 bg-orange-500 rounded-2xl flex items-center justify-center text-white shadow-lg">
+                            <MapPin size={28} />
+                        </div>
+                        <h2 className="text-5xl font-black italic tracking-tighter">Find Our Kitchen.</h2>
+                        <p className="text-gray-500 font-medium text-lg">We are located in the heart of the city, serving fresh flavors every single day. Stop by for a tasting!</p>
+                        <div className="space-y-2">
+                            <p className="font-black text-gray-900">📍 123 Jollof Avenue, Lagos, Nigeria</p>
+                            <p className="font-black text-gray-900">📞 +234 800 KKB KITCHEN</p>
+                        </div>
                     </div>
+                    <div className="flex-[1.5] w-full h-[400px] rounded-[3rem] overflow-hidden shadow-2xl border-8 border-white">
+                        <iframe
+                            title="KKB Kitchen Location"
+                            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3964.516839353982!2d3.3768412!3d6.4566373!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x103b8b1a99d9c9b7%3A0x6b6e6f1f5e5e5e5e!2sLagos!5e0!3m2!1sen!2sng!4v1700000000000"
+                            width="100%" height="100%" style={{ border: 0 }} allowFullScreen="" loading="lazy"
+                        ></iframe>
+                    </div>
+                </div>
+            </motion.section>
+
+            {/* --- COMMUNITY CHALLENGE SECTION --- */}
+            <motion.section initial={{ y: 50, opacity: 0 }} whileInView={{ y: 0, opacity: 1 }} viewport={{ once: true }} className="mx-6 max-w-7xl lg:mx-auto bg-gray-900 rounded-[5rem] p-16 text-white relative overflow-hidden shadow-2xl">
+                <div className="relative z-10 lg:w-1/2">
+                    <div className="inline-flex items-center gap-2 bg-orange-500 px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-[0.2em] mb-10 shadow-lg"><Trophy size={16} /> The Jollof Wars 2026</div>
                     <h2 className="text-6xl md:text-7xl font-black mb-8 leading-[0.9] italic tracking-tighter">Show us your <br /> Smoky Flavor.</h2>
                     <p className="text-gray-400 mb-12 text-xl font-medium max-w-md">Upload your best Jollof recipe and compete for the "Golden Ladle" award.</p>
-                    <button className="bg-white text-black px-14 py-6 rounded-[2.5rem] font-black uppercase text-xs tracking-[0.2em] hover:bg-orange-500 hover:text-white transition-all shadow-xl active:scale-95">
-                        Join Challenge
-                    </button>
+                    <button className="bg-white text-black px-14 py-6 rounded-[2.5rem] font-black uppercase text-xs tracking-[0.2em] hover:bg-orange-500 hover:text-white transition-all shadow-xl active:scale-95">Join Challenge</button>
                 </div>
-
-                {/* Visual side of the banner */}
                 <div className="absolute top-0 right-0 w-1/2 h-full hidden lg:block">
-                    <img
-                        src="https://images.unsplash.com/photo-1567073383164-ce59bda79c0e?q=80&w=2000&auto=format&fit=crop"
-                        className="h-full w-full object-cover opacity-40 mix-blend-overlay grayscale hover:grayscale-0 transition-all duration-1000"
-                    />
+                    <img src="https://images.unsplash.com/photo-1567073383164-ce59bda79c0e?q=80&w=2000&auto=format&fit=crop" className="h-full w-full object-cover opacity-40 mix-blend-overlay grayscale hover:grayscale-0 transition-all duration-1000" />
                     <div className="absolute inset-0 bg-gradient-to-r from-gray-900 via-gray-900/40 to-transparent" />
                 </div>
             </motion.section>
+            <ScrollToTop />
         </div>
     );
 };
