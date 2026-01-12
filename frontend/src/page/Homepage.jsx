@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Flame, ArrowRight, Trophy, Clock, User, Zap, Star, Search } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import PopularRecipes from '../components/PopularRecipes';
+import PopularRecipes from '../Components/PopularRecipes';
 
 const Homepage = () => {
     const [recipes, setRecipes] = useState([]);
