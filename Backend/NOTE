@@ -1,0 +1,988 @@
+✅ Database connected Successfully!
+
+🚀 Server is officially live at http://localhost:5000        
+
+[nodemon] restarting due to changes...
+
+[nodemon] starting `node server.js`
+
+[dotenv@17.2.3] injecting env (8) from .env -- tip: ⚙️  load  multiple .env files with { path: ['.env.local', '.env'] }    
+
+[dotenv@17.2.3] injecting env (0) from .env -- tip: ⚙️  speciify custom .env file path with { path: '/custom/path/.env' }  
+
+✅ Database connected Successfully!
+
+🚀 Server is officially live at http://localhost:5000
+
+Fetching admin stats and recipes...
+
+Fetching admin stats and recipes...
+
+Create Recipe Error: PrismaClientValidationError: 
+
+Invalid `prisma.recipe.create()` invocation:
+
+
+
+{
+
+  data: {
+
+    title: "Classic Margherita Pizza",
+
+    cookTime: "",
+
+    servings: "",
+
+    ingredients: [
+
+      "250g Pizza Dough (Store-bought or homemade)",
+
+      "1/2 cup San Marzano tomato sauce",
+
+      "150g Fresh Mozzarella cheese (sliced)",
+
+      "2 tbsp Extra virgin olive oil",
+
+      "6-8 Fresh basil leaves",
+
+      "A pinch of sea salt"
+
+    ],
+
+    instructions: [
+
+      "Preheat your oven to its highest setting (usually 250°C/500°F).",
+
+      "Roll out the dough on a floured surface until it is 12 inches wide.",
+
+      "Spread the tomato sauce evenly, leaving 1 inch for the crust.",
+
+      "Top with mozzarella slices and a drizzle of olive oil.",
+
+      "Bake for 8–10 minutes until the crust is charred and cheese is bubbly.",
+
+      "Remove from oven and top with fresh basil and salt immediately."
+
+    ],
+
+    imageUrl: "blob:http://localhost:5173/7b9e81eb-1ea0-4adf-a839-297d76cc293b",
+
+    status: "pending",
+
++   author: {
+
++     create: UserCreateWithoutRecipesInput | UserUncheckedCreateWithoutRecipesInput,
+
++     connectOrCreate: UserCreateOrConnectWithoutRecipesInput,
+
++     connect: UserWhereUniqueInput
+
++   }
+
+  }
+
+}
+
+
+
+Argument `author` is missing.
+
+    at tr (C:\project\Recipe website\Backend\node_modules\@prisma\client\runtime\client.js:10:1379)
+
+    at qr.handleRequestError (C:\project\Recipe website\Backend\node_modules\@prisma\client\runtime\client.js:65:7815)    
+
+    at qr.handleAndLogRequestError (C:\project\Recipe website\Backend\node_modules\@prisma\client\runtime\client.js:65:7467)
+
+    at qr.request (C:\project\Recipe website\Backend\node_modules\@prisma\client\runtime\client.js:65:7174)
+
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+
+    at async a (C:\project\Recipe website\Backend\node_modules\@prisma\client\runtime\client.js:75:5816)
+
+    at async createRecipe (file:///C:/project/Recipe%20website/Backend/controllers/recipeController.js:10:27) {
+
+  clientVersion: '7.2.0'
+
+}
+
+Create Recipe Error: PrismaClientValidationError: 
+
+Invalid `prisma.recipe.create()` invocation:
+
+
+
+{
+
+  data: {
+
+    title: "Classic Margherita Pizza",
+
+    cookTime: "",
+
+    servings: "",
+
+    ingredients: [
+
+      "250g Pizza Dough (Store-bought or homemade)",
+
+      "1/2 cup San Marzano tomato sauce",
+
+      "150g Fresh Mozzarella cheese (sliced)",
+
+      "2 tbsp Extra virgin olive oil",
+
+      "6-8 Fresh basil leaves",
+
+      "A pinch of sea salt"
+
+    ],
+
+    instructions: [
+
+      "Preheat your oven to its highest setting (usually 250°C/500°F).",
+
+      "Roll out the dough on a floured surface until it is 12 inches wide.",
+
+      "Spread the tomato sauce evenly, leaving 1 inch for the crust.",
+
+      "Top with mozzarella slices and a drizzle of olive oil.",
+
+      "Bake for 8–10 minutes until the crust is charred and cheese is bubbly.",
+
+      "Remove from oven and top with fresh basil and salt immediately."
+
+    ],
+
+    imageUrl: "blob:http://localhost:5173/7b9e81eb-1ea0-4adf-a839-297d76cc293b",
+
+    status: "pending",
+
++   author: {
+
++     create: UserCreateWithoutRecipesInput | UserUncheckedCreateWithoutRecipesInput,
+
++     connectOrCreate: UserCreateOrConnectWithoutRecipesInput,
+
++     connect: UserWhereUniqueInput
+
++   }
+
+  }
+
+}
+
+
+
+Argument `author` is missing.
+
+    at tr (C:\project\Recipe website\Backend\node_modules\@prisma\client\runtime\client.js:10:1379)
+
+    at qr.handleRequestError (C:\project\Recipe website\Backend\node_modules\@prisma\client\runtime\client.js:65:7815)    
+
+    at qr.handleAndLogRequestError (C:\project\Recipe website\Backend\node_modules\@prisma\client\runtime\client.js:65:7467)
+
+    at qr.request (C:\project\Recipe website\Backend\node_modules\@prisma\client\runtime\client.js:65:7174)
+
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+
+    at async a (C:\project\Recipe website\Backend\node_modules\@prisma\client\runtime\client.js:75:5816)
+
+    at async createRecipe (file:///C:/project/Recipe%20website/Backend/controllers/recipeController.js:10:27) {
+
+  clientVersion: '7.2.0'
+
+}
+
+Create Recipe Error: PrismaClientValidationError: 
+
+Invalid `prisma.recipe.create()` invocation:
+
+
+
+{
+
+  data: {
+
+    title: "Classic Margherita Pizza",
+
+    cookTime: "",
+
+    servings: "",
+
+    ingredients: [
+
+      "250g Pizza Dough (Store-bought or homemade)",
+
+      "1/2 cup San Marzano tomato sauce",
+
+      "150g Fresh Mozzarella cheese (sliced)",
+
+      "2 tbsp Extra virgin olive oil",
+
+      "6-8 Fresh basil leaves",
+
+      "A pinch of sea salt"
+
+    ],
+
+    instructions: [
+
+      "Preheat your oven to its highest setting (usually 250°C/500°F).",
+
+      "Roll out the dough on a floured surface until it is 12 inches wide.",
+
+      "Spread the tomato sauce evenly, leaving 1 inch for the crust.",
+
+      "Top with mozzarella slices and a drizzle of olive oil.",
+
+      "Bake for 8–10 minutes until the crust is charred and cheese is bubbly.",
+
+      "Remove from oven and top with fresh basil and salt immediately."
+
+    ],
+
+    imageUrl: "blob:http://localhost:5173/7b9e81eb-1ea0-4adf-a839-297d76cc293b",
+
+    status: "pending",
+
++   author: {
+
++     create: UserCreateWithoutRecipesInput | UserUncheckedCreateWithoutRecipesInput,
+
++     connectOrCreate: UserCreateOrConnectWithoutRecipesInput,
+
++     connect: UserWhereUniqueInput
+
++   }
+
+  }
+
+}
+
+
+
+Argument `author` is missing.
+
+    at tr (C:\project\Recipe website\Backend\node_modules\@prisma\client\runtime\client.js:10:1379)
+
+    at qr.handleRequestError (C:\project\Recipe website\Backend\node_modules\@prisma\client\runtime\client.js:65:7815)    
+
+    at qr.handleAndLogRequestError (C:\project\Recipe website\Backend\node_modules\@prisma\client\runtime\client.js:65:7467)
+
+    at qr.request (C:\project\Recipe website\Backend\node_modules\@prisma\client\runtime\client.js:65:7174)
+
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+
+    at async a (C:\project\Recipe website\Backend\node_modules\@prisma\client\runtime\client.js:75:5816)
+
+    at async createRecipe (file:///C:/project/Recipe%20website/Backend/controllers/recipeController.js:10:27) {
+
+  clientVersion: '7.2.0'
+
+}
+
+Create Recipe Error: PrismaClientValidationError: 
+
+Invalid `prisma.recipe.create()` invocation:
+
+
+
+{
+
+  data: {
+
+    title: "Classic Margherita Pizza",
+
+    cookTime: "",
+
+    servings: "",
+
+    ingredients: [
+
+      "250g Pizza Dough (Store-bought or homemade)",
+
+      "1/2 cup San Marzano tomato sauce",
+
+      "150g Fresh Mozzarella cheese (sliced)",
+
+      "2 tbsp Extra virgin olive oil",
+
+      "6-8 Fresh basil leaves",
+
+      "A pinch of sea salt"
+
+    ],
+
+    instructions: [
+
+      "Preheat your oven to its highest setting (usually 250°C/500°F).",
+
+      "Roll out the dough on a floured surface until it is 12 inches wide.",
+
+      "Spread the tomato sauce evenly, leaving 1 inch for the crust.",
+
+      "Top with mozzarella slices and a drizzle of olive oil.",
+
+      "Bake for 8–10 minutes until the crust is charred and cheese is bubbly.",
+
+      "Remove from oven and top with fresh basil and salt immediately."
+
+    ],
+
+    imageUrl: "blob:http://localhost:5173/7b9e81eb-1ea0-4adf-a839-297d76cc293b",
+
+    status: "pending",
+
++   author: {
+
++     create: UserCreateWithoutRecipesInput | UserUncheckedCreateWithoutRecipesInput,
+
++     connectOrCreate: UserCreateOrConnectWithoutRecipesInput,
+
++     connect: UserWhereUniqueInput
+
++   }
+
+  }
+
+}
+
+
+
+Argument `author` is missing.
+
+    at tr (C:\project\Recipe website\Backend\node_modules\@prisma\client\runtime\client.js:10:1379)
+
+    at qr.handleRequestError (C:\project\Recipe website\Backend\node_modules\@prisma\client\runtime\client.js:65:7815)    
+
+    at qr.handleAndLogRequestError (C:\project\Recipe website\Backend\node_modules\@prisma\client\runtime\client.js:65:7467)
+
+    at qr.request (C:\project\Recipe website\Backend\node_modules\@prisma\client\runtime\client.js:65:7174)
+
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+
+    at async a (C:\project\Recipe website\Backend\node_modules\@prisma\client\runtime\client.js:75:5816)
+
+    at async createRecipe (file:///C:/project/Recipe%20website/Backend/controllers/recipeController.js:10:27) {
+
+  clientVersion: '7.2.0'
+
+}
+
+Create Recipe Error: PrismaClientValidationError: 
+
+Invalid `prisma.recipe.create()` invocation:
+
+
+
+{
+
+  data: {
+
+    title: "Classic Margherita Pizza",
+
+    cookTime: "",
+
+    servings: "",
+
+    ingredients: [
+
+      "250g Pizza Dough (Store-bought or homemade)",
+
+      "1/2 cup San Marzano tomato sauce",
+
+      "150g Fresh Mozzarella cheese (sliced)",
+
+      "2 tbsp Extra virgin olive oil",
+
+      "6-8 Fresh basil leaves",
+
+      "A pinch of sea salt"
+
+    ],
+
+    instructions: [
+
+      "Preheat your oven to its highest setting (usually 250°C/500°F).",
+
+      "Roll out the dough on a floured surface until it is 12 inches wide.",
+
+      "Spread the tomato sauce evenly, leaving 1 inch for the crust.",
+
+      "Top with mozzarella slices and a drizzle of olive oil.",
+
+      "Bake for 8–10 minutes until the crust is charred and cheese is bubbly.",
+
+      "Remove from oven and top with fresh basil and salt immediately."
+
+    ],
+
+    imageUrl: "blob:http://localhost:5173/7b9e81eb-1ea0-4adf-a839-297d76cc293b",
+
+    status: "pending",
+
++   author: {
+
++     create: UserCreateWithoutRecipesInput | UserUncheckedCreateWithoutRecipesInput,
+
++     connectOrCreate: UserCreateOrConnectWithoutRecipesInput,
+
++     connect: UserWhereUniqueInput
+
++   }
+
+  }
+
+}
+
+
+
+Argument `author` is missing.
+
+    at tr (C:\project\Recipe website\Backend\node_modules\@prisma\client\runtime\client.js:10:1379)
+
+    at qr.handleRequestError (C:\project\Recipe website\Backend\node_modules\@prisma\client\runtime\client.js:65:7815)    
+
+    at qr.handleAndLogRequestError (C:\project\Recipe website\Backend\node_modules\@prisma\client\runtime\client.js:65:7467)
+
+    at qr.request (C:\project\Recipe website\Backend\node_modules\@prisma\client\runtime\client.js:65:7174)
+
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+
+    at async a (C:\project\Recipe website\Backend\node_modules\@prisma\client\runtime\client.js:75:5816)
+
+    at async createRecipe (file:///C:/project/Recipe%20website/Backend/controllers/recipeController.js:10:27) {
+
+  clientVersion: '7.2.0'
+
+}
+
+Create Recipe Error: PrismaClientValidationError: 
+
+Invalid `prisma.recipe.create()` invocation:
+
+
+
+{
+
+  data: {
+
+    title: "Classic Margherita Pizza",
+
+    cookTime: "",
+
+    servings: "",
+
+    ingredients: [
+
+      "250g Pizza Dough (Store-bought or homemade)",
+
+      "1/2 cup San Marzano tomato sauce",
+
+      "150g Fresh Mozzarella cheese (sliced)",
+
+      "2 tbsp Extra virgin olive oil",
+
+      "6-8 Fresh basil leaves",
+
+      "A pinch of sea salt"
+
+    ],
+
+    instructions: [
+
+      "Preheat your oven to its highest setting (usually 250°C/500°F).",
+
+      "Roll out the dough on a floured surface until it is 12 inches wide.",
+
+      "Spread the tomato sauce evenly, leaving 1 inch for the crust.",
+
+      "Top with mozzarella slices and a drizzle of olive oil.",
+
+      "Bake for 8–10 minutes until the crust is charred and cheese is bubbly.",
+
+      "Remove from oven and top with fresh basil and salt immediately."
+
+    ],
+
+    imageUrl: "blob:http://localhost:5173/7b9e81eb-1ea0-4adf-a839-297d76cc293b",
+
+    status: "pending",
+
++   author: {
+
++     create: UserCreateWithoutRecipesInput | UserUncheckedCreateWithoutRecipesInput,
+
++     connectOrCreate: UserCreateOrConnectWithoutRecipesInput,
+
++     connect: UserWhereUniqueInput
+
++   }
+
+  }
+
+}
+
+
+
+Argument `author` is missing.
+
+    at tr (C:\project\Recipe website\Backend\node_modules\@prisma\client\runtime\client.js:10:1379)
+
+    at qr.handleRequestError (C:\project\Recipe website\Backend\node_modules\@prisma\client\runtime\client.js:65:7815)    
+
+    at qr.handleAndLogRequestError (C:\project\Recipe website\Backend\node_modules\@prisma\client\runtime\client.js:65:7467)
+
+    at qr.request (C:\project\Recipe website\Backend\node_modules\@prisma\client\runtime\client.js:65:7174)
+
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+
+    at async a (C:\project\Recipe website\Backend\node_modules\@prisma\client\runtime\client.js:75:5816)
+
+    at async createRecipe (file:///C:/project/Recipe%20website/Backend/controllers/recipeController.js:10:27) {
+
+  clientVersion: '7.2.0'
+
+}
+
+Create Recipe Error: PrismaClientValidationError: 
+
+Invalid `prisma.recipe.create()` invocation:
+
+
+
+{
+
+  data: {
+
+    title: "Classic Margherita Pizza",
+
+    cookTime: "",
+
+    servings: "",
+
+    ingredients: [
+
+      "250g Pizza Dough (Store-bought or homemade)",
+
+      "1/2 cup San Marzano tomato sauce",
+
+      "150g Fresh Mozzarella cheese (sliced)",
+
+      "2 tbsp Extra virgin olive oil",
+
+      "6-8 Fresh basil leaves",
+
+      "A pinch of sea salt"
+
+    ],
+
+    instructions: [
+
+      "Preheat your oven to its highest setting (usually 250°C/500°F).",
+
+      "Roll out the dough on a floured surface until it is 12 inches wide.",
+
+      "Spread the tomato sauce evenly, leaving 1 inch for the crust.",
+
+      "Top with mozzarella slices and a drizzle of olive oil.",
+
+      "Bake for 8–10 minutes until the crust is charred and cheese is bubbly.",
+
+      "Remove from oven and top with fresh basil and salt immediately."
+
+    ],
+
+    imageUrl: "blob:http://localhost:5173/7b9e81eb-1ea0-4adf-a839-297d76cc293b",
+
+    status: "pending",
+
++   author: {
+
++     create: UserCreateWithoutRecipesInput | UserUncheckedCreateWithoutRecipesInput,
+
++     connectOrCreate: UserCreateOrConnectWithoutRecipesInput,
+
++     connect: UserWhereUniqueInput
+
++   }
+
+  }
+
+}
+
+
+
+Argument `author` is missing.
+
+    at tr (C:\project\Recipe website\Backend\node_modules\@prisma\client\runtime\client.js:10:1379)
+
+    at qr.handleRequestError (C:\project\Recipe website\Backend\node_modules\@prisma\client\runtime\client.js:65:7815)    
+
+    at qr.handleAndLogRequestError (C:\project\Recipe website\Backend\node_modules\@prisma\client\runtime\client.js:65:7467)
+
+    at qr.request (C:\project\Recipe website\Backend\node_modules\@prisma\client\runtime\client.js:65:7174)
+
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+
+    at async a (C:\project\Recipe website\Backend\node_modules\@prisma\client\runtime\client.js:75:5816)
+
+    at async createRecipe (file:///C:/project/Recipe%20website/Backend/controllers/recipeController.js:10:27) {
+
+  clientVersion: '7.2.0'
+
+}
+
+Create Recipe Error: PrismaClientValidationError:
+
+Invalid `prisma.recipe.create()` invocation:
+
+
+
+{
+
+  data: {
+
+    title: "Classic Margherita Pizza",
+
+    cookTime: "",
+
+    servings: "",
+
+    ingredients: [
+
+      "250g Pizza Dough (Store-bought or homemade)",
+
+      "1/2 cup San Marzano tomato sauce",
+
+      "150g Fresh Mozzarella cheese (sliced)",
+
+      "2 tbsp Extra virgin olive oil",
+
+      "6-8 Fresh basil leaves",
+
+      "A pinch of sea salt"
+
+    ],
+
+    instructions: [
+
+      "Preheat your oven to its highest setting (usually 250°C/500°F).",
+
+      "Roll out the dough on a floured surface until it is 12 inches wide.",
+
+      "Spread the tomato sauce evenly, leaving 1 inch for the crust.",
+
+      "Top with mozzarella slices and a drizzle of olive oil.",
+
+      "Bake for 8–10 minutes until the crust is charred and cheese is bubbly.",
+
+      "Remove from oven and top with fresh basil and salt immediately."
+
+    ],
+
+    imageUrl: "blob:http://localhost:5173/7b9e81eb-1ea0-4adf-a839-297d76cc293b",
+
+    status: "pending",
+
++   author: {
+
++     create: UserCreateWithoutRecipesInput | UserUncheckedCreateWithoutRecipesInput,
+
++     connectOrCreate: UserCreateOrConnectWithoutRecipesInput,
+
++     connect: UserWhereUniqueInput
+
++   }
+
+  }
+
+}
+
+
+
+Argument `author` is missing.
+
+    at tr (C:\project\Recipe website\Backend\node_modules\@prisma\client\runtime\client.js:10:1379)
+
+    at qr.handleRequestError (C:\project\Recipe website\Backend\node_modules\@prisma\client\runtime\client.js:65:7815)    
+
+    at qr.handleAndLogRequestError (C:\project\Recipe website\Backend\node_modules\@prisma\client\runtime\client.js:65:7467)
+
+    at qr.request (C:\project\Recipe website\Backend\node_modules\@prisma\client\runtime\client.js:65:7174)
+
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+
+    at async a (C:\project\Recipe website\Backend\node_modules\@prisma\client\runtime\client.js:75:5816)
+
+    at async createRecipe (file:///C:/project/Recipe%20website/Backend/controllers/recipeController.js:10:27) {
+
+  clientVersion: '7.2.0'
+
+}
+
+Create Recipe Error: PrismaClientValidationError: 
+
+Invalid `prisma.recipe.create()` invocation:
+
+
+
+{
+
+  data: {
+
+    title: "Classic Margherita Pizza",
+
+    cookTime: "",
+
+    servings: "",
+
+    ingredients: [
+
+      "250g Pizza Dough (Store-bought or homemade)",
+
+      "1/2 cup San Marzano tomato sauce",
+
+      "150g Fresh Mozzarella cheese (sliced)",
+
+      "2 tbsp Extra virgin olive oil",
+
+      "6-8 Fresh basil leaves",
+
+      "A pinch of sea salt"
+
+    ],
+
+    instructions: [
+
+      "Preheat your oven to its highest setting (usually 250°C/500°F).",
+
+      "Roll out the dough on a floured surface until it is 12 inches wide.",
+
+      "Spread the tomato sauce evenly, leaving 1 inch for the crust.",
+
+      "Top with mozzarella slices and a drizzle of olive oil.",
+
+      "Bake for 8–10 minutes until the crust is charred and cheese is bubbly.",
+
+      "Remove from oven and top with fresh basil and salt immediately."
+
+    ],
+
+    imageUrl: "blob:http://localhost:5173/7b9e81eb-1ea0-4adf-a839-297d76cc293b",
+
+    status: "pending",
+
++   author: {
+
++     create: UserCreateWithoutRecipesInput | UserUncheckedCreateWithoutRecipesInput,
+
++     connectOrCreate: UserCreateOrConnectWithoutRecipesInput,
+
++     connect: UserWhereUniqueInput
+
++   }
+
+  }
+
+}
+
+
+
+Argument `author` is missing.
+
+    at tr (C:\project\Recipe website\Backend\node_modules\@prisma\client\runtime\client.js:10:1379)
+
+    at qr.handleRequestError (C:\project\Recipe website\Backend\node_modules\@prisma\client\runtime\client.js:65:7815)    
+
+    at qr.handleAndLogRequestError (C:\project\Recipe website\Backend\node_modules\@prisma\client\runtime\client.js:65:7467)
+
+    at qr.request (C:\project\Recipe website\Backend\node_modules\@prisma\client\runtime\client.js:65:7174)
+
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+
+    at async a (C:\project\Recipe website\Backend\node_modules\@prisma\client\runtime\client.js:75:5816)
+
+    at async createRecipe (file:///C:/project/Recipe%20website/Backend/controllers/recipeController.js:10:27) {
+
+  clientVersion: '7.2.0'
+
+}
+
+Create Recipe Error: PrismaClientValidationError:
+
+Invalid `prisma.recipe.create()` invocation:
+
+
+
+{
+
+  data: {
+
+    title: "Classic Margherita Pizza",
+
+    cookTime: "",
+
+    servings: "",
+
+    ingredients: [
+
+      "250g Pizza Dough (Store-bought or homemade)",
+
+      "1/2 cup San Marzano tomato sauce",
+
+      "150g Fresh Mozzarella cheese (sliced)",
+
+      "2 tbsp Extra virgin olive oil",
+
+      "6-8 Fresh basil leaves",
+
+      "A pinch of sea salt"
+
+    ],
+
+    instructions: [
+
+      "Preheat your oven to its highest setting (usually 250°C/500°F).",
+
+      "Roll out the dough on a floured surface until it is 12 inches wide.",
+
+      "Spread the tomato sauce evenly, leaving 1 inch for the crust.",
+
+      "Top with mozzarella slices and a drizzle of olive oil.",
+
+      "Bake for 8–10 minutes until the crust is charred and cheese is bubbly.",
+
+      "Remove from oven and top with fresh basil and salt immediately."
+
+    ],
+
+    imageUrl: "blob:http://localhost:5173/7b9e81eb-1ea0-4adf-a839-297d76cc293b",
+
+    status: "pending",
+
++   author: {
+
++     create: UserCreateWithoutRecipesInput | UserUncheckedCreateWithoutRecipesInput,
+
++     connectOrCreate: UserCreateOrConnectWithoutRecipesInput,
+
++     connect: UserWhereUniqueInput
+
++   }
+
+  }
+
+}
+
+
+
+Argument `author` is missing.
+
+    at tr (C:\project\Recipe website\Backend\node_modules\@prisma\client\runtime\client.js:10:1379)
+
+    at qr.handleRequestError (C:\project\Recipe website\Backend\node_modules\@prisma\client\runtime\client.js:65:7815)    
+
+    at qr.handleAndLogRequestError (C:\project\Recipe website\Backend\node_modules\@prisma\client\runtime\client.js:65:7467)
+
+    at qr.request (C:\project\Recipe website\Backend\node_modules\@prisma\client\runtime\client.js:65:7174)
+
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+
+    at async a (C:\project\Recipe website\Backend\node_modules\@prisma\client\runtime\client.js:75:5816)
+
+    at async createRecipe (file:///C:/project/Recipe%20website/Backend/controllers/recipeController.js:10:27) {
+
+  clientVersion: '7.2.0'
+
+}
+
+Create Recipe Error: PrismaClientValidationError: 
+
+Invalid `prisma.recipe.create()` invocation:
+
+
+
+{
+
+  data: {
+
+    title: "Classic Margherita Pizza",
+
+    cookTime: "",
+
+    servings: "",
+
+    ingredients: [
+
+      "250g Pizza Dough (Store-bought or homemade)",
+
+      "1/2 cup San Marzano tomato sauce",
+
+      "150g Fresh Mozzarella cheese (sliced)",
+
+      "2 tbsp Extra virgin olive oil",
+
+      "6-8 Fresh basil leaves",
+
+      "A pinch of sea salt"
+
+    ],
+
+    instructions: [
+
+      "Preheat your oven to its highest setting (usually 250°C/500°F).",
+
+      "Roll out the dough on a floured surface until it is 12 inches wide.",
+
+      "Spread the tomato sauce evenly, leaving 1 inch for the crust.",
+
+      "Top with mozzarella slices and a drizzle of olive oil.",
+
+      "Bake for 8–10 minutes until the crust is charred and cheese is bubbly.",
+
+      "Remove from oven and top with fresh basil and salt immediately."
+
+    ],
+
+    imageUrl: "blob:http://localhost:5173/7b9e81eb-1ea0-4adf-a839-297d76cc293b",
+
+    status: "pending",
+
++   author: {
+
++     create: UserCreateWithoutRecipesInput | UserUncheckedCreateWithoutRecipesInput,
+
++     connectOrCreate: UserCreateOrConnectWithoutRecipesInput,
+
++     connect: UserWhereUniqueInput
+
++   }
+
+  }
+
+}
+
+
+
+Argument `author` is missing.
+
+    at tr (C:\project\Recipe website\Backend\node_modules\@prisma\client\runtime\client.js:10:1379)
+
+    at qr.handleRequestError (C:\project\Recipe website\Backend\node_modules\@prisma\client\runtime\client.js:65:7815)    
+
+    at qr.handleAndLogRequestError (C:\project\Recipe website\Backend\node_modules\@prisma\client\runtime\client.js:65:7467)
+
+    at qr.request (C:\project\Recipe website\Backend\node_modules\@prisma\client\runtime\client.js:65:7174)
+
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+
+    at async a (C:\project\Recipe website\Backend\node_modules\@prisma\client\runtime\client.js:75:5816)
+
+    at async createRecipe (file:///C:/project/Recipe%20website/Backend/controllers/recipeController.js:10:27) {
+
+  clientVersion: '7.2.0'
+
+}
+

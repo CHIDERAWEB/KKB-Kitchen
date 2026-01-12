@@ -1,0 +1,31 @@
+@import url('https://fonts.googleapis.com/css2?family=Caveat:wght@700&display=swap');
+@import "tailwindcss";
+
+@source "../index.html";
+@source "./**/*.{js,ts,jsx,tsx}";
+
+/* Import the handwritten font from Google */
+
+@theme {
+  /* This creates the .font-signature utility class */
+  --font-signature: "Caveat", cursive;
+  
+  /* Adding a custom animation for the logo sparkle */
+  --animate-float: float 3s ease-in-out infinite;
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-5px); }
+  }
+}
+
+body {
+  overflow-x: hidden;
+  background-color: #ffffff;
+  transition: background-color 0.5s ease;
+}
+
+/* Optional: Add a custom cursor to match the doll vibe */
+.cursor-toy {
+  cursor: url('https://img.icons8.com/color/24/cookie.png'), auto;
+}
