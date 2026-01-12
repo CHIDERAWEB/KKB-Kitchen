@@ -15,12 +15,12 @@ const Homepage = () => {
 
         const fetchRecipes = async () => {
             try {
-                const response = await fetch('http://localhost:5000/api/recipes/all');
+                const response = await fetch('https://kkb-kitchen-api.onrender.com/api/recipes/all');
                 const data = await response.json();
                 setRecipes(Array.isArray(data) ? data : []);
             } catch (error) {
                 console.error("Error fetching recipes:", error);
-                setRecipes([]); 
+                setRecipes([]);
             } finally {
                 setLoading(false);
             }
@@ -52,29 +52,29 @@ const Homepage = () => {
 
     return (
         <div className="space-y-16 pb-20 overflow-hidden bg-white">
-            
+
             {/* --- HERO SECTION: PERSONALIZED & VISUAL --- */}
             <section className="pt-24 px-6 max-w-7xl mx-auto">
                 <div className="flex flex-col lg:flex-row items-center justify-between gap-12">
-                    <motion.div 
+                    <motion.div
                         initial={{ opacity: 0, x: -50 }}
                         animate={{ opacity: 1, x: 0 }}
                         className="flex-1 space-y-6"
                     >
                         <h1 className="text-6xl md:text-8xl font-black italic text-gray-900 leading-[0.9] tracking-tighter">
                             {user ? (
-                                <>Welcome, <br/><span className="text-orange-500 font-serif lowercase">Chef {user.name.split(' ')[0]}!</span></>
+                                <>Welcome, <br /><span className="text-orange-500 font-serif lowercase">Chef {user.name.split(' ')[0]}!</span></>
                             ) : (
-                                <>Cook like <br/><span className="text-orange-500 font-serif lowercase">a masterpiece.</span></>
+                                <>Cook like <br /><span className="text-orange-500 font-serif lowercase">a masterpiece.</span></>
                             )}
                         </h1>
-                        
+
                         <div className="flex items-center gap-3">
                             <span className="flex items-center gap-1 bg-orange-50 text-orange-600 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border border-orange-100">
-                                <Zap size={12} fill="currentColor"/> 12 New Recipes
+                                <Zap size={12} fill="currentColor" /> 12 New Recipes
                             </span>
                             <span className="flex items-center gap-1 bg-gray-900 text-white px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest shadow-lg">
-                                <Star size={12} fill="currentColor" className="text-yellow-400"/> Pro Community
+                                <Star size={12} fill="currentColor" className="text-yellow-400" /> Pro Community
                             </span>
                         </div>
 
@@ -83,29 +83,29 @@ const Homepage = () => {
                             <div className="absolute inset-y-0 left-4 flex items-center text-gray-400 group-focus-within:text-orange-500 transition-colors">
                                 <Search size={20} />
                             </div>
-                            <input 
-                                type="text" 
-                                placeholder="Search Mummy's secret vault..." 
+                            <input
+                                type="text"
+                                placeholder="Search Mummy's secret vault..."
                                 className="w-full pl-12 pr-6 py-5 bg-gray-50 rounded-[2rem] border-none focus:ring-2 focus:ring-orange-500 font-bold text-gray-700 shadow-sm transition-all"
                             />
                         </div>
                     </motion.div>
 
                     {/* NEW: Floating Hero Image */}
-                    <motion.div 
+                    <motion.div
                         initial={{ opacity: 0, scale: 0.8 }}
                         animate={{ opacity: 1, scale: 1 }}
                         transition={{ duration: 1, ease: "easeOut" }}
                         className="flex-1 relative hidden lg:block"
                     >
                         <div className="relative w-full aspect-square max-w-md mx-auto">
-                            <img 
-                                src="https://images.unsplash.com/photo-1504674900247-0877df9cc836?q=80&w=1000&auto=format&fit=crop" 
+                            <img
+                                src="https://images.unsplash.com/photo-1504674900247-0877df9cc836?q=80&w=1000&auto=format&fit=crop"
                                 className="w-full h-full object-cover rounded-[4rem] shadow-2xl rotate-3 hover:rotate-0 transition-transform duration-700 border-[12px] border-white"
                                 alt="Chef's Special"
                             />
                             {/* Floating "Live" badge */}
-                            <motion.div 
+                            <motion.div
                                 animate={{ y: [0, -10, 0] }}
                                 transition={{ repeat: Infinity, duration: 3 }}
                                 className="absolute -top-6 -right-6 bg-white p-4 rounded-3xl shadow-xl flex items-center gap-3 border border-gray-50"
@@ -139,7 +139,7 @@ const Homepage = () => {
             </motion.div>
 
             {/* --- SECTION 2: POPULAR (THE SIZZLING SECTION) --- */}
-            <PopularRecipes /> 
+            <PopularRecipes />
 
             {/* --- SECTION 3: RECENT DISCOVERIES --- */}
             <section className="px-6 max-w-7xl mx-auto">
@@ -168,10 +168,10 @@ const Homepage = () => {
                                     className="bg-white rounded-[3.5rem] overflow-hidden border border-gray-100 shadow-sm hover:shadow-2xl transition-all h-full relative group"
                                 >
                                     <div className="h-80 overflow-hidden relative">
-                                        <img 
-                                            src={recipe.imageUrl || 'https://via.placeholder.com/400x300'} 
-                                            alt={recipe.title} 
-                                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000" 
+                                        <img
+                                            src={recipe.imageUrl || 'https://via.placeholder.com/400x300'}
+                                            alt={recipe.title}
+                                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000"
                                         />
                                         <div className="absolute top-6 right-6 bg-white/90 backdrop-blur-md h-12 w-12 flex items-center justify-center rounded-2xl shadow-lg text-orange-500 opacity-0 group-hover:opacity-100 transition-all">
                                             <Flame size={20} fill="currentColor" />
@@ -182,7 +182,7 @@ const Homepage = () => {
                                             {recipe.category || 'Secret Recipe'}
                                         </span>
                                         <h3 className="text-3xl font-black text-gray-900 mb-6 italic leading-tight">{recipe.title}</h3>
-                                        
+
                                         <div className="flex items-center justify-between border-t border-gray-50 pt-6">
                                             <div className="flex items-center gap-3">
                                                 <div className="h-10 w-10 rounded-full bg-orange-100 flex items-center justify-center text-orange-600 font-black text-xs">
@@ -213,18 +213,18 @@ const Homepage = () => {
                     <div className="inline-flex items-center gap-2 bg-orange-500 px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-[0.2em] mb-10 shadow-lg">
                         <Trophy size={16} /> The Jollof Wars 2026
                     </div>
-                    <h2 className="text-6xl md:text-7xl font-black mb-8 leading-[0.9] italic tracking-tighter">Show us your <br/> Smoky Flavor.</h2>
+                    <h2 className="text-6xl md:text-7xl font-black mb-8 leading-[0.9] italic tracking-tighter">Show us your <br /> Smoky Flavor.</h2>
                     <p className="text-gray-400 mb-12 text-xl font-medium max-w-md">Upload your best Jollof recipe and compete for the "Golden Ladle" award.</p>
                     <button className="bg-white text-black px-14 py-6 rounded-[2.5rem] font-black uppercase text-xs tracking-[0.2em] hover:bg-orange-500 hover:text-white transition-all shadow-xl active:scale-95">
                         Join Challenge
                     </button>
                 </div>
-                
+
                 {/* Visual side of the banner */}
                 <div className="absolute top-0 right-0 w-1/2 h-full hidden lg:block">
-                    <img 
-                        src="https://images.unsplash.com/photo-1567073383164-ce59bda79c0e?q=80&w=2000&auto=format&fit=crop" 
-                        className="h-full w-full object-cover opacity-40 mix-blend-overlay grayscale hover:grayscale-0 transition-all duration-1000" 
+                    <img
+                        src="https://images.unsplash.com/photo-1567073383164-ce59bda79c0e?q=80&w=2000&auto=format&fit=crop"
+                        className="h-full w-full object-cover opacity-40 mix-blend-overlay grayscale hover:grayscale-0 transition-all duration-1000"
                     />
                     <div className="absolute inset-0 bg-gradient-to-r from-gray-900 via-gray-900/40 to-transparent" />
                 </div>

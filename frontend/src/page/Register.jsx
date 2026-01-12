@@ -17,7 +17,7 @@ const Register = ({ triggerLoading, showToast }) => {
     ], [formData.password]);
 
     const strengthScore = passwordRequirements.filter(req => req.test).length;
-    
+
     const getStrengthColor = () => {
         if (strengthScore <= 1) return 'bg-red-500';
         if (strengthScore <= 3) return 'bg-orange-500';
@@ -26,7 +26,7 @@ const Register = ({ triggerLoading, showToast }) => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        
+
         if (strengthScore < 4) {
             showToast("Please make your password stronger! 💪");
             return;
@@ -34,7 +34,7 @@ const Register = ({ triggerLoading, showToast }) => {
 
         triggerLoading(2500);
         try {
-            const response = await fetch('http://localhost:5000/api/auth/register', {
+            const response = await fetch('https://kkb-kitchen-api.onrender.com/api/auth/register', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(formData)
@@ -59,7 +59,7 @@ const Register = ({ triggerLoading, showToast }) => {
         <div className="min-h-screen flex bg-white overflow-hidden">
             {/* LEFT SIDE: DECORATIVE */}
             <div className="hidden lg:block lg:w-1/2 relative bg-gray-900">
-                 <motion.div initial={{ scale: 1.2, opacity: 0 }} animate={{ scale: 1, opacity: 0.7 }} transition={{ duration: 1.5 }} className="absolute inset-0">
+                <motion.div initial={{ scale: 1.2, opacity: 0 }} animate={{ scale: 1, opacity: 0.7 }} transition={{ duration: 1.5 }} className="absolute inset-0">
                     <img src="https://res.cloudinary.com/dutabdorh/image/upload/v1767630984/katie-smith-uQs1802D0CQ-unsplash_xexgsy.jpg" alt="Cooking" className="w-full h-full object-cover" />
                 </motion.div>
                 <div className="absolute inset-0 flex flex-col justify-center px-20 z-10">
@@ -90,7 +90,7 @@ const Register = ({ triggerLoading, showToast }) => {
                                 <label className="block text-xs font-black uppercase text-gray-400 ml-2 mb-2">Full Name</label>
                                 <div className="relative group">
                                     <User className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-orange-500" size={18} />
-                                    <input type="text" required value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} className="w-full pl-12 pr-4 py-4 bg-gray-50 rounded-2xl outline-none focus:ring-2 focus:ring-orange-500 transition-all" placeholder="Mummy Doe" />
+                                    <input type="text" required value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} className="w-full pl-12 pr-4 py-4 bg-gray-50 rounded-2xl outline-none focus:ring-2 focus:ring-orange-500 transition-all" placeholder="Mummy Doe" />
                                 </div>
                             </div>
 
@@ -99,7 +99,7 @@ const Register = ({ triggerLoading, showToast }) => {
                                 <label className="block text-xs font-black uppercase text-gray-400 ml-2 mb-2">Email</label>
                                 <div className="relative group">
                                     <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-orange-500" size={18} />
-                                    <input type="email" required value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value})} className="w-full pl-12 pr-4 py-4 bg-gray-50 rounded-2xl outline-none focus:ring-2 focus:ring-orange-500 transition-all" placeholder="mummy@kitchen.com" />
+                                    <input type="email" required value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} className="w-full pl-12 pr-4 py-4 bg-gray-50 rounded-2xl outline-none focus:ring-2 focus:ring-orange-500 transition-all" placeholder="mummy@kitchen.com" />
                                 </div>
                             </div>
 
@@ -108,7 +108,7 @@ const Register = ({ triggerLoading, showToast }) => {
                                 <label className="block text-xs font-black uppercase text-gray-400 ml-2 mb-2">Password</label>
                                 <div className="relative group">
                                     <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-orange-500" size={18} />
-                                    <input type="password" required value={formData.password} onChange={(e) => setFormData({...formData, password: e.target.value})} className="w-full pl-12 pr-4 py-4 bg-gray-50 rounded-2xl outline-none focus:ring-2 focus:ring-orange-500 transition-all" placeholder="••••••••" />
+                                    <input type="password" required value={formData.password} onChange={(e) => setFormData({ ...formData, password: e.target.value })} className="w-full pl-12 pr-4 py-4 bg-gray-50 rounded-2xl outline-none focus:ring-2 focus:ring-orange-500 transition-all" placeholder="••••••••" />
                                 </div>
 
                                 {/* Password Strength Meter */}
@@ -146,7 +146,7 @@ const Register = ({ triggerLoading, showToast }) => {
                                 <GoogleLogin
                                     onSuccess={async (credentialResponse) => {
                                         try {
-                                            const response = await fetch('http://localhost:5000/api/auth/google-login', {
+                                            const response = await fetch('https://kkb-kitchen-api.onrender.com/api/auth/google-login', {
                                                 method: 'POST',
                                                 headers: { 'Content-Type': 'application/json' },
                                                 body: JSON.stringify({ idToken: credentialResponse.credential })
@@ -155,7 +155,7 @@ const Register = ({ triggerLoading, showToast }) => {
                                             if (response.ok) {
                                                 localStorage.setItem('token', data.token);
                                                 showToast(`Welcome, ${data.user.name}! 🍳`);
-                                                navigate('/'); 
+                                                navigate('/');
                                             } else {
                                                 showToast(data.message || "Google Login failed");
                                             }

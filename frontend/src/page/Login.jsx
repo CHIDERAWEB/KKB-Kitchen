@@ -16,7 +16,7 @@ const Login = ({ triggerLoading, showToast }) => {
     triggerLoading(2000);
 
     try {
-      const response = await fetch('http://localhost:5000/api/auth/login', {
+      const response = await fetch('https://kkb-kitchen-api.onrender.com/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData)
@@ -163,7 +163,7 @@ const Login = ({ triggerLoading, showToast }) => {
                 <GoogleLogin
                   onSuccess={async (credentialResponse) => {
                     try {
-                      const response = await fetch('http://localhost:5000/api/auth/google-login', {
+                      const response = await fetch('https://kkb-kitchen-api.onrender.com/api/auth/google-login', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ idToken: credentialResponse.credential })

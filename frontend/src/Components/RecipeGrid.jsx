@@ -15,7 +15,7 @@ const RecipeGrid = () => {
         const fetchRecipes = async () => {
             try {
                 // Now fetching ALL (including pending) to keep the site busy
-                const response = await fetch('http://localhost:5000/api/recipes/all');
+                const response = await fetch('https://kkb-kitchen-api.onrender.com/api/recipes/all');
                 const data = await response.json();
                 setRecipes(data);
             } catch (err) {

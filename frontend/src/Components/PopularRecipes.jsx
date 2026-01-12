@@ -11,7 +11,7 @@ const PopularRecipes = () => {
         const fetchPopular = async () => {
             try {
                 // This calls the specific "popular" route we discussed for the backend
-                const response = await fetch('http://localhost:5000/api/recipes/popular');
+                const response = await fetch('https://kkb-kitchen-api.onrender.com/api/recipes/popular');
                 const data = await response.json();
                 setRecipes(Array.isArray(data) ? data : []);
             } catch (error) {
@@ -48,21 +48,21 @@ const PopularRecipes = () => {
                     >
                         <Link to={`/Recipejollofdetail/${r.id}`}>
                             <div className="relative h-[350px] rounded-[3rem] overflow-hidden shadow-2xl border border-gray-100">
-                                <img 
-                                    src={r.imageUrl || 'https://via.placeholder.com/300x400'} 
-                                    className="h-full w-full object-cover group-hover:scale-110 transition-transform duration-1000" 
+                                <img
+                                    src={r.imageUrl || 'https://via.placeholder.com/300x400'}
+                                    className="h-full w-full object-cover group-hover:scale-110 transition-transform duration-1000"
                                     alt={r.title}
                                 />
                                 {/* Dark overlay for text readability */}
                                 <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
-                                
+
                                 {/* Stats Badges */}
                                 <div className="absolute top-6 left-6 flex gap-2">
                                     <div className="bg-white/20 backdrop-blur-md px-3 py-1 rounded-full flex items-center gap-1 text-[10px] text-white font-black uppercase">
-                                        <Eye size={12}/> {r.views || 0}
+                                        <Eye size={12} /> {r.views || 0}
                                     </div>
                                     <div className="bg-orange-500 px-3 py-1 rounded-full flex items-center gap-1 text-[10px] text-white font-black uppercase">
-                                        <Heart size={12} fill="white"/> {r.likedBy?.length || 0}
+                                        <Heart size={12} fill="white" /> {r.likedBy?.length || 0}
                                     </div>
                                 </div>
 

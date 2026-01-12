@@ -28,14 +28,14 @@ const AdminDashboard = () => {
     const fetchData = async () => {
         setLoading(true);
         try {
-            const res = await fetch('http://localhost:5000/api/admin/data', {
+            const res = await fetch('https://kkb-kitchen-api.onrender.com/api/admin/data', {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             const data = await res.json();
             setPendingRecipes(data.pendingRecipes || []);
             setStats(data.stats || { total: 0, pending: 0, approved: 0 });
 
-            const userRes = await fetch('http://localhost:5000/api/admin/users', {
+            const userRes = await fetch('https://kkb-kitchen-api.onrender.com/api/admin/users', {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             const userData = await userRes.json();
@@ -49,7 +49,7 @@ const AdminDashboard = () => {
 
     const handleApprove = async (id) => {
         try {
-            const res = await fetch(`http://localhost:5000/api/admin/approve/${id}`, {
+            const res = await fetch(`https://kkb-kitchen-api.onrender.com/api/admin/approve/${id}`, {
                 method: 'PUT',
                 headers: { 'Authorization': `Bearer ${token}` }
             });
@@ -70,7 +70,7 @@ const AdminDashboard = () => {
     const handleDelete = async (id) => {
         if (window.confirm("Delete permanently?")) {
             try {
-                const res = await fetch(`http://localhost:5000/api/admin/delete/${id}`, {
+                const res = await fetch(`https://kkb-kitchen-api.onrender.com/api/admin/delete/${id}`, {
                     method: 'DELETE',
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
@@ -93,7 +93,7 @@ const AdminDashboard = () => {
         const newRole = currentRole === 'admin' ? 'user' : 'admin';
         if (window.confirm(`Change user to ${newRole}?`)) {
             try {
-                const res = await fetch(`http://localhost:5000/api/admin/users/role/${userId}`, {
+                const res = await fetch(`https://kkb-kitchen-api.onrender.com/api/admin/users/role/${userId}`, {
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json',

@@ -8,7 +8,7 @@ const UploadRecipe = ({ showToast }) => {
         title: '',
         imageUrl: '',
         ingredients: [''], // Start with one empty field
-        instructions: [''] 
+        instructions: ['']
     });
 
     // Handle adding/removing dynamic fields
@@ -32,9 +32,9 @@ const UploadRecipe = ({ showToast }) => {
         const token = localStorage.getItem('token');
 
         try {
-            const response = await fetch('http://localhost:5000/api/recipes/create', {
+            const response = await fetch('https://kkb-kitchen-api.onrender.com/api/recipes/create', {
                 method: 'POST',
-                headers: { 
+                headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}` // Send the JWT Key
                 },
@@ -63,20 +63,20 @@ const UploadRecipe = ({ showToast }) => {
                 <div className="grid md:grid-cols-2 gap-6">
                     <div>
                         <label className="block text-xs font-black uppercase text-gray-400 mb-2">Recipe Title</label>
-                        <input 
-                            required 
+                        <input
+                            required
                             className="w-full p-4 bg-gray-50 rounded-2xl border-none outline-none focus:ring-2 focus:ring-orange-500"
                             placeholder="e.g. Grandma's Secret Jollof"
-                            onChange={(e) => setFormData({...formData, title: e.target.value})}
+                            onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                         />
                     </div>
                     <div>
                         <label className="block text-xs font-black uppercase text-gray-400 mb-2">Image URL</label>
-                        <input 
-                            required 
+                        <input
+                            required
                             className="w-full p-4 bg-gray-50 rounded-2xl border-none outline-none focus:ring-2 focus:ring-orange-500"
                             placeholder="Link to food photo"
-                            onChange={(e) => setFormData({...formData, imageUrl: e.target.value})}
+                            onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
                         />
                     </div>
                 </div>
@@ -86,7 +86,7 @@ const UploadRecipe = ({ showToast }) => {
                     <label className="block text-xs font-black uppercase text-gray-400 mb-2">Ingredients</label>
                     {formData.ingredients.map((ing, index) => (
                         <div key={index} className="flex gap-2 mb-2">
-                            <input 
+                            <input
                                 className="flex-1 p-3 bg-gray-50 rounded-xl outline-none"
                                 value={ing}
                                 onChange={(e) => handleListChange('ingredients', index, e.target.value)}

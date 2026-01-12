@@ -47,7 +47,8 @@ const CreateRecipe = ({ showToast }) => {
         }
 
         try {
-            const response = await fetch('http://localhost:5000/api/recipes/create', {
+            // NEW CLOUD NUMBER (Works everywhere in the world)
+            const response = await fetch('https://kkb-kitchen-api.onrender.com/api/recipes/create', {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`

@@ -34,7 +34,7 @@ function Header() {
     const fetchResults = async () => {
       if (query.length > 1) {
         try {
-          const response = await fetch(`http://localhost:5000/api/recipes/search?query=${query}`);
+          const response = await fetch(`https://kkb-kitchen-api.onrender.com/api/recipes/search?query=${query}`);
           const data = await response.json();
           setSearchResults(data);
         } catch (err) {

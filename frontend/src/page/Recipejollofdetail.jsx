@@ -18,7 +18,7 @@ const Recipejollofdetail = ({ showToast }) => {
         const fetchRecipeData = async () => {
             try {
                 // Fetch Main Recipe
-                const response = await fetch(`http://localhost:5000/api/recipes/${id}`);
+                const response = await fetch(`https://kkb-kitchen-api.onrender.com/api/recipes/${id}`);
                 if (!response.ok) throw new Error("Recipe not found");
                 const data = await response.json();
 
@@ -32,7 +32,7 @@ const Recipejollofdetail = ({ showToast }) => {
                 setIsLiked(data.likedBy?.some(u => (typeof u === 'object' ? u.id === user?.id : u === user?.id)) || false);
 
                 // Fetch Recommendations (All recipes, then filter out current one)
-                const recRes = await fetch(`http://localhost:5000/api/recipes`);
+                const recRes = await fetch(`https://kkb-kitchen-api.onrender.com/api/recipes`);
                 const recData = await recRes.json();
                 setRecommendations(recData.filter(r => r._id !== id).slice(0, 4));
 
@@ -57,7 +57,7 @@ const Recipejollofdetail = ({ showToast }) => {
     const handleLike = async () => {
         if (!user) return showToast("Please login to like recipes! 🔐");
         try {
-            await fetch(`http://localhost:5000/api/recipes/${id}/like`, {
+            await fetch(`https://kkb-kitchen-api.onrender.com/api/recipes/${id}/like`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                 body: JSON.stringify({ userId: user?.id })
@@ -74,7 +74,7 @@ const Recipejollofdetail = ({ showToast }) => {
     const handlePostComment = async () => {
         if (!newCommentText.trim() || !user) return;
         try {
-            const response = await fetch(`http://localhost:5000/api/recipes/${id}/comments`, {
+            const response = await fetch(`https://kkb-kitchen-api.onrender.com/api/recipes/${id}/comments`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                 body: JSON.stringify({ text: newCommentText, userName: user?.name || "Guest Chef" })
@@ -89,7 +89,7 @@ const Recipejollofdetail = ({ showToast }) => {
     const handleDeleteComment = async (commentId) => {
         if (!window.confirm("Remove this comment?")) return;
         try {
-            const res = await fetch(`http://localhost:5000/api/recipes/comments/${commentId}`, {
+            const res = await fetch(`https://kkb-kitchen-api.onrender.com/api/recipes/comments/${commentId}`, {
                 method: 'DELETE',
                 headers: { 'Authorization': `Bearer ${token}` }
             });

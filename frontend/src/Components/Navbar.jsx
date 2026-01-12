@@ -21,7 +21,7 @@ const Navbar = () => {
     const fetchPendingCount = async () => {
       if (user?.role === 'admin') {
         try {
-          const response = await fetch('http://localhost:5000/api/recipes/pending-count');
+          const response = await fetch('https://kkb-kitchen-api.onrender.com/api/recipes/pending-count');
           const data = await response.json();
           setPendingCount(data.count || 0);
         } catch (err) {
