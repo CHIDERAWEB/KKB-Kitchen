@@ -21,37 +21,30 @@ const Login = ({ triggerLoading, showToast }) => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData)
       });
-      // 1. SAVE THE TOKEN!
-      localStorage.setItem('token', data.token);
 
-      // 2. SAVE THE USER OBJECT (for the Role and Name)
-      localStorage.setItem('user', JSON.stringify(data.user));
-
-      const data = await response.json();
+      const data = await response.json(); // ✅ Moved this UP
 
       if (response.ok) {
         localStorage.setItem('token', data.token);
 
         // --- ADMIN PROTECTION LOGIC ---
-        // This ensures that your specific email is always saved as an admin in the browser
         const userWithRole = {
           ...data.user,
           role: data.user.email === 'gluno5191@gmail.com' ? 'admin' : (data.user.role || 'user')
         };
 
         localStorage.setItem('user', JSON.stringify(userWithRole));
-        // ------------------------------
 
         setTimeout(() => {
           showToast(`Welcome back, ${data.user.name || 'Chef'}! 👨‍🍳`);
           navigate('/');
         }, 2000);
       } else {
-        showToast(data.error || "Invalid email or password");
+        showToast(data.message || data.error || "Invalid email or password");
       }
     } catch (err) {
       console.error("Login error:", err);
-      showToast("Could not connect to server. Is your Backend running?");
+      showToast("Could not connect to server.");
     }
   };
 
