@@ -1,9 +1,11 @@
-import { PrismaClient } from '@prisma/client';
-import { PrismaPg } from '@prisma/adapter-pg';
-import pkg from 'pg';
-const { Pool } = pkg;
+import prismaPkg from '@prisma/client';
+const { PrismaClient } = prismaPkg;
 
-// 1. Setup the connection pool with SSL (Necessary for Cloud/Official hosting)
+import { PrismaPg } from '@prisma/adapter-pg';
+import pgPkg from 'pg';
+const { Pool } = pgPkg;
+
+// 1. Setup the connection pool with SSL (Necessary for Cloud hosting)
 const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
     ssl: { rejectUnauthorized: false }
@@ -15,6 +17,7 @@ const adapter = new PrismaPg(pool);
 // 3. Initialize Prisma Client
 export const prisma = new PrismaClient({ adapter });
 
+// 4. Connection check function
 export const connectDB = async () => {
     try {
         await prisma.$connect();
