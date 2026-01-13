@@ -9,7 +9,7 @@ import Banner from './Components/Banner';
 import RecipeGrid from './Components/RecipeGrid';
 import Footer from './Components/Footer';
 import Loader from './Components/Loader';
-import ProtectedRoute from './Components/ProtectedRoutes';
+import ProtectedRoutes from './Components/ProtectedRoutes';
 
 // PAGES
 import Recipejollofdetail from './page/Recipejollofdetail';
@@ -35,7 +35,7 @@ function App() {
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsLoading(false);
-    }, 2500);
+    }, 1500);
     return () => clearTimeout(timer);
   }, []);
 
@@ -97,9 +97,9 @@ function App() {
             <Route path="/edit-recipe/:id" element={<UploadRecipe isEditing={true} />} />
 
             <Route path="/upload-recipe" element={
-              <ProtectedRoute>
+              <ProtectedRoutes>
                 <UploadRecipe showToast={showToast} triggerLoading={triggerLoading} />
-              </ProtectedRoute>
+              </ProtectedRoutes>
             } />
 
             <Route path="/planner" element={<MealPlanner />} />

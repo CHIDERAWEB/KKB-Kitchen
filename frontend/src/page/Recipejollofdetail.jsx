@@ -18,13 +18,20 @@ const Recipejollofdetail = ({ showToast }) => {
         const fetchRecipeData = async () => {
             try {
                 setLoading(true);
-                // Fetch Main Recipe
+
+                // 1. Fetch Main Recipe
                 const response = await fetch(`https://kkb-kitchen-api.onrender.com/api/recipes/${id}`);
 
-                if (!response.ok) throw new Error("Recipe not found");
+                if (!response.ok) {
+                    const errorMsg = await response.text();
+                    console.error("Server says:", errorMsg);
+                    throw new Error("Recipe not found");
+                }
+
+                // --- THE FIX: Define 'data' here before using it! ---
                 const data = await response.json();
 
-                // Format ingredients and instructions to handle strings or arrays
+                // 2. Format ingredients and instructions
                 const formattedData = {
                     ...data,
                     ingredients: Array.isArray(data.ingredients) ? data.ingredients : (data.ingredients?.split(',').filter(i => i.trim() !== "") || []),
@@ -33,15 +40,24 @@ const Recipejollofdetail = ({ showToast }) => {
 
                 setRecipe(formattedData);
 
-                // Handle like status check
+                // 3. Handle like status check
                 const userId = user?.id || user?._id;
-                setIsLiked(data.likedBy?.some(u => (typeof u === 'object' ? (u.id === userId || u._id === userId) : u === userId)) || false);
+                if (data.likedBy && userId) {
+                    // Ensure we compare numbers to numbers or strings to strings
+                    setIsLiked(data.likedBy.some(u => {
+                        const likedUserId = typeof u === 'object' ? (u.id || u._id) : u;
+                        return likedUserId.toString() === userId.toString();
+                    }));
+                }
 
-                // Fetch Recommendations
-                const recRes = await fetch(`https://kkb-kitchen-api.onrender.com/api/recipes`);
-                const recData = await recRes.json();
-                // Filter out current recipe using both id and _id checks
-                setRecommendations(recData.filter(r => (r._id || r.id) !== id).slice(0, 4));
+                // 4. Fetch Recommendations (Use /all to avoid 404)
+                const recRes = await fetch(`https://kkb-kitchen-api.onrender.com/api/recipes/all`);
+                if (recRes.ok) {
+                    const recData = await recRes.json();
+                    // Filter current recipe: ensure we compare IDs correctly
+                    const filtered = recData.filter(r => (r.id || r._id).toString() !== id.toString());
+                    setRecommendations(filtered.slice(0, 4));
+                }
 
             } catch (err) {
                 console.error("Fetch Error:", err);
@@ -56,7 +72,6 @@ const Recipejollofdetail = ({ showToast }) => {
         }
         window.scrollTo(0, 0);
     }, [id, user?.id, user?._id]);
-
     const handlePrint = () => window.print();
 
     const handleShare = () => {

@@ -26,20 +26,24 @@ const RecipeGrid = () => {
     }, []);
 
     const handleProtectedNavigation = (recipe, status) => {
-        // FIXED: Check for both _id and id
-        const recipeId = recipe._id || recipe.id;
+        // 1. Get the ID (checking both formats)
+        const rawId = recipe.id || recipe._id;
+
+        // 2. Ensure it is a clean number if using Prisma/SQL
+        const cleanId = typeof rawId === 'string' ? rawId.replace(/\D/g, '') : rawId;
 
         if (status === 'pending' && user?.role !== 'admin') {
             alert("👨‍🍳 Chef is still tasting this one! Check back once it's approved.");
             return;
         }
 
-        if (!recipeId) {
-            console.error("No ID found for this recipe:", recipe);
+        if (!cleanId) {
+            console.error("No valid ID found for this recipe:", recipe);
             return;
         }
 
-        navigate(`/recipe/${recipeId}`);
+        // 3. Navigate with the clean ID
+        navigate(`/recipe/${cleanId}`);
     };
 
     if (loading) return <div className="text-center py-20 font-black italic text-orange-500 uppercase tracking-widest">Gathering Ingredients...</div>;
