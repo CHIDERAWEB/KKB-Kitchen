@@ -20,23 +20,24 @@ const router = express.Router();
 // Configure multer
 const upload = multer({ dest: 'uploads/' });
 
-// --- GET ROUTES ---
+// --- 1. STATIC/SPECIFIC GET ROUTES (Keep these at the top) ---
 router.get('/all', getAllRecipes);
 router.get('/popular', getPopularRecipes);
 router.get('/search', searchRecipes);
-router.get('/pending-count', getPendingCount);
+router.get('/pending-count', protect, isAdmin, getPendingCount); // Added protection for admin only
 
-// --- COMMENT ROUTES ---
-router.put('/comments/:id', protect, updateComment);
-router.delete('/comments/:id', protect, deleteComment);
-router.post('/:id/comments', addComment);
-
-// --- RECIPE ID ROUTE ---
+// --- 2. DYNAMIC ID ROUTE (Must be below specific routes) ---
 router.get('/:id', getRecipeById);
 
-// --- PROTECTED ROUTES (Changed authenticateToken to protect) ---
+// --- 3. INTERACTION ROUTES (Require Login) ---
+// If your controller needs the user ID to save a like or comment, you MUST use 'protect'
+router.post('/:id/like', protect, toggleLike);
+router.post('/:id/comments', protect, addComment);
+router.put('/comments/:id', protect, updateComment);
+router.delete('/comments/:id', protect, deleteComment);
+
+// --- 4. CREATE/UPDATE ROUTES (Require Login + Uploads) ---
 router.post('/create', protect, upload.single('image'), createRecipe);
 router.put('/:id', protect, upload.single('image'), updateRecipe);
-router.post('/:id/like', toggleLike);
 
 export default router;
