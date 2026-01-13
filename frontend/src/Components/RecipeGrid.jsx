@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { FiClock, FiChevronRight, FiLock, FiEye } from 'react-icons/fi';
 
@@ -8,13 +8,11 @@ const RecipeGrid = () => {
     const [loading, setLoading] = useState(true);
     const navigate = useNavigate();
 
-    // Get current user to allow Admin to bypass the "Lock"
     const user = JSON.parse(localStorage.getItem('user'));
 
     useEffect(() => {
         const fetchRecipes = async () => {
             try {
-                // Now fetching ALL (including pending) to keep the site busy
                 const response = await fetch('https://kkb-kitchen-api.onrender.com/api/recipes/all');
                 const data = await response.json();
                 setRecipes(data);
@@ -27,11 +25,20 @@ const RecipeGrid = () => {
         fetchRecipes();
     }, []);
 
-    const handleProtectedNavigation = (recipeId, status) => {
+    const handleProtectedNavigation = (recipe, status) => {
+        // FIXED: Check for both _id and id
+        const recipeId = recipe._id || recipe.id;
+
         if (status === 'pending' && user?.role !== 'admin') {
             alert("👨‍🍳 Chef is still tasting this one! Check back once it's approved.");
             return;
         }
+
+        if (!recipeId) {
+            console.error("No ID found for this recipe:", recipe);
+            return;
+        }
+
         navigate(`/recipe/${recipeId}`);
     };
 
@@ -52,25 +59,25 @@ const RecipeGrid = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
                 {recipes.map((recipe, index) => {
                     const isPending = recipe.status === 'pending';
+                    // FIXED: Ensure we have a valid key
+                    const currentId = recipe._id || recipe.id;
 
                     return (
                         <motion.div
-                            key={recipe.id}
+                            key={currentId || index}
                             initial={{ opacity: 0, y: 20 }}
                             whileInView={{ opacity: 1, y: 0 }}
                             transition={{ delay: index * 0.1 }}
                             viewport={{ once: true }}
                             className={`group bg-white rounded-[2.5rem] shadow-sm hover:shadow-2xl transition-all duration-500 overflow-hidden border border-gray-100 flex flex-col relative ${isPending ? 'cursor-not-allowed' : ''}`}
                         >
-                            {/* --- IMAGE SECTION --- */}
                             <div className="relative h-72 overflow-hidden">
                                 <img
                                     src={recipe.imageUrl || recipe.image}
-                                    alt={recipe.title}
+                                    alt={recipe.title || recipe.name}
                                     className={`w-full h-full object-cover transition-transform duration-700 ${!isPending ? 'group-hover:scale-110' : 'blur-[2px] opacity-60'}`}
                                 />
 
-                                {/* PENDING OVERLAY: Keeps them busy but prevents viewing */}
                                 {isPending && (
                                     <div className="absolute inset-0 bg-gray-900/20 backdrop-blur-[1px] flex items-center justify-center flex-col gap-2">
                                         <div className="bg-white/90 p-3 rounded-full shadow-xl">
@@ -88,10 +95,9 @@ const RecipeGrid = () => {
                                 </div>
                             </div>
 
-                            {/* --- CONTENT SECTION --- */}
                             <div className="p-8 flex-1 flex flex-col">
                                 <h3 className={`text-2xl font-black text-gray-900 mb-6 transition-colors line-clamp-1 ${!isPending ? 'group-hover:text-orange-600' : 'text-gray-400'}`}>
-                                    {recipe.title}
+                                    {recipe.title || recipe.name}
                                 </h3>
 
                                 <div className="mt-auto pt-6 border-t border-dashed border-gray-100 flex items-center justify-between">
@@ -111,9 +117,8 @@ const RecipeGrid = () => {
                                         </div>
                                     </div>
 
-                                    {/* NAVIGATION BUTTON */}
                                     <button
-                                        onClick={() => handleProtectedNavigation(recipe.id, recipe.status)}
+                                        onClick={() => handleProtectedNavigation(recipe, recipe.status)}
                                         className="h-12 w-12 bg-gray-50 rounded-2xl flex items-center justify-center text-gray-400 hover:bg-orange-500 hover:text-white transition-all shadow-sm group/btn"
                                     >
                                         {isPending ? <FiEye size={20} className="opacity-50" /> : <FiChevronRight size={24} />}
