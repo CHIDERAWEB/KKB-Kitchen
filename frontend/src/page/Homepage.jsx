@@ -17,6 +17,7 @@ const Homepage = () => {
         const fetchRecipes = async () => {
             try {
                 // FIXED: Using the verified API URL
+                // Copy and paste this EXACTLY
                 const response = await fetch('https://kkb-kitchen-api.onrender.com/api/recipes/all');
                 if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
 
