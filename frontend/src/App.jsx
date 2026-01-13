@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
 import { CheckCircle } from 'lucide-react';
 
@@ -12,7 +12,6 @@ import Loader from './Components/Loader';
 import ProtectedRoute from './Components/ProtectedRoutes';
 
 // PAGES
-import Homepage from './page/Homepage';
 import Recipejollofdetail from './page/Recipejollofdetail';
 import Register from './page/Register';
 import CreateRecipe from './page/CreateRecipes';
@@ -54,12 +53,11 @@ function App() {
     setUser(userData);
   };
 
-  // --- FIXED: This is only for the TRUE home page ---
+  // CLEANED HOME VIEW: Banner + the Grid that shows the food
   const HomeView = (
     <>
       <Banner />
       <RecipeGrid />
-      <Homepage />
     </>
   );
 
@@ -90,17 +88,13 @@ function App() {
             <Route path="/register" element={<Register triggerLoading={triggerLoading} showToast={showToast} onAuthSuccess={handleAuthSuccess} />} />
             <Route path="/login" element={<Login triggerLoading={triggerLoading} showToast={showToast} onAuthSuccess={handleAuthSuccess} />} />
 
-            <Route path="/create" element={<CreateRecipe showToast={showToast} />} />
+            {/* RECIPE DETAIL - This matches your Recipejollofdetail.jsx */}
+            <Route path="/recipe/:id" element={<Recipejollofdetail showToast={showToast} />} />
 
-            {/* --- FIXED ADMIN ROUTE --- */}
-            {/* If user is admin, show Dashboard. If not, go back to /login */}
-           // This will let you in even if Google Login is broken
+            {/* ADMIN & TOOLS */}
             <Route path="/admin" element={<AdminDashboard />} />
+            <Route path="/create" element={<CreateRecipe showToast={showToast} />} />
             <Route path="/edit-recipe/:id" element={<UploadRecipe isEditing={true} />} />
-            <Route path="/planner" element={<MealPlanner />} />
-            <Route path="/shopping-list" element={<ShoppingList />} />
-            <Route path="/about" element={<About />} />
-            <Route path="/favorites" element={<Favorites />} />
 
             <Route path="/upload-recipe" element={
               <ProtectedRoute>
@@ -108,7 +102,10 @@ function App() {
               </ProtectedRoute>
             } />
 
-            <Route path="/recipe/:id" element={<Recipejollofdetail showToast={showToast} />} />
+            <Route path="/planner" element={<MealPlanner />} />
+            <Route path="/shopping-list" element={<ShoppingList />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/favorites" element={<Favorites />} />
           </Routes>
         </main>
 
