@@ -3,7 +3,7 @@ import express from 'express';
 import cors from 'cors';
 
 // Import your configurations
-import './config/Cloudinary.js'; // This just runs the config file
+import './config/Cloudinary.js';
 import { connectDB } from './config/db.js';
 
 // Import your Routes
@@ -16,8 +16,17 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// 1. Middleware
-app.use(cors());
+// 1. Middleware - THE FIX IS HERE
+app.use(cors({
+  origin: [
+    'https://kkb-kitchen-frontend.onrender.com',
+    'http://localhost:3000'
+  ],
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
+
 app.use(express.json());
 
 // 2. Routes
@@ -27,7 +36,11 @@ app.use('/api/admin', adminRoutes);
 
 // 3. Health Check Route
 app.get('/', (req, res) => {
-  res.status(200).json({ message: "Chef, the kitchen is open! 👨‍🍳" });
+  res.status(200).json({
+    message: "Chef, the kitchen is open! 👨‍🍳",
+    status: "Healthy",
+    timestamp: new Date().toISOString()
+  });
 });
 
 // 4. Start Database then start Listening
