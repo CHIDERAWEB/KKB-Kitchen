@@ -15,7 +15,7 @@ import {
     updateComment
 } from '../controllers/recipeController.js';
 
-import { authenticateToken } from '../middleware/authMiddleware.js';
+import { protect } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
