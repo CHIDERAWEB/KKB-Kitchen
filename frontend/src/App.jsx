@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
 import { CheckCircle } from 'lucide-react';
 
@@ -22,6 +22,15 @@ import About from './page/About';
 import MealPlanner from './page/MealPlanner';
 import AdminDashboard from './page/AdminDashboard';
 import UploadRecipe from './page/UploadRecipe';
+
+// Helper to fix the "staying at bottom" issue when changing pages
+function ScrollToTop() {
+  const { pathname } = useLocation();
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
+  return null;
+}
 
 function App() {
   const [toast, setToast] = useState({ show: false, message: "" });
@@ -53,16 +62,9 @@ function App() {
     setUser(userData);
   };
 
-  // CLEANED HOME VIEW: Banner + the Grid that shows the food
-  const HomeView = (
-    <>
-      <Banner />
-      <RecipeGrid />
-    </>
-  );
-
   return (
     <Router>
+      <ScrollToTop /> {/* Ensures every page starts at the top */}
       <AnimatePresence mode="wait">
         {isLoading && <Loader key="loader" />}
       </AnimatePresence>
@@ -80,15 +82,28 @@ function App() {
 
         <main className="flex-grow">
           <Routes>
-            {/* HOME ROUTES */}
-            <Route path="/" element={HomeView} />
-            <Route path="/homepage" element={HomeView} />
+            {/* HOME ROUTES - Fixed by putting components directly in element */}
+            <Route path="/" element={
+              <>
+                <Banner />
+                <div className="pb-20"> {/* Adds spacing before footer */}
+                  <RecipeGrid />
+                </div>
+              </>
+            } />
+
+            <Route path="/homepage" element={
+              <>
+                <Banner />
+                <RecipeGrid />
+              </>
+            } />
 
             {/* AUTH ROUTES */}
             <Route path="/register" element={<Register triggerLoading={triggerLoading} showToast={showToast} onAuthSuccess={handleAuthSuccess} />} />
             <Route path="/login" element={<Login triggerLoading={triggerLoading} showToast={showToast} onAuthSuccess={handleAuthSuccess} />} />
 
-            {/* RECIPE DETAIL - This matches your Recipejollofdetail.jsx */}
+            {/* RECIPE DETAIL */}
             <Route path="/recipe/:id" element={<Recipejollofdetail showToast={showToast} />} />
 
             {/* ADMIN & TOOLS */}
