@@ -70,7 +70,7 @@ const Homepage = () => {
 
                         <h1 className="text-6xl md:text-8xl font-black italic text-gray-900 leading-[0.9] tracking-tighter">
                             {user ? (
-                                <>Welcome, <br /><span className="text-orange-500 font-serif lowercase">Chef {user.name.split(' ')[0]}!</span></>
+                                <>Welcome, <br /><span className="text-orange-500 font-signature text-7xl lowercase">Chef {user.name.split(' ')[0]}!</span></>
                             ) : (
                                 <>Cook like <br /><span className="text-orange-500 font-serif lowercase">a masterpiece.</span></>
                             )}
@@ -101,7 +101,9 @@ const Homepage = () => {
 
                     <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} className="flex-1 relative hidden lg:block">
                         <div className="relative w-full aspect-square max-w-md mx-auto">
-                            <img src="https://images.unsplash.com/photo-1504674900247-0877df9cc836?q=80&w=1000&auto=format&fit=crop" className="w-full h-full object-cover rounded-[4rem] shadow-2xl rotate-3 hover:rotate-0 transition-transform duration-700 border-[12px] border-white" alt="Chef's Special" />
+                            <div className="img-reveal-container h-full w-full">
+                                <img src="https://images.unsplash.com/photo-1504674900247-0877df9cc836?q=80&w=1000&auto=format&fit=crop" className="w-full h-full object-cover shadow-2xl rotate-3 hover:rotate-0 transition-transform duration-700 border-[12px] border-white" alt="Chef's Special" />
+                            </div>
                             <motion.div animate={{ y: [0, -10, 0] }} transition={{ repeat: Infinity, duration: 3 }} className="absolute -top-6 -right-6 bg-white p-4 rounded-3xl shadow-xl flex items-center gap-3 border border-gray-50">
                                 <div className="h-3 w-3 bg-green-500 rounded-full animate-pulse" />
                                 <span className="text-xs font-black uppercase tracking-tighter">Kitchen Open</span>
@@ -167,7 +169,7 @@ const Homepage = () => {
                                 const recipeId = recipe._id || recipe.id;
                                 return (
                                     <Link to={`/recipe/${recipeId}`} key={recipeId}>
-                                        <motion.div whileHover={{ y: -15 }} className="bg-white rounded-[3.5rem] overflow-hidden border border-gray-100 shadow-sm hover:shadow-2xl transition-all h-full relative group">
+                                        <motion.div whileHover={{ y: -15 }} className="recipe-card-glass rounded-[3.5rem] overflow-hidden shadow-sm hover:shadow-2xl transition-all h-full relative group">
                                             <div className="h-80 overflow-hidden relative">
                                                 <img src={recipe.imageUrl || recipe.image} alt={recipe.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000" />
                                                 <div className="absolute top-6 right-6 bg-white/90 backdrop-blur-md h-12 w-12 flex items-center justify-center rounded-2xl shadow-lg text-orange-500 opacity-0 group-hover:opacity-100 transition-all">
@@ -180,7 +182,7 @@ const Homepage = () => {
                                                 <div className="flex items-center justify-between border-t border-gray-50 pt-6">
                                                     <div className="flex items-center gap-3">
                                                         <div className="h-10 w-10 rounded-full bg-orange-100 flex items-center justify-center text-orange-600 font-black text-xs">
-                                                            {recipe.author?.picture ? <img src={recipe.author.picture} className="rounded-full h-full w-full object-cover" /> : (recipe.author?.name?.charAt(0) || 'C')}
+                                                            {recipe.author?.picture ? <img src={recipe.author.picture} className="rounded-full h-full w-full object-cover" alt="author" /> : (recipe.author?.name?.charAt(0) || 'C')}
                                                         </div>
                                                         <span className="text-xs font-black text-gray-700 uppercase tracking-widest">{recipe.author?.name?.split(' ')[0] || 'Chef'}</span>
                                                     </div>
@@ -213,7 +215,7 @@ const Homepage = () => {
                         </div>
                     </div>
                     <div className="flex-[1.5] w-full h-[400px] rounded-[3rem] overflow-hidden shadow-2xl border-8 border-white">
-                        <iframe title="map" src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d126844.06348602283!2d3.33624!3d6.5244" width="100%" height="100%" style={{ border: 0 }} loading="lazy"></iframe>
+                        <iframe title="map" src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d126839.06498522771!2d3.33624!3d6.524379!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x103b8b2ae68280c1%3A0xdc9e87a3da572931!2sLagos!5e0!3m2!1sen!2sng!4v1641123456789!5m2!1sen!2sng" width="100%" height="100%" style={{ border: 0 }} loading="lazy"></iframe>
                     </div>
                 </div>
             </section>

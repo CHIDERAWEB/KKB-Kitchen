@@ -1,12 +1,18 @@
-/* Import Google Fonts: Playfair for Headings, Jakarta for Body, Caveat for Signature */
+/* 1. Import Google Fonts */
 @import url('https://fonts.googleapis.com/css2?family=Caveat:wght@700&family=Playfair+Display:ital,wght@0,900;1,900&family=Plus+Jakarta+Sans:wght@400;700;800&display=swap');
+
+/* 2. Import Tailwind v4 */
 @import "tailwindcss";
 
 @source "../index.html";
 @source "./**/*.{js,ts,jsx,tsx}";
 
 @theme {
+  /* We add these so Tailwind classes like 'font-serif' work automatically */
+  --font-serif: "Playfair Display", serif;
+  --font-sans: "Plus Jakarta Sans", sans-serif;
   --font-signature: "Caveat", cursive;
+  
   --animate-float: float 3s ease-in-out infinite;
 
   @keyframes float {
@@ -20,17 +26,21 @@ body {
   overflow-x: hidden;
   background-color: #ffffff;
   transition: background-color 0.5s ease;
-  font-family: 'Plus Jakarta Sans', sans-serif; /* Applied Jakarta Sans globally */
-  color: #111827;
+  /* Using @apply makes sure Tailwind and your custom CSS stay in sync */
+  @apply font-sans text-[#111827];
 }
 
 h1, h2, h3 {
-  font-family: 'Playfair Display', serif; /* Applied Playfair to all headings */
+  @apply font-serif;
 }
 
-/* Optional: Cookie cursor for a fun kitchen vibe */
-.cursor-toy {
-  cursor: url('https://img.icons8.com/color/24/cookie.png'), auto;
+/* --- Custom Utilities --- */
+@utility no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
 }
 
 /* --- Recipe Card Glassmorphism --- */
@@ -64,11 +74,9 @@ h1, h2, h3 {
 ::-webkit-scrollbar {
   width: 8px;
 }
-
 ::-webkit-scrollbar-track {
   background: #f1f1f1;
 }
-
 ::-webkit-scrollbar-thumb {
   background: #f97316;
   border-radius: 10px;
