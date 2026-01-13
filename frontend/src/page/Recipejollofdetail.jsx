@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Heart, Share2, Clock, ChevronLeft, CheckCircle, Utensils, MessageSquare, Eye, Trash2, Lock, Printer } from 'lucide-react';
+import { Heart, Share2, Clock, ChevronLeft, CheckCircle, Utensils, MessageSquare, Eye, Trash2, Printer } from 'lucide-react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 
 const Recipejollofdetail = ({ showToast }) => {
@@ -17,11 +17,14 @@ const Recipejollofdetail = ({ showToast }) => {
     useEffect(() => {
         const fetchRecipeData = async () => {
             try {
+                setLoading(true);
                 // Fetch Main Recipe
                 const response = await fetch(`https://kkb-kitchen-api.onrender.com/api/recipes/${id}`);
+
                 if (!response.ok) throw new Error("Recipe not found");
                 const data = await response.json();
 
+                // Format ingredients and instructions to handle strings or arrays
                 const formattedData = {
                     ...data,
                     ingredients: Array.isArray(data.ingredients) ? data.ingredients : (data.ingredients?.split(',').filter(i => i.trim() !== "") || []),
@@ -29,23 +32,30 @@ const Recipejollofdetail = ({ showToast }) => {
                 };
 
                 setRecipe(formattedData);
-                setIsLiked(data.likedBy?.some(u => (typeof u === 'object' ? u.id === user?.id : u === user?.id)) || false);
 
-                // Fetch Recommendations (All recipes, then filter out current one)
+                // Handle like status check
+                const userId = user?.id || user?._id;
+                setIsLiked(data.likedBy?.some(u => (typeof u === 'object' ? (u.id === userId || u._id === userId) : u === userId)) || false);
+
+                // Fetch Recommendations
                 const recRes = await fetch(`https://kkb-kitchen-api.onrender.com/api/recipes`);
                 const recData = await recRes.json();
-                setRecommendations(recData.filter(r => r._id !== id).slice(0, 4));
+                // Filter out current recipe using both id and _id checks
+                setRecommendations(recData.filter(r => (r._id || r.id) !== id).slice(0, 4));
 
             } catch (err) {
-                console.error(err);
+                console.error("Fetch Error:", err);
                 setRecipe(null);
             } finally {
                 setLoading(false);
             }
         };
-        fetchRecipeData();
+
+        if (id) {
+            fetchRecipeData();
+        }
         window.scrollTo(0, 0);
-    }, [id, user?.id]);
+    }, [id, user?.id, user?._id]);
 
     const handlePrint = () => window.print();
 
@@ -55,17 +65,18 @@ const Recipejollofdetail = ({ showToast }) => {
     };
 
     const handleLike = async () => {
-        if (!user) return showToast("Please login to like recipes! 🔐");
+        const userId = user?.id || user?._id;
+        if (!userId) return showToast("Please login to like recipes! 🔐");
         try {
             await fetch(`https://kkb-kitchen-api.onrender.com/api/recipes/${id}/like`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                body: JSON.stringify({ userId: user?.id })
+                body: JSON.stringify({ userId: userId })
             });
             setIsLiked(!isLiked);
             setRecipe(prev => ({
                 ...prev,
-                likedBy: !isLiked ? [...(prev.likedBy || []), user.id] : prev.likedBy.filter(u => (typeof u === 'object' ? u.id !== user.id : u !== user.id))
+                likedBy: !isLiked ? [...(prev.likedBy || []), userId] : prev.likedBy.filter(u => (typeof u === 'object' ? (u.id !== userId && u._id !== userId) : u !== userId))
             }));
             showToast(!isLiked ? "Added to favorites! ❤️" : "Removed from favorites");
         } catch (err) { console.error(err); }
@@ -94,18 +105,17 @@ const Recipejollofdetail = ({ showToast }) => {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             if (res.ok) {
-                setRecipe(prev => ({ ...prev, comments: prev.comments.filter(c => c.id !== commentId) }));
+                setRecipe(prev => ({ ...prev, comments: prev.comments.filter(c => (c.id !== commentId && c._id !== commentId)) }));
                 showToast("Deleted! 🗑️");
             }
         } catch (err) { console.error(err); }
     };
 
     if (loading) return <div className="h-screen flex items-center justify-center font-black text-orange-500 italic text-3xl">Loading...</div>;
-    if (!recipe) return <div className="text-center pt-20 h-screen">Recipe not found</div>;
+    if (!recipe) return <div className="text-center pt-20 h-screen font-bold text-2xl">Recipe not found</div>;
 
     return (
         <div className="min-h-screen bg-white pb-20">
-            {/* PRINT STYLES */}
             <style>
                 {`@media print { .no-print { display: none !important; } .print-area { margin: 0; padding: 0; box-shadow: none; border: none; } }`}
             </style>
@@ -152,7 +162,6 @@ const Recipejollofdetail = ({ showToast }) => {
                     </div>
                 </div>
 
-                {/* Chatter Section */}
                 <div className="no-print border-t-4 border-dashed border-gray-100 pt-10">
                     <h3 className="text-3xl font-black mb-8 italic flex items-center gap-3">
                         <MessageSquare size={32} className="text-orange-500" /> Kitchen Chatter
@@ -164,12 +173,12 @@ const Recipejollofdetail = ({ showToast }) => {
                     </div>
                     <div className="space-y-6">
                         {recipe.comments?.map((c) => (
-                            <div key={c.id} className="bg-white p-8 rounded-[2rem] border-2 border-gray-100 relative group shadow-sm">
+                            <div key={c.id || c._id} className="bg-white p-8 rounded-[2rem] border-2 border-gray-100 relative group shadow-sm">
                                 <div className="flex justify-between items-center mb-4">
                                     <span className="font-black text-xl text-gray-900">@{c.userName || 'Chef'}</span>
                                     <div className="flex items-center gap-3">
                                         <span className="text-[10px] bg-gray-100 px-3 py-1 rounded-full text-gray-500 font-black uppercase">{c.createdAt ? new Date(c.createdAt).toLocaleDateString() : 'New'}</span>
-                                        {user?.role === 'admin' && <button onClick={() => handleDeleteComment(c.id)} className="text-gray-300 hover:text-red-500"><Trash2 size={18} /></button>}
+                                        {user?.role === 'admin' && <button onClick={() => handleDeleteComment(c.id || c._id)} className="text-gray-300 hover:text-red-500"><Trash2 size={18} /></button>}
                                     </div>
                                 </div>
                                 <p className="text-gray-600 font-bold italic">"{c.text}"</p>
@@ -178,19 +187,18 @@ const Recipejollofdetail = ({ showToast }) => {
                     </div>
                 </div>
 
-                {/* RECOMMENDED SECTION */}
                 <div className="no-print mt-20">
                     <h3 className="text-3xl font-black mb-8 italic uppercase tracking-tighter">You might also like...</h3>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
                         {recommendations.map((rec) => (
-                            <Link key={rec._id} to={`/recipe/${rec._id}`} className="group">
+                            <Link key={rec._id || rec.id} to={`/recipe/${rec._id || rec.id}`} className="group">
                                 <div className="relative h-40 rounded-3xl overflow-hidden mb-3">
                                     <img src={rec.imageUrl} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt={rec.title} />
                                     <div className="absolute inset-0 bg-black/20 group-hover:bg-black/0 transition-all" />
                                 </div>
                                 <p className="font-black text-sm uppercase tracking-tight group-hover:text-orange-500 transition-colors line-clamp-1">{rec.title}</p>
                             </Link>
-                        ))}vf
+                        ))}
                     </div>
                 </div>
             </div>
