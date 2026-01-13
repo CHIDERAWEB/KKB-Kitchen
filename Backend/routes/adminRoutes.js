@@ -1,7 +1,6 @@
 import express from 'express';
-// 1. Fixed the import for the middleware (must match your file path)
-import { authenticateToken, isAdmin } from '../middleware/authMiddleware.js';
-
+// 1. Fixed the import - Changed authenticateToken to protect
+import { protect, isAdmin } from '../middleware/authMiddleware.js';
 
 import {
     approveRecipe,
@@ -15,25 +14,23 @@ import {
 const router = express.Router();
 
 // --- ALL ADMIN ROUTES ARE NOW PROTECTED ---
-// This means: Valid Token MUST exist AND Role MUST be 'admin'
 
 // 1. Get Dashboard Stats & Pending Recipes
-router.get('/data', authenticateToken, isAdmin, getAdminData);
+router.get('/data', protect, isAdmin, getAdminData);
 
 // 2. Approve a recipe
-router.put('/approve/:id', authenticateToken, isAdmin, approveRecipe);
+router.put('/approve/:id', protect, isAdmin, approveRecipe);
 
 // 3. Delete a recipe
-router.delete('/delete/:id', authenticateToken, isAdmin, deleteRecipe);
+router.delete('/delete/:id', protect, isAdmin, deleteRecipe);
 
 // 4. Update/Fix a recipe
-router.put('/update/:id', authenticateToken, isAdmin, updateRecipeByAdmin);
+router.put('/update/:id', protect, isAdmin, updateRecipeByAdmin);
 
 // 5. User Management
-router.get('/users', authenticateToken, isAdmin, getAllUsers);
+router.get('/users', protect, isAdmin, getAllUsers);
 
 // 6. Change User Roles
-router.put('/users/role/:id', authenticateToken, isAdmin, toggleUserRole);
-
+router.put('/users/role/:id', protect, isAdmin, toggleUserRole);
 
 export default router;
