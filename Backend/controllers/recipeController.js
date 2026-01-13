@@ -167,22 +167,55 @@ export const searchRecipes = async (req, res) => {
     }
 };
 
+// --- UPDATE COMMENT (NEW: For the Save button) ---
+export const updateComment = async (req, res) => {
+    try {
+        const { id } = req.params; // Comment ID
+        const { text } = req.body;
+        const commentId = parseInt(id);
+        const userId = req.user.id;
+        const userRole = req.user.role;
+
+        // 1. Find the comment
+        const comment = await prisma.comment.findUnique({ where: { id: commentId } });
+        if (!comment) return res.status(404).json({ message: "Comment not found" });
+
+        // 2. Security: Only the creator of the comment or an Admin can edit it
+        // We check if the comment.userId matches the logged-in user
+        if (comment.userId !== userId && userRole !== 'admin') {
+            return res.status(403).json({ message: "You can only edit your own comments" });
+        }
+
+        // 3. Update it
+        const updatedComment = await prisma.comment.update({
+            where: { id: commentId },
+            data: { text: text }
+        });
+
+        res.json(updatedComment);
+    } catch (error) {
+        console.error("Update Comment Error:", error);
+        res.status(500).json({ error: "Failed to update comment" });
+    }
+};
+
+// --- ADD COMMENT (UPDATED: Added userId for security) ---
 export const addComment = async (req, res) => {
     try {
-        const { id } = req.params;
+        const { id } = req.params; // Recipe ID
         const { text, userName } = req.body;
         const recipeId = parseInt(id);
+        const userId = req.user.id; // From your auth middleware
 
         const newComment = await prisma.comment.create({
             data: {
                 text,
                 userName: userName || "Anonymous Chef",
                 recipeId: recipeId,
-                // Prisma automatically sets createdAt, but we ensure it's in the response
+                userId: userId // CRITICAL: This links the comment to your account
             }
         });
 
-        // Return the full object so the frontend has the name and date immediately
         res.status(201).json(newComment);
     } catch (error) {
         console.error("Comment Error:", error);
@@ -225,3 +258,4 @@ export const deleteComment = async (req, res) => {
         res.status(500).json({ error: "Failed to delete comment" });
     }
 };
+

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Heart, Share2, Clock, ChevronLeft, CheckCircle, Utensils, MessageSquare, Eye, Trash2, Printer } from 'lucide-react';
+import { Heart, Share2, Clock, ChevronLeft, CheckCircle, Utensils, MessageSquare, Eye, Trash2, Printer, Save, X } from 'lucide-react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 
 const Recipejollofdetail = ({ showToast }) => {
@@ -11,6 +11,10 @@ const Recipejollofdetail = ({ showToast }) => {
     const [isLiked, setIsLiked] = useState(false);
     const [newCommentText, setNewCommentText] = useState("");
 
+    // --- NEW: STATES FOR INLINE EDITING ---
+    const [editingCommentId, setEditingCommentId] = useState(null);
+    const [editText, setEditText] = useState("");
+
     const user = JSON.parse(localStorage.getItem('user'));
     const token = localStorage.getItem('token');
 
@@ -18,26 +22,18 @@ const Recipejollofdetail = ({ showToast }) => {
         const fetchRecipeData = async () => {
             try {
                 setLoading(true);
-
                 const response = await fetch(`https://kkb-kitchen-api.onrender.com/api/recipes/${id}`);
 
-                if (!response.ok) {
-                    const errorMsg = await response.text();
-                    console.error("Server says:", errorMsg);
-                    throw new Error("Recipe not found");
-                }
+                if (!response.ok) throw new Error("Recipe not found");
 
                 const data = await response.json();
 
-                // --- THE CLEANUP LOGIC ---
+                // CLEANUP LOGIC: Fixes the spaces and bunched instructions
                 const formattedData = {
                     ...data,
-                    // 1. Ingredients: Split by comma, trim extra spaces, remove empty lines
                     ingredients: Array.isArray(data.ingredients)
                         ? data.ingredients
                         : (data.ingredients?.split(',').map(i => i.trim()).filter(i => i !== "") || []),
-
-                    // 2. Instructions: Split by numbers (1.), new lines (\n), or periods followed by space/capital
                     instructions: Array.isArray(data.instructions)
                         ? data.instructions
                         : (data.instructions?.split(/\d+\.|\n|\.(?=\s|[A-Z])/)
@@ -47,7 +43,6 @@ const Recipejollofdetail = ({ showToast }) => {
 
                 setRecipe(formattedData);
 
-                // 3. Like status check
                 const userId = user?.id || user?._id;
                 if (data.likedBy && userId) {
                     setIsLiked(data.likedBy.some(u => {
@@ -56,7 +51,6 @@ const Recipejollofdetail = ({ showToast }) => {
                     }));
                 }
 
-                // 4. Recommendations
                 const recRes = await fetch(`https://kkb-kitchen-api.onrender.com/api/recipes/all`);
                 if (recRes.ok) {
                     const recData = await recRes.json();
@@ -72,11 +66,9 @@ const Recipejollofdetail = ({ showToast }) => {
             }
         };
 
-        if (id) {
-            fetchRecipeData();
-        }
+        if (id) fetchRecipeData();
         window.scrollTo(0, 0);
-    }, [id, user?.id, user?._id]);
+    }, [id]);
 
     const handlePrint = () => window.print();
 
@@ -104,17 +96,42 @@ const Recipejollofdetail = ({ showToast }) => {
     };
 
     const handlePostComment = async () => {
-        if (!newCommentText.trim() || !user) return;
+        if (!newCommentText.trim() || !user) return showToast("Please login to comment! 🔐");
         try {
             const response = await fetch(`https://kkb-kitchen-api.onrender.com/api/recipes/${id}/comments`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                body: JSON.stringify({ text: newCommentText, userName: user?.name || "Guest Chef" })
+                body: JSON.stringify({
+                    text: newCommentText,
+                    userName: user?.name || user?.username || "Guest Chef"
+                })
             });
             const savedComment = await response.json();
             setRecipe(prev => ({ ...prev, comments: [savedComment, ...(prev.comments || [])] }));
             setNewCommentText("");
             showToast("Comment posted! 🥂");
+        } catch (err) { console.error(err); }
+    };
+
+    // --- NEW: UPDATE COMMENT HANDLER ---
+    const handleUpdateComment = async (commentId) => {
+        if (!editText.trim()) return;
+        try {
+            const res = await fetch(`https://kkb-kitchen-api.onrender.com/api/recipes/comments/${commentId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify({ text: editText })
+            });
+            if (res.ok) {
+                setRecipe(prev => ({
+                    ...prev,
+                    comments: prev.comments.map(c =>
+                        (c.id === commentId || c._id === commentId) ? { ...c, text: editText } : c
+                    )
+                }));
+                setEditingCommentId(null);
+                showToast("Comment updated! ✨");
+            }
         } catch (err) { console.error(err); }
     };
 
@@ -166,7 +183,7 @@ const Recipejollofdetail = ({ showToast }) => {
                         <h3 className="text-2xl font-black mb-6 italic text-orange-600 uppercase tracking-widest flex items-center gap-2"><Utensils /> Ingredients</h3>
                         <ul className="space-y-3">
                             {recipe.ingredients.map((item, i) => (
-                                <li key={i} className="flex items-center gap-3 font-bold text-gray-700 bg-gray-50 p-4 rounded-2xl hover:bg-orange-50 transition-colors">
+                                <li key={i} className="flex items-center gap-3 font-bold text-gray-700 bg-gray-50 p-4 rounded-2xl">
                                     <CheckCircle size={20} className="text-orange-500 shrink-0" />
                                     <span>{item}</span>
                                 </li>
@@ -186,28 +203,71 @@ const Recipejollofdetail = ({ showToast }) => {
                     </div>
                 </div>
 
+                {/* --- COMMENTS SECTION --- */}
                 <div className="no-print border-t-4 border-dashed border-gray-100 pt-10">
                     <h3 className="text-3xl font-black mb-8 italic flex items-center gap-3">
                         <MessageSquare size={32} className="text-orange-500" /> Kitchen Chatter
                         <span className="text-sm bg-orange-100 text-orange-600 px-3 py-1 rounded-full">{recipe.comments?.length || 0}</span>
                     </h3>
+
                     <div className="flex flex-col md:flex-row gap-4 mb-12">
                         <input type="text" value={newCommentText} onChange={(e) => setNewCommentText(e.target.value)} placeholder="Secret tips?" className="flex-1 bg-gray-50 rounded-2xl p-5 outline-none font-bold border-2 border-transparent focus:border-orange-500 transition-all" />
                         <button onClick={handlePostComment} className="bg-orange-500 text-white px-10 py-4 rounded-2xl font-black uppercase hover:bg-orange-600 transition-all">Post</button>
                     </div>
+
                     <div className="space-y-6">
-                        {recipe.comments?.map((c) => (
-                            <div key={c.id || c._id} className="bg-white p-8 rounded-[2rem] border-2 border-gray-100 relative group shadow-sm hover:border-orange-100 transition-all">
-                                <div className="flex justify-between items-center mb-4">
-                                    <span className="font-black text-xl text-gray-900">@{c.userName || 'Chef'}</span>
-                                    <div className="flex items-center gap-3">
-                                        <span className="text-[10px] bg-gray-100 px-3 py-1 rounded-full text-gray-500 font-black uppercase">{c.createdAt ? new Date(c.createdAt).toLocaleDateString() : 'New'}</span>
-                                        {user?.role === 'admin' && <button onClick={() => handleDeleteComment(c.id || c._id)} className="text-gray-300 hover:text-red-500 transition-colors"><Trash2 size={18} /></button>}
+                        {recipe.comments?.map((c) => {
+                            const cId = c.id || c._id;
+                            const isEditing = editingCommentId === cId;
+                            const isOwner = user && (c.userId === user.id || c.userName === user.name);
+                            const isAdmin = user?.role === 'admin';
+
+                            return (
+                                <div key={cId} className="bg-white p-8 rounded-[2rem] border-2 border-gray-100 relative group shadow-sm hover:border-orange-100 transition-all">
+                                    <div className="flex justify-between items-center mb-4">
+                                        <span className="font-black text-xl text-gray-900">@{c.userName || 'Chef'}</span>
+                                        <div className="flex items-center gap-3">
+                                            <span className="text-[10px] bg-gray-100 px-3 py-1 rounded-full text-gray-500 font-black uppercase">
+                                                {c.createdAt ? new Date(c.createdAt).toLocaleDateString() : 'Just now'}
+                                            </span>
+
+                                            {(isOwner || isAdmin) && !isEditing && (
+                                                <div className="flex gap-2">
+                                                    <button
+                                                        onClick={() => { setEditingCommentId(cId); setEditText(c.text); }}
+                                                        className="text-gray-400 hover:text-orange-500 transition-colors"
+                                                    >
+                                                        <Utensils size={18} />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleDeleteComment(cId)}
+                                                        className="text-gray-400 hover:text-red-500 transition-colors"
+                                                    >
+                                                        <Trash2 size={18} />
+                                                    </button>
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
+
+                                    {isEditing ? (
+                                        <div className="space-y-3">
+                                            <textarea
+                                                className="w-full p-4 bg-gray-50 border-2 border-orange-200 rounded-xl outline-none font-bold"
+                                                value={editText}
+                                                onChange={(e) => setEditText(e.target.value)}
+                                            />
+                                            <div className="flex gap-2">
+                                                <button onClick={() => handleUpdateComment(cId)} className="bg-orange-500 text-white px-4 py-2 rounded-lg text-xs font-black uppercase flex items-center gap-1"><Save size={12} /> Save</button>
+                                                <button onClick={() => setEditingCommentId(null)} className="bg-gray-200 text-gray-600 px-4 py-2 rounded-lg text-xs font-black uppercase flex items-center gap-1"><X size={12} /> Cancel</button>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <p className="text-gray-600 font-bold italic">"{c.text}"</p>
+                                    )}
                                 </div>
-                                <p className="text-gray-600 font-bold italic">"{c.text}"</p>
-                            </div>
-                        ))}
+                            );
+                        })}
                     </div>
                 </div>
 

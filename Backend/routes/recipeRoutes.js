@@ -10,7 +10,8 @@ import {
     addComment,
     getPendingCount,
     deleteComment,
-    updateRecipe // Added this in case you need to edit
+    updateRecipe, // Added this in case you need to edit
+    updateComment
 } from '../controllers/recipeController.js';
 
 import { authenticateToken } from '../middleware/authMiddleware.js';
@@ -25,6 +26,8 @@ router.get('/all', getAllRecipes);
 router.get('/popular', getPopularRecipes);
 router.get('/search', searchRecipes);
 router.get('/pending-count', getPendingCount);
+// Add this near your other comment routes
+router.put('/comments/:id', protect, updateComment);
 
 // Single recipe must be AFTER specific words like 'all' or 'search'
 router.get('/:id', getRecipeById);
