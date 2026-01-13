@@ -11,7 +11,7 @@ const Recipejollofdetail = ({ showToast }) => {
     const [isLiked, setIsLiked] = useState(false);
     const [newCommentText, setNewCommentText] = useState("");
 
-    // --- NEW: STATES FOR INLINE EDITING ---
+    // --- STATES FOR INLINE EDITING ---
     const [editingCommentId, setEditingCommentId] = useState(null);
     const [editText, setEditText] = useState("");
 
@@ -19,10 +19,20 @@ const Recipejollofdetail = ({ showToast }) => {
     const token = localStorage.getItem('token');
 
     useEffect(() => {
+        // 🚨 GATEKEEPER LOGIC: If no token, redirect to login immediately
+        if (!token) {
+            if (showToast) showToast("Please login or register to view full recipes! 🔐");
+            navigate('/login');
+            return;
+        }
+
         const fetchRecipeData = async () => {
             try {
                 setLoading(true);
-                const response = await fetch(`https://kkb-kitchen-api.onrender.com/api/recipes/${id}`);
+                // Added Authorization header to the fetch request
+                const response = await fetch(`https://kkb-kitchen-api.onrender.com/api/recipes/${id}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
 
                 if (!response.ok) throw new Error("Recipe not found");
 
@@ -51,7 +61,9 @@ const Recipejollofdetail = ({ showToast }) => {
                     }));
                 }
 
-                const recRes = await fetch(`https://kkb-kitchen-api.onrender.com/api/recipes/all`);
+                const recRes = await fetch(`https://kkb-kitchen-api.onrender.com/api/recipes/all`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
                 if (recRes.ok) {
                     const recData = await recRes.json();
                     const filtered = recData.filter(r => (r.id || r._id).toString() !== id.toString());
@@ -68,7 +80,7 @@ const Recipejollofdetail = ({ showToast }) => {
 
         if (id) fetchRecipeData();
         window.scrollTo(0, 0);
-    }, [id]);
+    }, [id, navigate, token]); // Added dependencies for the protection logic
 
     const handlePrint = () => window.print();
 
@@ -113,7 +125,6 @@ const Recipejollofdetail = ({ showToast }) => {
         } catch (err) { console.error(err); }
     };
 
-    // --- NEW: UPDATE COMMENT HANDLER ---
     const handleUpdateComment = async (commentId) => {
         if (!editText.trim()) return;
         try {

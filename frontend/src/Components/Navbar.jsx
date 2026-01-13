@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiChevronDown, FiMenu, FiX, FiHeart, FiCalendar, FiShoppingCart, FiInfo, FiLogOut, FiUser, FiShield } from 'react-icons/fi';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 
 const Navbar = () => {
   const [discoverOpen, setDiscoverOpen] = useState(false);
@@ -10,12 +10,24 @@ const Navbar = () => {
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [pendingCount, setPendingCount] = useState(0);
 
+  // ✅ VITAL: State to track user so Navbar updates instantly
+  const [user, setUser] = useState(null);
+
   const discoverRef = useRef(null);
   const kitchenRef = useRef(null);
   const userRef = useRef(null);
   const navigate = useNavigate();
+  const location = useLocation();
 
-  const user = JSON.parse(localStorage.getItem('user'));
+  // ✅ Check for user whenever the route changes (after login/register)
+  useEffect(() => {
+    const savedUser = localStorage.getItem('user');
+    if (savedUser) {
+      setUser(JSON.parse(savedUser));
+    } else {
+      setUser(null);
+    }
+  }, [location]);
 
   useEffect(() => {
     const fetchPendingCount = async () => {
@@ -65,8 +77,8 @@ const Navbar = () => {
   const handleLogout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
+    setUser(null); // Clear state
     navigate('/login');
-    window.location.reload();
   };
 
   return (
@@ -118,7 +130,6 @@ const Navbar = () => {
 
         {user ? (
           <div className="flex items-center gap-3">
-            {/* NEW: THE PULSING NOTIFICATION MARK */}
             {user?.role === 'admin' && pendingCount > 0 && (
               <div className="flex items-center bg-red-50 px-2 py-1 rounded-full border border-red-100 animate-pulse">
                 <span className="relative flex h-2 w-2">
@@ -134,7 +145,6 @@ const Navbar = () => {
                 onClick={() => setUserMenuOpen(!userMenuOpen)}
                 className="relative flex items-center gap-3 p-1 pr-4 bg-white rounded-full hover:bg-orange-50 transition-all border border-gray-100 hover:border-orange-200 shadow-sm"
               >
-                {/* SMALL COUNT BUBBLE ON TOP OF IMAGE */}
                 {user?.role === 'admin' && pendingCount > 0 && (
                   <span className="absolute -top-1 -left-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-600 text-[10px] font-bold text-white border-2 border-white shadow-md">
                     {pendingCount}
@@ -146,7 +156,7 @@ const Navbar = () => {
                   alt="Profile"
                   className="w-8 h-8 rounded-full object-cover border border-white shadow-sm"
                 />
-                <span className="text-sm font-bold text-gray-700">CHEF {user.name.split(' ')[0]}</span>
+                <span className="text-sm font-bold text-gray-700">CHEF {user.name?.split(' ')[0]}</span>
                 <FiChevronDown className={`text-gray-400 text-xs transition-transform ${userMenuOpen ? 'rotate-180' : ''}`} />
               </button>
 
@@ -220,7 +230,7 @@ const Navbar = () => {
                     alt="Profile"
                   />
                   <div>
-                    <p className="font-black text-gray-900 leading-tight">Chef {user.name.split(' ')[0]}</p>
+                    <p className="font-black text-gray-900 leading-tight">Chef {user.name?.split(' ')[0]}</p>
                     <button onClick={handleLogout} className="text-red-500 font-bold text-xs uppercase tracking-wider mt-1">Logout</button>
                   </div>
                 </div>

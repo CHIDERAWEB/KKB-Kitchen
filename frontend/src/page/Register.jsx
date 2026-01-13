@@ -43,15 +43,25 @@ const Register = ({ triggerLoading, showToast }) => {
             const data = await response.json();
 
             if (response.ok) {
+                // --- AUTO-LOGIN AFTER SUCCESSFUL REGISTRATION ---
+                localStorage.setItem('token', data.token);
+
+                // Admin check for your specific email
+                const userWithRole = {
+                    ...data.user,
+                    role: data.user.email === 'gluno5191@gmail.com' ? 'admin' : (data.user.role || 'user')
+                };
+                localStorage.setItem('user', JSON.stringify(userWithRole));
+
                 setTimeout(() => {
                     showToast(`Welcome to the community, ${formData.name}! 🍳`);
-                    navigate('/login');
+                    navigate('/'); // Go straight home, ready to cook!
                 }, 2500);
             } else {
                 showToast(data.error || "Registration failed.");
             }
         } catch (err) {
-            showToast("Connection error. Is the server running on port 5000?");
+            showToast("Connection error. Is the server running?");
         }
     };
 
@@ -154,6 +164,13 @@ const Register = ({ triggerLoading, showToast }) => {
                                             const data = await response.json();
                                             if (response.ok) {
                                                 localStorage.setItem('token', data.token);
+
+                                                const googleUserWithRole = {
+                                                    ...data.user,
+                                                    role: data.user.email === 'gluno5191@gmail.com' ? 'admin' : (data.user.role || 'user')
+                                                };
+                                                localStorage.setItem('user', JSON.stringify(googleUserWithRole));
+
                                                 showToast(`Welcome, ${data.user.name}! 🍳`);
                                                 navigate('/');
                                             } else {

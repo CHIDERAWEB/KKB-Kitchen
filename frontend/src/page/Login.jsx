@@ -22,9 +22,10 @@ const Login = ({ triggerLoading, showToast }) => {
         body: JSON.stringify(formData)
       });
 
-      const data = await response.json(); // ✅ Moved this UP
+      const data = await response.json();
 
       if (response.ok) {
+        // --- SAVE CREDENTIALS FOR THE GATEKEEPER ---
         localStorage.setItem('token', data.token);
 
         // --- ADMIN PROTECTION LOGIC ---

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
 import { CheckCircle } from 'lucide-react';
 
@@ -36,10 +36,22 @@ function App() {
   const [toast, setToast] = useState({ show: false, message: "" });
   const [isLoading, setIsLoading] = useState(true);
 
+  // Initialize user from localStorage
   const [user, setUser] = useState(() => {
     const savedUser = localStorage.getItem('user');
     return savedUser ? JSON.parse(savedUser) : null;
   });
+
+  // Keep state in sync with localStorage automatically
+  useEffect(() => {
+    const handleStorageChange = () => {
+      const savedUser = localStorage.getItem('user');
+      setUser(savedUser ? JSON.parse(savedUser) : null);
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -60,11 +72,12 @@ function App() {
 
   const handleAuthSuccess = (userData) => {
     setUser(userData);
+    localStorage.setItem('user', JSON.stringify(userData));
   };
 
   return (
     <Router>
-      <ScrollToTop /> {/* Ensures every page starts at the top */}
+      <ScrollToTop />
       <AnimatePresence mode="wait">
         {isLoading && <Loader key="loader" />}
       </AnimatePresence>
@@ -78,38 +91,50 @@ function App() {
           </div>
         </div>
 
+        {/* Passing user to Header ensures the Logout/Profile UI works */}
         <Header user={user} />
 
         <main className="flex-grow">
           <Routes>
-            {/* HOME ROUTES - Fixed by putting components directly in element */}
+            {/* HOME ROUTES */}
             <Route path="/" element={
               <>
                 <Banner />
-                <div className="pb-20"> {/* Adds spacing before footer */}
-                  <RecipeGrid />
+                <div className="pb-20">
+                  <RecipeGrid user={user} />
                 </div>
               </>
             } />
 
-            <Route path="/homepage" element={
-              <>
-                <Banner />
-                <RecipeGrid />
-              </>
-            } />
+            <Route path="/homepage" element={<Navigate to="/" replace />} />
 
             {/* AUTH ROUTES */}
-            <Route path="/register" element={<Register triggerLoading={triggerLoading} showToast={showToast} onAuthSuccess={handleAuthSuccess} />} />
-            <Route path="/login" element={<Login triggerLoading={triggerLoading} showToast={showToast} onAuthSuccess={handleAuthSuccess} />} />
+            <Route path="/register" element={
+              <Register
+                triggerLoading={triggerLoading}
+                showToast={showToast}
+                onAuthSuccess={handleAuthSuccess}
+              />
+            } />
+
+            <Route path="/login" element={
+              <Login
+                triggerLoading={triggerLoading}
+                showToast={showToast}
+                onAuthSuccess={handleAuthSuccess}
+              />
+            } />
 
             {/* RECIPE DETAIL */}
-            <Route path="/recipe/:id" element={<Recipejollofdetail showToast={showToast} />} />
+            <Route path="/recipe/:id" element={<Recipejollofdetail showToast={showToast} user={user} />} />
 
             {/* ADMIN & TOOLS */}
-            <Route path="/admin" element={<AdminDashboard />} />
-            <Route path="/create" element={<CreateRecipe showToast={showToast} />} />
-            <Route path="/edit-recipe/:id" element={<UploadRecipe isEditing={true} />} />
+            <Route path="/admin" element={
+              user?.role === 'admin' ? <AdminDashboard /> : <Navigate to="/" />
+            } />
+
+            <Route path="/create" element={<CreateRecipe showToast={showToast} user={user} />} />
+            <Route path="/edit-recipe/:id" element={<UploadRecipe isEditing={true} user={user} />} />
 
             <Route path="/upload-recipe" element={
               <ProtectedRoutes>
@@ -117,10 +142,13 @@ function App() {
               </ProtectedRoutes>
             } />
 
-            <Route path="/planner" element={<MealPlanner />} />
-            <Route path="/shopping-list" element={<ShoppingList />} />
+            <Route path="/planner" element={<MealPlanner user={user} />} />
+            <Route path="/shopping-list" element={<ShoppingList user={user} />} />
             <Route path="/about" element={<About />} />
-            <Route path="/favorites" element={<Favorites />} />
+            <Route path="/favorites" element={<Favorites user={user} />} />
+
+            {/* Catch-all redirect */}
+            <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </main>
 
