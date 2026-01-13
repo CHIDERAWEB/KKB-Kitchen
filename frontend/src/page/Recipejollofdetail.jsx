@@ -19,7 +19,6 @@ const Recipejollofdetail = ({ showToast }) => {
             try {
                 setLoading(true);
 
-                // 1. Fetch Main Recipe
                 const response = await fetch(`https://kkb-kitchen-api.onrender.com/api/recipes/${id}`);
 
                 if (!response.ok) {
@@ -28,33 +27,39 @@ const Recipejollofdetail = ({ showToast }) => {
                     throw new Error("Recipe not found");
                 }
 
-                // --- THE FIX: Define 'data' here before using it! ---
                 const data = await response.json();
 
-                // 2. Format ingredients and instructions
+                // --- THE CLEANUP LOGIC ---
                 const formattedData = {
                     ...data,
-                    ingredients: Array.isArray(data.ingredients) ? data.ingredients : (data.ingredients?.split(',').filter(i => i.trim() !== "") || []),
-                    instructions: Array.isArray(data.instructions) ? data.instructions : (data.instructions?.split('.').filter(i => i.trim() !== "") || [])
+                    // 1. Ingredients: Split by comma, trim extra spaces, remove empty lines
+                    ingredients: Array.isArray(data.ingredients)
+                        ? data.ingredients
+                        : (data.ingredients?.split(',').map(i => i.trim()).filter(i => i !== "") || []),
+
+                    // 2. Instructions: Split by numbers (1.), new lines (\n), or periods followed by space/capital
+                    instructions: Array.isArray(data.instructions)
+                        ? data.instructions
+                        : (data.instructions?.split(/\d+\.|\n|\.(?=\s|[A-Z])/)
+                            .map(i => i.trim())
+                            .filter(i => i.length > 2) || [])
                 };
 
                 setRecipe(formattedData);
 
-                // 3. Handle like status check
+                // 3. Like status check
                 const userId = user?.id || user?._id;
                 if (data.likedBy && userId) {
-                    // Ensure we compare numbers to numbers or strings to strings
                     setIsLiked(data.likedBy.some(u => {
                         const likedUserId = typeof u === 'object' ? (u.id || u._id) : u;
-                        return likedUserId.toString() === userId.toString();
+                        return likedUserId?.toString() === userId.toString();
                     }));
                 }
 
-                // 4. Fetch Recommendations (Use /all to avoid 404)
+                // 4. Recommendations
                 const recRes = await fetch(`https://kkb-kitchen-api.onrender.com/api/recipes/all`);
                 if (recRes.ok) {
                     const recData = await recRes.json();
-                    // Filter current recipe: ensure we compare IDs correctly
                     const filtered = recData.filter(r => (r.id || r._id).toString() !== id.toString());
                     setRecommendations(filtered.slice(0, 4));
                 }
@@ -72,6 +77,7 @@ const Recipejollofdetail = ({ showToast }) => {
         }
         window.scrollTo(0, 0);
     }, [id, user?.id, user?._id]);
+
     const handlePrint = () => window.print();
 
     const handleShare = () => {
@@ -126,7 +132,7 @@ const Recipejollofdetail = ({ showToast }) => {
         } catch (err) { console.error(err); }
     };
 
-    if (loading) return <div className="h-screen flex items-center justify-center font-black text-orange-500 italic text-3xl">Loading...</div>;
+    if (loading) return <div className="h-screen flex items-center justify-center font-black text-orange-500 italic text-3xl animate-pulse">Gathering Ingredients...</div>;
     if (!recipe) return <div className="text-center pt-20 h-screen font-bold text-2xl">Recipe not found</div>;
 
     return (
@@ -136,8 +142,8 @@ const Recipejollofdetail = ({ showToast }) => {
             </style>
 
             <div className="relative h-96 w-full no-print">
-                <img src={recipe.imageUrl} className="w-full h-full object-cover" alt={recipe.title} />
-                <Link to="/" className="absolute top-6 left-6 bg-white/80 p-2 rounded-full shadow-lg"><ChevronLeft /></Link>
+                <img src={recipe.imageUrl || recipe.image} className="w-full h-full object-cover" alt={recipe.title} />
+                <button onClick={() => navigate(-1)} className="absolute top-6 left-6 bg-white/80 p-2 rounded-full shadow-lg hover:bg-white transition-colors"><ChevronLeft /></button>
             </div>
 
             <div className="max-w-4xl mx-auto -mt-24 relative bg-white rounded-t-[3rem] p-8 md:p-12 shadow-2xl print-area">
@@ -153,14 +159,17 @@ const Recipejollofdetail = ({ showToast }) => {
                     </div>
                 </div>
 
-                <h1 className="text-5xl md:text-7xl font-black mb-10 italic uppercase leading-none">{recipe.title}</h1>
+                <h1 className="text-5xl md:text-7xl font-black mb-10 italic uppercase leading-none tracking-tighter text-gray-900">{recipe.title}</h1>
 
                 <div className="grid md:grid-cols-2 gap-12 mb-20">
                     <div>
                         <h3 className="text-2xl font-black mb-6 italic text-orange-600 uppercase tracking-widest flex items-center gap-2"><Utensils /> Ingredients</h3>
                         <ul className="space-y-3">
                             {recipe.ingredients.map((item, i) => (
-                                <li key={i} className="flex items-center gap-3 font-bold text-gray-700 bg-gray-50 p-4 rounded-2xl"><CheckCircle size={20} className="text-orange-500" /> {item}</li>
+                                <li key={i} className="flex items-center gap-3 font-bold text-gray-700 bg-gray-50 p-4 rounded-2xl hover:bg-orange-50 transition-colors">
+                                    <CheckCircle size={20} className="text-orange-500 shrink-0" />
+                                    <span>{item}</span>
+                                </li>
                             ))}
                         </ul>
                     </div>
@@ -169,8 +178,8 @@ const Recipejollofdetail = ({ showToast }) => {
                         <div className="space-y-8">
                             {recipe.instructions.map((step, i) => (
                                 <div key={i} className="flex gap-5 group">
-                                    <span className="text-4xl font-black text-orange-100 group-hover:text-orange-400 leading-none">{i + 1}</span>
-                                    <p className="text-gray-600 font-bold leading-relaxed">{step.trim()}</p>
+                                    <span className="text-4xl font-black text-orange-100 group-hover:text-orange-400 leading-none transition-colors">{i + 1}</span>
+                                    <p className="text-gray-600 font-bold leading-relaxed">{step}</p>
                                 </div>
                             ))}
                         </div>
@@ -183,17 +192,17 @@ const Recipejollofdetail = ({ showToast }) => {
                         <span className="text-sm bg-orange-100 text-orange-600 px-3 py-1 rounded-full">{recipe.comments?.length || 0}</span>
                     </h3>
                     <div className="flex flex-col md:flex-row gap-4 mb-12">
-                        <input type="text" value={newCommentText} onChange={(e) => setNewCommentText(e.target.value)} placeholder="Secret tips?" className="flex-1 bg-gray-50 rounded-2xl p-5 outline-none font-bold" />
-                        <button onClick={handlePostComment} className="bg-orange-500 text-white px-10 py-4 rounded-2xl font-black uppercase">Post</button>
+                        <input type="text" value={newCommentText} onChange={(e) => setNewCommentText(e.target.value)} placeholder="Secret tips?" className="flex-1 bg-gray-50 rounded-2xl p-5 outline-none font-bold border-2 border-transparent focus:border-orange-500 transition-all" />
+                        <button onClick={handlePostComment} className="bg-orange-500 text-white px-10 py-4 rounded-2xl font-black uppercase hover:bg-orange-600 transition-all">Post</button>
                     </div>
                     <div className="space-y-6">
                         {recipe.comments?.map((c) => (
-                            <div key={c.id || c._id} className="bg-white p-8 rounded-[2rem] border-2 border-gray-100 relative group shadow-sm">
+                            <div key={c.id || c._id} className="bg-white p-8 rounded-[2rem] border-2 border-gray-100 relative group shadow-sm hover:border-orange-100 transition-all">
                                 <div className="flex justify-between items-center mb-4">
                                     <span className="font-black text-xl text-gray-900">@{c.userName || 'Chef'}</span>
                                     <div className="flex items-center gap-3">
                                         <span className="text-[10px] bg-gray-100 px-3 py-1 rounded-full text-gray-500 font-black uppercase">{c.createdAt ? new Date(c.createdAt).toLocaleDateString() : 'New'}</span>
-                                        {user?.role === 'admin' && <button onClick={() => handleDeleteComment(c.id || c._id)} className="text-gray-300 hover:text-red-500"><Trash2 size={18} /></button>}
+                                        {user?.role === 'admin' && <button onClick={() => handleDeleteComment(c.id || c._id)} className="text-gray-300 hover:text-red-500 transition-colors"><Trash2 size={18} /></button>}
                                     </div>
                                 </div>
                                 <p className="text-gray-600 font-bold italic">"{c.text}"</p>
@@ -207,8 +216,8 @@ const Recipejollofdetail = ({ showToast }) => {
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
                         {recommendations.map((rec) => (
                             <Link key={rec._id || rec.id} to={`/recipe/${rec._id || rec.id}`} className="group">
-                                <div className="relative h-40 rounded-3xl overflow-hidden mb-3">
-                                    <img src={rec.imageUrl} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt={rec.title} />
+                                <div className="relative h-40 rounded-3xl overflow-hidden mb-3 shadow-md">
+                                    <img src={rec.imageUrl || rec.image} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt={rec.title} />
                                     <div className="absolute inset-0 bg-black/20 group-hover:bg-black/0 transition-all" />
                                 </div>
                                 <p className="font-black text-sm uppercase tracking-tight group-hover:text-orange-500 transition-colors line-clamp-1">{rec.title}</p>
