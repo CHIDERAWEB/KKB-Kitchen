@@ -1,6 +1,8 @@
 import dotenv from 'dotenv';
 import express from 'express';
 import cors from 'cors';
+import { createServer } from 'http'; // 1. Import HTTP
+import { Server } from 'socket.io';  // 2. Import Socket.io
 
 // Import your configurations
 import './config/Cloudinary.js';
@@ -16,7 +18,24 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// 1. Middleware - THE FIX IS HERE
+// 3. Create the HTTP Server
+const httpServer = createServer(app);
+
+// 4. Initialize Socket.io with CORS
+const io = new Server(httpServer, {
+  cors: {
+    origin: [
+      'https://kkb-kitchen-frontend.onrender.com',
+      'http://localhost:3000'
+    ],
+    methods: ['GET', 'POST']
+  }
+});
+
+// 5. Make 'io' accessible in your controllers via req.app.get('socketio')
+app.set('socketio', io);
+
+// Middleware
 app.use(cors({
   origin: [
     'https://kkb-kitchen-frontend.onrender.com',
@@ -29,12 +48,12 @@ app.use(cors({
 
 app.use(express.json());
 
-// 2. Routes
+// Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/recipes', recipeRoutes);
 app.use('/api/admin', adminRoutes);
 
-// 3. Health Check Route
+// Health Check
 app.get('/', (req, res) => {
   res.status(200).json({
     message: "Chef, the kitchen is open! 👨‍🍳",
@@ -43,16 +62,19 @@ app.get('/', (req, res) => {
   });
 });
 
-// 4. Start Database then start Listening
+// Socket connection log (optional, for debugging)
+io.on("connection", (socket) => {
+  console.log(`Chef connected: ${socket.id}`);
+});
+
+// 6. Start Database then start Listening using httpServer
 const startServer = async () => {
   try {
     await connectDB();
-    const server = app.listen(PORT, () => {
-      console.log(`🚀 Server is officially live at http://localhost:${PORT}`);
-    });
 
-    server.on('error', (err) => {
-      console.error("Server Error:", err);
+    // NOTE: We use httpServer.listen, NOT app.listen
+    httpServer.listen(PORT, () => {
+      console.log(`🚀 Server + WebSockets live at http://localhost:${PORT}`);
     });
 
   } catch (error) {

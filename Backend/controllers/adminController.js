@@ -40,11 +40,30 @@ export const getAdminData = async (req, res) => {
 export const approveRecipe = async (req, res) => {
     try {
         const { id } = req.params;
+
+        // 1. Update the recipe status in Prisma
         const updatedRecipe = await prisma.recipe.update({
             where: { id: parseInt(id) },
             data: { status: 'approved' }
         });
-        res.status(200).json({ message: "Recipe approved! ✅", recipe: updatedRecipe });
+
+        // 2. TRIGGER SOCKET NOTIFICATION
+        // We get the 'socketio' instance that you (should) have attached to the 'app' object in server.js
+        const io = req.app.get('socketio');
+
+        if (io) {
+            io.emit('recipeApproved', {
+                id: updatedRecipe.id,
+                title: updatedRecipe.title,
+                message: "New masterpiece approved!"
+            });
+        }
+
+        res.status(200).json({
+            message: "Recipe approved! ✅",
+            recipe: updatedRecipe
+        });
+
     } catch (error) {
         console.error("Approve Error:", error);
         res.status(500).json({ error: "Failed to approve recipe" });
@@ -120,3 +139,4 @@ export const toggleUserRole = async (req, res) => {
         res.status(500).json({ error: "Failed to update role" });
     }
 };
+

@@ -22,6 +22,7 @@ import About from './page/About';
 import MealPlanner from './page/MealPlanner';
 import AdminDashboard from './page/AdminDashboard';
 import UploadRecipe from './page/UploadRecipe';
+import Homepage from './page/Homepage';
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -115,6 +116,8 @@ function App() {
                 <Banner />
                 <div className="max-w-[1400px] mx-auto px-4 md:px-10 pb-20">
                   <RecipeGrid user={user} />
+                  <Homepage />
+                  <Route path="/homepage" element={<Navigate to="/" replace />} />
                 </div>
               </div>
             } />
