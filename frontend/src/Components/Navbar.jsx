@@ -131,7 +131,7 @@ const Navbar = () => {
                 <button onClick={() => handleLinkClick('/favorites')} className="flex items-center gap-3 w-full text-left px-4 py-3 text-sm font-bold text-gray-600 hover:bg-orange-50 rounded-xl transition-all"><FiHeart className="text-red-500" /> Favorites</button>
                 <button onClick={() => handleLinkClick('/planner')} className="flex items-center gap-3 w-full text-left px-4 py-3 text-sm font-bold text-gray-600 hover:bg-orange-50 rounded-xl transition-all"><FiCalendar className="text-blue-500" /> Meal Planner</button>
                 <button onClick={() => handleLinkClick('/shopping-list')} className="flex items-center gap-3 w-full text-left px-4 py-3 text-sm font-bold text-gray-600 hover:bg-orange-50 rounded-xl transition-all"><FiShoppingCart className="text-green-500" /> Shopping List</button>
-                <Link to="/create" className="text-gray-600 font-bold hover:text-orange-600 transition-colors text-sm uppercase tracking-wider">Create</Link>
+                <Link to="/create" className="text-gray-600 font-bold hover:text-orange-600 transition-colors uppercase tracking-wider flex items-center gap-3 w-full px-4 py-3 text-sm font-bold text-gray-600 hover:bg-orange-50 rounded-xl transition-all ">Create</Link>
               </motion.div>
             )}
           </AnimatePresence>
