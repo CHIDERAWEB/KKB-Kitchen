@@ -181,7 +181,7 @@ function Header() {
                     )} */}
 
 
-                    {/* <div className="flex items-center gap-2 bg-orange-50 border border-orange-100 px-3 py-1.5 rounded-full shadow-sm">
+                    <div className="flex items-center gap-2 bg-orange-50 border border-orange-100 px-3 py-1.5 rounded-full shadow-sm">
                       <div className="h-7 w-7 rounded-full overflow-hidden border border-orange-200 bg-white">
                         {user?.picture ? (
                           <img src={user.picture} alt="Avatar" className="h-full w-full object-cover" />
@@ -192,7 +192,7 @@ function Header() {
                         )}
                       </div>
                       <span className="text-[11px] font-black uppercase text-gray-700 italic pr-1">Chef {user?.name?.split(' ')[0]}</span>
-                    </div> */}
+                    </div>
 
                     {/* <Link to="/upload-recipe" className="hidden md:flex items-center gap-2 bg-green-600 text-white px-5 py-2.5 rounded-full font-bold text-[10px] uppercase hover:bg-green-700 transition-all shadow-lg shadow-green-100">
                       <FiPlusCircle /> Upload
