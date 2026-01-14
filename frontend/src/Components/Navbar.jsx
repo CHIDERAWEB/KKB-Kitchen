@@ -1,6 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiChevronDown, FiMenu, FiX, FiHeart, FiCalendar, FiShoppingCart, FiInfo, FiLogOut, FiUser, FiShield } from 'react-icons/fi';
+import {
+  FiChevronDown, FiMenu, FiX, FiHeart, FiCalendar,
+  FiShoppingCart, FiPlusCircle, FiHome, FiInfo,
+  FiShield, FiSearch, FiLogOut, FiLayers, FiUser
+} from 'react-icons/fi';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 
 const Navbar = () => {
@@ -17,13 +21,13 @@ const Navbar = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
+  // Sync User Auth
   useEffect(() => {
     const savedUser = localStorage.getItem('user');
     if (savedUser) {
       try {
         setUser(JSON.parse(savedUser));
       } catch (err) {
-        console.error("Auth sync error:", err);
         setUser(null);
       }
     } else {
@@ -31,6 +35,7 @@ const Navbar = () => {
     }
   }, [location]);
 
+  // Fetch Admin Notifications
   useEffect(() => {
     const fetchPendingCount = async () => {
       const token = localStorage.getItem('token');
@@ -42,16 +47,16 @@ const Navbar = () => {
           const data = await response.json();
           setPendingCount(data.count || 0);
         } catch (err) {
-          console.error("Notification count fetch failed");
+          console.error("Notification fetch failed");
         }
       }
     };
-
     fetchPendingCount();
     const interval = setInterval(fetchPendingCount, 30000);
     return () => clearInterval(interval);
   }, [user]);
 
+  // Close Dropdowns on Click Outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (discoverRef.current && !discoverRef.current.contains(event.target)) setDiscoverOpen(false);
@@ -68,7 +73,6 @@ const Navbar = () => {
     { name: 'Dinner', href: '/discover/dinner' },
     { name: 'Dessert', href: '/discover/dessert' },
     { name: 'Snack', href: '/discover/snack' },
-    { name: 'Junks', href: '/discover/junks' },
   ];
 
   const handleLinkClick = (href) => {
@@ -77,7 +81,6 @@ const Navbar = () => {
     setKitchenOpen(false);
     setMobileMenuOpen(false);
     setUserMenuOpen(false);
-    // window.scrollTo(0, 0);
   };
 
   const handleLogout = () => {
@@ -85,30 +88,24 @@ const Navbar = () => {
     localStorage.removeItem('user');
     setUser(null);
     setMobileMenuOpen(false);
-    navigate('/Register');
     navigate('/login');
   };
 
   return (
-    <div className="flex items-center justify-between w-full px-4 py-3 bg-white">
+    <div className="flex items-center">
       {/* --- DESKTOP NAVIGATION --- */}
-      <div className="hidden lg:flex items-center gap-8 font-sans">
-
-        {/* Home & About - Always Visible */}
-        <Link to="/home" className="text-gray-600 font-bold hover:text-orange-600 transition-colors text-sm uppercase tracking-wider">Home</Link>
-        <Link to="/about" className="text-gray-600 font-bold hover:text-orange-600 transition-colors text-sm uppercase tracking-wider">About</Link>
+      <div className="hidden lg:flex items-center gap-8 mr-6">
+        <Link to="/home" className="text-gray-600 font-bold hover:text-orange-600 text-sm uppercase tracking-widest transition-colors">Home</Link>
+        <Link to="/about" className="text-gray-600 font-bold hover:text-orange-600 text-sm uppercase tracking-widest transition-colors">About</Link>
 
         {/* Discover Dropdown */}
         <div className="relative" ref={discoverRef}>
-          <button
-            onClick={() => setDiscoverOpen(!discoverOpen)}
-            className="flex items-center text-gray-600 font-bold hover:text-orange-600 transition-colors text-sm uppercase tracking-wider"
-          >
+          <button onClick={() => setDiscoverOpen(!discoverOpen)} className="flex items-center text-gray-600 font-bold hover:text-orange-600 text-sm uppercase tracking-widest">
             Discover <FiChevronDown className={`ml-1 transition-transform ${discoverOpen ? 'rotate-180' : ''}`} />
           </button>
           <AnimatePresence>
             {discoverOpen && (
-              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }} className="absolute left-0 mt-4 w-48 bg-white rounded-2xl shadow-2xl z-[150] border border-gray-100 p-2 overflow-hidden">
+              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }} className="absolute left-0 mt-4 w-48 bg-white rounded-2xl shadow-2xl z-[150] border p-2">
                 {mealTypes.map((item) => (
                   <button key={item.name} onClick={() => handleLinkClick(item.href)} className="block w-full text-left px-4 py-2.5 text-sm font-bold text-gray-600 hover:bg-orange-50 hover:text-orange-600 rounded-xl transition-all">{item.name}</button>
                 ))}
@@ -117,143 +114,99 @@ const Navbar = () => {
           </AnimatePresence>
         </div>
 
-        {/* My Kitchen Dropdown */}
+        {/* Kitchen Dropdown */}
         <div className="relative" ref={kitchenRef}>
-          <button
-            onClick={() => setKitchenOpen(!kitchenOpen)}
-            className="flex items-center text-gray-600 font-bold hover:text-orange-600 transition-colors text-sm uppercase tracking-wider"
-          >
-            My Kitchen <FiChevronDown className={`ml-1 transition-transform ${kitchenOpen ? 'rotate-180' : ''}`} />
+          <button onClick={() => setKitchenOpen(!kitchenOpen)} className="flex items-center text-gray-600 font-bold hover:text-orange-600 text-sm uppercase tracking-widest">
+            Kitchen <FiChevronDown className={`ml-1 transition-transform ${kitchenOpen ? 'rotate-180' : ''}`} />
           </button>
           <AnimatePresence>
             {kitchenOpen && (
-              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }} className="absolute left-0 mt-4 w-56 bg-white rounded-2xl shadow-2xl z-[150] border border-gray-100 p-2">
-                <button onClick={() => handleLinkClick('/favorites')} className="flex items-center gap-3 w-full text-left px-4 py-3 text-sm font-bold text-gray-600 hover:bg-orange-50 rounded-xl transition-all"><FiHeart className="text-red-500" /> Favorites</button>
-                <button onClick={() => handleLinkClick('/planner')} className="flex items-center gap-3 w-full text-left px-4 py-3 text-sm font-bold text-gray-600 hover:bg-orange-50 rounded-xl transition-all"><FiCalendar className="text-blue-500" /> Meal Planner</button>
-                <button onClick={() => handleLinkClick('/shopping-list')} className="flex items-center gap-3 w-full text-left px-4 py-3 text-sm font-bold text-gray-600 hover:bg-orange-50 rounded-xl transition-all"><FiShoppingCart className="text-green-500" /> Shopping List</button>
-                <button onClick={() => handleLinkClick('/create')} className="flex items-center gap-3 w-full text-left px-4 py-3 text-sm font-bold text-gray-600 hover:bg-orange-50 rounded-xl transition-all uppercase tracking-wider text-orange-600">Create Recipe</button>
+              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }} className="absolute left-0 mt-4 w-56 bg-white rounded-2xl shadow-2xl z-[150] border p-2">
+                <button onClick={() => handleLinkClick('/favorites')} className="flex items-center gap-3 w-full px-4 py-3 text-sm font-bold text-gray-600 hover:bg-orange-50 rounded-xl transition-all"><FiHeart className="text-red-500" /> Favorites</button>
+                <button onClick={() => handleLinkClick('/planner')} className="flex items-center gap-3 w-full px-4 py-3 text-sm font-bold text-gray-600 hover:bg-orange-50 rounded-xl transition-all"><FiCalendar className="text-blue-500" /> Planner</button>
+                <button onClick={() => handleLinkClick('/shopping-list')} className="flex items-center gap-3 w-full px-4 py-3 text-sm font-bold text-gray-600 hover:bg-orange-50 rounded-xl transition-all"><FiShoppingCart className="text-green-500" /> Shopping List</button>
+                <button onClick={() => handleLinkClick('/create')} className="mt-2 flex items-center gap-3 w-full px-4 py-3 text-sm font-black text-orange-600 bg-orange-50 rounded-xl transition-all"><FiPlusCircle /> CREATE RECIPE</button>
               </motion.div>
             )}
           </AnimatePresence>
         </div>
       </div>
 
-      {/* --- AUTHENTICATION & USER MENU --- */}
-      <div className="flex items-center gap-4">
-        {user ? (
-          <div className="relative" ref={userRef}>
-            <button
-              onClick={() => setUserMenuOpen(!userMenuOpen)}
-              className="relative flex items-center gap-3 p-1 pr-4 bg-white rounded-full hover:bg-orange-50 transition-all border border-gray-100 hover:border-orange-200 shadow-sm"
-            >
-              {/* 🔴 THE BIG RED NOTIFICATION DOT */}
-              {user?.role === 'admin' && pendingCount > 0 && (
-                <span className="flex h-3 w-3 shrink-0 rounded-full bg-red-600 shadow-[0_0_10px_rgba(220,38,38,0.5)] animate-pulse ml-2" />
-              )}
-
-              {/* <img
-                src={user.picture || `https://ui-avatars.com/api/?name=${user.name}&background=f97316&color=fff`}
-                alt="Profile"
-                className="w-8 h-8 rounded-full object-cover border border-white shadow-sm"
-              />
-              <span className="text-sm font-bold text-gray-700 uppercase">CHEF {user.name?.split(' ')[0]}</span>
-              <FiChevronDown className={`text-gray-400 text-xs transition-transform ${userMenuOpen ? 'rotate-180' : ''}`} /> */}
-            </button>
-
-            <AnimatePresence>
-              {userMenuOpen && (
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: 10 }}
-                  className="absolute right-0 mt-4 w-52 bg-white rounded-2xl shadow-2xl z-[150] border border-gray-100 p-2 overflow-hidden"
-                >
-                  {user?.role === 'admin' && (
-                    <button onClick={() => handleLinkClick('/admin')} className="flex items-center justify-between w-full px-4 py-3 text-sm font-black text-purple-600 hover:bg-purple-50 rounded-xl transition-all">
-                      <div className="flex items-center gap-3"><FiShield /> Admin</div>
-                      {pendingCount > 0 && <span className="bg-red-600 text-white text-[10px] px-2 py-0.5 rounded-full">{pendingCount} NEW</span>}
-                    </button>
-                  )}
-
-                  <button onClick={() => handleLinkClick('/profile')} className="flex items-center gap-3 w-full text-left px-4 py-3 text-sm font-bold text-gray-600 hover:bg-orange-50 rounded-xl transition-all">
-                    <FiUser className="text-orange-500" /> My Profile
-                  </button>
-
-                  <div className="h-px bg-gray-100 my-1 mx-2" />
-
-                  <button onClick={handleLogout} className="flex items-center gap-3 w-full text-left px-4 py-3 text-sm font-bold text-red-500 hover:bg-red-50 rounded-xl transition-all">
-                    <FiLogOut /> Logout
-                  </button>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-        ) : (
-          <div className="hidden lg:flex items-center gap-4">
-            <Link to="/login" className="text-gray-400 font-black hover:text-gray-900 transition-colors text-xs uppercase tracking-[0.2em]">Login</Link>
-            <Link to="/register" className="rounded-full bg-orange-600 px-8 py-3 font-black text-white text-xs uppercase tracking-widest shadow-lg shadow-orange-200 hover:bg-orange-700 hover:-translate-y-0.5 transition-all">Join KKB</Link>
-          </div>
-        )}
-
-        {/* --- MOBILE HAMBURGER --- */}
-        <div className="lg:hidden relative">
-          <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="text-gray-900 text-3xl p-2 transition-transform active:scale-90">
-            {mobileMenuOpen ? <FiX /> : <FiMenu />}
-            {!mobileMenuOpen && user?.role === 'admin' && pendingCount > 0 && (
-              <span className="absolute top-0 right-0 h-4 w-4 bg-red-600 border-2 border-white rounded-full" />
-            )}
-          </button>
-        </div>
+      {/* --- MOBILE HAMBURGER BUTTON --- */}
+      <div className="lg:hidden relative">
+        <button onClick={() => setMobileMenuOpen(true)} className="text-gray-900 text-3xl p-2 active:scale-90 transition-transform relative">
+          <FiMenu />
+          {!mobileMenuOpen && user?.role === 'admin' && pendingCount > 0 && (
+            <span className="absolute top-2 right-2 h-3 w-3 bg-red-600 border-2 border-white rounded-full" />
+          )}
+        </button>
       </div>
 
-
-      {/* <AnimatePresence>
+      {/* --- FULL SCREEN MOBILE MENU --- */}
+      <AnimatePresence>
         {mobileMenuOpen && (
           <motion.div
-            initial={{ x: '100%' }}
-            animate={{ x: 0 }}
-            exit={{ x: '100%' }}
+            initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }}
             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-            className="fixed top-0 right-0 h-full w-[80%] bg-white shadow-2xl lg:hidden z-[200] p-8 flex flex-col"
+            className="fixed inset-0 bg-white z-[300] flex flex-col p-6 lg:hidden"
           >
-            <div className="flex justify-end mb-8">
-              <button onClick={() => setMobileMenuOpen(false)} className="p-2 bg-gray-50 rounded-full text-gray-900"><FiX size={24} /></button>
+            {/* Header */}
+            <div className="flex justify-between items-center mb-8">
+              <span className="font-signature text-3xl text-orange-600">KKB Kitchen</span>
+              <button onClick={() => setMobileMenuOpen(false)} className="p-2 bg-gray-100 rounded-full text-gray-900"><FiX size={24} /></button>
             </div>
 
-            <div className="flex flex-col gap-6 overflow-y-auto">
-              <button onClick={() => handleLinkClick('/home')} className="text-left text-2xl font-black text-gray-900">Home</button>
-              <button onClick={() => handleLinkClick('/about')} className="text-left text-2xl font-black text-gray-900 flex items-center gap-3">
-                About <FiInfo className="text-orange-500" size={20} />
-              </button>
-
-              <div className="h-px w-full bg-gray-100 my-2" />
-
-              <button onClick={() => handleLinkClick('/favorites')} className="text-left text-lg font-bold text-gray-600">My Favorites</button>
-              <button onClick={() => handleLinkClick('/planner')} className="text-left text-lg font-bold text-gray-600">Meal Planner</button>
-              <button onClick={() => handleLinkClick('/create')} className="text-left text-lg font-bold text-orange-600">Create Recipe</button>
-
-              {!user ? (
-                <div className="mt-auto space-y-4">
-                  <Link to="/login" onClick={() => setMobileMenuOpen(false)} className="block w-full text-center py-4 font-black text-gray-400 uppercase tracking-widest">Login</Link>
-                  <Link to="/register" onClick={() => setMobileMenuOpen(false)} className="block w-full text-center bg-orange-600 text-white py-5 rounded-3xl font-black uppercase tracking-widest shadow-xl shadow-orange-100">Register</Link>
-                </div>
-              ) : (
-                <div className="mt-auto flex flex-col gap-4">
-                  {user?.role === 'admin' && (
-                    <button onClick={() => handleLinkClick('/admin')} className="text-xl font-black text-purple-600 flex items-center justify-between">
-                      Admin Panel {pendingCount > 0 && <span className="bg-red-600 text-white text-xs px-2 py-1 rounded-full">{pendingCount}</span>}
-                    </button>
-                  )}
-                  <button onClick={handleLogout} className="text-left text-xl font-black text-red-500">Logout</button>
-                </div>
+            {/* Admin & Create Shortcut */}
+            <div className="flex flex-col gap-3 mb-8">
+              {user?.role === 'admin' && (
+                <button onClick={() => handleLinkClick('/admin')} className="w-full bg-purple-600 text-white p-4 rounded-2xl flex items-center justify-between shadow-lg">
+                  <span className="flex items-center gap-3 font-bold text-sm uppercase tracking-wider"><FiShield size={20} /> Admin Panel</span>
+                  {pendingCount > 0 && <span className="bg-red-500 px-2 py-0.5 rounded-full text-[10px] font-black">{pendingCount}</span>}
+                </button>
               )}
+              <button onClick={() => handleLinkClick('/create')} className="w-full bg-orange-600 text-white p-4 rounded-2xl flex items-center gap-3 font-bold text-sm uppercase tracking-wider shadow-lg">
+                <FiPlusCircle size={20} /> Create New Recipe
+              </button>
+            </div>
+
+            {/* Scrollable Links */}
+            <div className="flex flex-col gap-1 overflow-y-auto custom-scrollbar flex-1">
+              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-4">Main Menu</p>
+              <MobileLink icon={<FiHome />} label="Home" onClick={() => handleLinkClick('/home')} />
+              <MobileLink icon={<FiLayers />} label="Discover" onClick={() => handleLinkClick('/discover')} />
+
+              <div className="my-4 border-t border-gray-100 pt-4">
+                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 ml-4">My Kitchen</p>
+                <MobileLink icon={<FiHeart />} label="Favorites" onClick={() => handleLinkClick('/favorites')} />
+                <MobileLink icon={<FiCalendar />} label="Meal Planner" onClick={() => handleLinkClick('/planner')} />
+                <MobileLink icon={<FiShoppingCart />} label="Shopping List" onClick={() => handleLinkClick('/shopping-list')} />
+                <MobileLink icon={<FiInfo />} label="About KKB" onClick={() => handleLinkClick('/about')} />
+              </div>
+            </div>
+
+            {/* Mobile Footer Profile */}
+            <div className="mt-auto pt-6 border-t border-gray-100 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <img src={user?.picture || `https://ui-avatars.com/api/?name=${user?.name}`} className="w-12 h-12 rounded-full border-2 border-orange-500 p-0.5" alt="user" />
+                <div>
+                  <p className="font-black text-gray-800 text-sm uppercase">Chef {user?.name?.split(' ')[0]}</p>
+                  <button onClick={() => handleLinkClick('/profile')} className="text-[10px] text-orange-600 font-bold uppercase">View Profile</button>
+                </div>
+              </div>
+              <button onClick={handleLogout} className="text-red-500 font-bold flex items-center gap-2 text-sm bg-red-50 px-4 py-2 rounded-xl"><FiLogOut /> Logout</button>
             </div>
           </motion.div>
         )}
-      </AnimatePresence> */}
+      </AnimatePresence>
     </div>
   );
 };
 
-export default Navbar;
+// Sub-component for Mobile Links
+const MobileLink = ({ icon, label, onClick }) => (
+  <button onClick={onClick} className="flex items-center gap-4 w-full p-4 text-gray-700 font-bold text-lg active:bg-orange-50 rounded-2xl transition-all">
+    <span className="text-orange-500 text-xl">{icon}</span> {label}
+  </button>
+);
 
+export default Navbar;

@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiSearch, FiUserPlus, FiClock, FiLogOut, FiPlusCircle, FiUser, FiEye, FiTrendingUp, FiX, FiChevronRight, FiShield } from 'react-icons/fi';
+import { FiSearch, FiLogOut, FiPlusCircle, FiUser, FiEye, FiTrendingUp, FiX, FiChevronRight, FiShield, FiClock } from 'react-icons/fi';
 import { Link, useNavigate } from 'react-router-dom';
 import image from '../assets/image.png';
 import Navbar from './Navbar';
@@ -12,206 +12,152 @@ function Header() {
   const [recentSearches, setRecentSearches] = useState([]);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [user, setUser] = useState(null);
+  const [pendingCount, setPendingCount] = useState(0);
 
-  const inputRef = useRef(null);
   const containerRef = useRef(null);
   const navigate = useNavigate();
 
   useEffect(() => {
     const token = localStorage.getItem('token');
     const storedUser = localStorage.getItem('user');
-    const savedSearches = JSON.parse(localStorage.getItem('recentSearches') || '[]');
-
     if (token && storedUser) {
-      const parsedUser = JSON.parse(storedUser);
       setIsLoggedIn(true);
-      setUser(parsedUser);
+      setUser(JSON.parse(storedUser));
     }
-    setRecentSearches(savedSearches);
+    setRecentSearches(JSON.parse(localStorage.getItem('recentSearches') || '[]'));
   }, []);
 
+  // Fetch Pending Count for Red Notification
+  useEffect(() => {
+    const fetchPending = async () => {
+      const token = localStorage.getItem('token');
+      if (user?.role === 'admin' && token) {
+        try {
+          const res = await fetch('https://kkb-kitchen-api.onrender.com/api/recipes/pending-count', {
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          const data = await res.json();
+          setPendingCount(data.count || 0);
+        } catch (err) { console.error(err); }
+      }
+    };
+    fetchPending();
+  }, [user]);
+
+  // Handle Search Input
   useEffect(() => {
     const fetchResults = async () => {
       if (query.length > 1) {
-        try {
-          const response = await fetch(`https://kkb-kitchen-api.onrender.com/api/recipes/search?query=${query}`);
-          const data = await response.json();
-          setSearchResults(data);
-        } catch (err) {
-          console.error("Search error:", err);
-        }
-      } else {
-        setSearchResults([]);
-      }
+        const res = await fetch(`https://kkb-kitchen-api.onrender.com/api/recipes/search?query=${query}`);
+        const data = await res.json();
+        setSearchResults(data);
+      } else { setSearchResults([]); }
     };
-
     const timer = setTimeout(fetchResults, 300);
     return () => clearTimeout(timer);
   }, [query]);
 
-  const handleResultClick = (recipe) => {
-    const updatedRecent = [recipe.title, ...recentSearches.filter(s => s !== recipe.title)].slice(0, 5);
-    setRecentSearches(updatedRecent);
-    localStorage.setItem('recentSearches', JSON.stringify(updatedRecent));
-
-    navigate(`/Recipejollofdetail/${recipe.id}`);
-    setSearchOpen(false);
-    setQuery("");
-  };
-
   const handleLogout = () => {
     localStorage.clear();
     setIsLoggedIn(false);
-    setUser(null);
     navigate('/login');
   };
 
   return (
-    <motion.header
-      initial={{ y: -50, opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
-      className="sticky top-0 z-[100] bg-white/80 backdrop-blur-md border-b border-gray-100 shadow-sm"
-    >
-      <div className="max-w-7xl mx-auto px-4 md:px-6">
-        <div className="flex h-20 items-center justify-between gap-4">
+    <motion.header className="sticky top-0 z-[100] bg-white/80 backdrop-blur-md border-b border-gray-100 shadow-sm">
+      <div className="max-w-7xl mx-auto px-4 md:px-6 h-20 flex items-center justify-between gap-4">
 
-          {/* BRANDING */}
-          <Link to="/" className="flex items-center gap-2 shrink-0 group">
-            <img src={image} alt="Logo" className="h-10 w-auto group-hover:rotate-12 transition-transform" />
+        {/* BRANDING (Always Visible) */}
+        {!searchOpen && (
+          <Link to="/" className="flex items-center gap-2 shrink-0">
+            <img src={image} alt="Logo" className="h-10 w-auto" />
             <div className="hidden sm:flex flex-col -space-y-3">
               <span className="font-signature text-4xl text-orange-600">KKB</span>
-              <span className="text-[9px] font-black uppercase tracking-[0.3em] text-gray-400 ml-1">Recipes</span>
             </div>
           </Link>
+        )}
 
-          {/* SEARCH & ACTIONS */}
-          <div ref={containerRef} className="flex-1 flex justify-center items-center gap-4 relative">
-            <AnimatePresence>
-              {searchOpen && (
-                <div className="absolute w-full max-w-[500px] top-0">
-                  <motion.div
-                    initial={{ scale: 0.9, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    exit={{ scale: 0.9, opacity: 0 }}
-                    className="flex items-center bg-white border-2 border-orange-500 rounded-[2rem] shadow-2xl overflow-hidden px-4 py-1"
-                  >
-                    <FiSearch className="text-orange-500" size={20} />
-                    <input
-                      ref={inputRef}
-                      type="text"
-                      value={query}
-                      onChange={(e) => setQuery(e.target.value)}
-                      placeholder="Search for Jollof, Pasta, or Chefs..."
-                      className="w-full bg-transparent outline-none py-3 px-3 text-sm font-bold text-gray-700"
-                    />
-                    <button onClick={() => { setSearchOpen(false); setQuery("") }}>
-                      <FiX className="text-gray-400 hover:text-red-500" size={20} />
-                    </button>
-                  </motion.div>
+        {/* EXPANDABLE SEARCH BAR */}
+        <div className={`relative flex items-center transition-all duration-300 ${searchOpen ? 'flex-1' : 'w-10 md:w-48'}`}>
+          <motion.div
+            animate={{ width: searchOpen ? "100%" : "100%" }}
+            className={`flex items-center bg-gray-50 border border-gray-100 rounded-full transition-all ${searchOpen ? 'ring-2 ring-orange-500 bg-white' : ''}`}
+          >
+            <button
+              onClick={() => setSearchOpen(true)}
+              className="p-3 text-gray-400 hover:text-orange-600"
+            >
+              <FiSearch size={20} />
+            </button>
 
-                  <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="absolute top-16 left-0 w-full bg-white rounded-[2.5rem] shadow-2xl border border-gray-100 overflow-hidden z-[110] p-3"
-                  >
-                    {query.length > 0 ? (
-                      <div className="max-h-[400px] overflow-y-auto custom-scrollbar">
-                        <p className="px-4 py-2 text-[10px] font-black text-gray-400 uppercase tracking-widest">Global Results</p>
-                        {searchResults.length > 0 ? searchResults.map(r => (
-                          <div
-                            key={r.id}
-                            onClick={() => handleResultClick(r)}
-                            className="flex items-center gap-4 p-3 hover:bg-orange-50 rounded-3xl cursor-pointer group transition-all"
-                          >
-                            <div className="h-14 w-14 rounded-2xl overflow-hidden bg-gray-100 relative">
-                              <img src={r.imageUrl} className="h-full w-full object-cover group-hover:scale-110 transition-transform" />
-                              {r.views > 50 && <div className="absolute top-1 right-1 w-2 h-2 bg-orange-500 rounded-full animate-pulse" />}
-                            </div>
-                            <div className="flex-1">
-                              <div className="flex items-center gap-2">
-                                <span className="font-black text-gray-800 italic">{r.title}</span>
-                                {r.views > 50 && <span className="bg-orange-100 text-orange-600 text-[8px] px-2 py-0.5 rounded-full font-black uppercase flex items-center gap-1"><FiTrendingUp /> Trending</span>}
-                              </div>
-                              <div className="flex gap-3 mt-1">
-                                <span className="text-[10px] font-bold text-gray-400 flex items-center gap-1 uppercase"><FiClock /> {r.time || '30m'}</span>
-                                <span className="text-[10px] font-bold text-gray-400 flex items-center gap-1 uppercase"><FiEye /> {r.views || 0}</span>
-                              </div>
-                            </div>
-                            <FiChevronRight className="text-gray-300 group-hover:text-orange-500 transition-colors" />
-                          </div>
-                        )) : (
-                          <div className="p-8 text-center font-signature text-2xl text-gray-400 italic">No flavors found...</div>
-                        )}
-                      </div>
-                    ) : (
-                      <div className="p-4">
-                        <p className="px-4 py-2 text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Recent Searches</p>
-                        <div className="flex flex-wrap gap-2 px-2">
-                          {recentSearches.length > 0 ? recentSearches.map((s, i) => (
-                            <button key={i} onClick={() => setQuery(s)} className="bg-gray-100 hover:bg-orange-100 hover:text-orange-600 px-4 py-2 rounded-full text-xs font-bold text-gray-600 transition-all">
-                              {s}
-                            </button>
-                          )) : <p className="text-xs font-bold text-gray-300 px-2 italic">Search something delicious...</p>}
-                        </div>
-                      </div>
-                    )}
-                  </motion.div>
-                </div>
-              )}
-            </AnimatePresence>
-
-            {!searchOpen && (
-              <div className="flex items-center gap-4">
-                <button
-                  onClick={() => setSearchOpen(true)}
-                  className="flex items-center gap-3 bg-gray-50 border border-gray-100 px-5 py-2.5 rounded-full hover:border-orange-500 group transition-all"
-                >
-                  <FiSearch className="text-gray-400 group-hover:text-orange-500" />
-                  <span className="text-sm font-bold text-gray-400">Search recipes...</span>
-                </button>
-
-                {isLoggedIn ? (
-                  <div className="flex items-center gap-2">
-
-                    {/* FIXED: ADMIN BUTTON (Shows only if role is admin) */}
-                    {/* {user?.role === 'admin' && (
-                      <Link to="/admin" className="flex items-center gap-2 bg-purple-600 text-white px-4 py-2.5 rounded-full font-bold text-[10px] uppercase hover:bg-purple-700 transition-all shadow-lg shadow-purple-100">
-                        <FiShield /> Admin Console
-                      </Link>
-                    )} */}
-
-                    {/* FIXED: GOOGLE IMAGE DISPLAY */}
-                    {/* <div className="flex items-center gap-2 bg-orange-50 border border-orange-100 px-3 py-1.5 rounded-full shadow-sm">
-                      <div className="h-7 w-7 rounded-full overflow-hidden border border-orange-200 bg-white">
-                        {user?.picture ? (
-                          <img src={user.picture} alt="Avatar" className="h-full w-full object-cover" />
-                        ) : (
-                          <div className="h-full w-full flex items-center justify-center bg-orange-100 text-orange-600">
-                            <FiUser size={14} />
-                          </div>
-                        )}
-                      </div>
-                      <span className="text-[11px] font-black uppercase text-gray-700 italic pr-1">Chef {user?.name?.split(' ')[0]}</span>
-                    </div> */}
-
-                    {/* <Link to="/upload-recipe" className="hidden md:flex items-center gap-2 bg-green-600 text-white px-5 py-2.5 rounded-full font-bold text-[10px] uppercase hover:bg-green-700 transition-all shadow-lg shadow-green-100">
-                      <FiPlusCircle /> Upload
-                    </Link> */}
-
-                    {/* <button onClick={handleLogout} className="h-10 w-10 flex items-center justify-center rounded-full bg-gray-100 text-gray-600 hover:bg-red-50 hover:text-red-500 transition-all">
-                      <FiLogOut size={18} />
-                    </button> */}
-                  </div>
-                ) : (
-                  // <Link to="/register" className="bg-orange-600 text-white px-8 py-3 rounded-full font-bold text-xs uppercase tracking-widest hover:bg-orange-700 transition-all shadow-xl shadow-orange-200">
-                  //   Join Kitchen
-                  // </Link>
-                )}
-              </div>
+            {searchOpen && (
+              <input
+                autoFocus
+                type="text"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Search flavors..."
+                className="w-full bg-transparent outline-none py-2 px-1 text-sm font-bold"
+              />
             )}
-          </div>
-          <Navbar />
+
+            {searchOpen && (
+              <button onClick={() => { setSearchOpen(false); setQuery(""); }} className="p-3 text-gray-400 hover:text-red-500">
+                <FiX size={18} />
+              </button>
+            )}
+          </motion.div>
+
+          {/* Search Results Dropdown */}
+          <AnimatePresence>
+            {searchOpen && query.length > 0 && (
+              <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="absolute top-14 left-0 w-full bg-white rounded-3xl shadow-2xl border p-2 z-[110]">
+                {searchResults.map(r => (
+                  <div key={r.id} onClick={() => { navigate(`/Recipejollofdetail/${r.id}`); setSearchOpen(false); }} className="flex items-center gap-3 p-3 hover:bg-orange-50 rounded-2xl cursor-pointer">
+                    <img src={r.imageUrl} className="h-10 w-10 rounded-lg object-cover" />
+                    <span className="font-bold text-gray-700">{r.title}</span>
+                  </div>
+                ))}
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
+
+        {/* ACTIONS & USER (Hides branding on small screens when searching) */}
+        {!searchOpen && (
+          <div className="flex items-center gap-2 md:gap-4 shrink-0">
+            {isLoggedIn ? (
+              <>
+                {/* 🔴 ADMIN CONSOLE (With Red Dot) */}
+                {user?.role === 'admin' && (
+                  <Link to="/admin" className="relative p-2.5 bg-purple-100 text-purple-600 rounded-full hover:bg-purple-600 hover:text-white transition-all">
+                    <FiShield size={20} />
+                    {pendingCount > 0 && (
+                      <span className="absolute -top-1 -right-1 flex h-4 w-4 bg-red-600 text-[8px] text-white items-center justify-center rounded-full border-2 border-white animate-pulse">
+                        {pendingCount}
+                      </span>
+                    )}
+                  </Link>
+                )}
+
+                {/* USER INFO */}
+                <div className="flex items-center gap-2 bg-orange-50 px-2 py-1.5 rounded-full border border-orange-100">
+                  <img src={user?.picture || `https://ui-avatars.com/api/?name=${user?.name}`} className="h-7 w-7 rounded-full object-cover" />
+                  <span className="hidden md:inline text-[10px] font-black uppercase text-gray-700 italic">Chef {user?.name?.split(' ')[0]}</span>
+                </div>
+
+                <button onClick={handleLogout} className="p-2.5 bg-gray-100 text-gray-500 rounded-full hover:bg-red-50 hover:text-red-500 transition-all">
+                  <FiLogOut size={18} />
+                </button>
+              </>
+            ) : (
+              <Link to="/register" className="bg-orange-600 text-white px-6 py-2.5 rounded-full font-bold text-xs uppercase shadow-lg">Join</Link>
+            )}
+
+            {/* The Rest of the Navigation Links */}
+            <Navbar />
+          </div>
+        )}
       </div>
     </motion.header>
   );
