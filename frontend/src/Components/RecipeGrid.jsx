@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { FiClock, FiChevronRight, FiLock, FiEye } from 'react-icons/fi';
 
+
 // ✅ Receive 'user' as a prop from App.js
 const RecipeGrid = ({ user }) => {
     const [recipes, setRecipes] = useState([]);
@@ -150,6 +151,7 @@ const RecipeGrid = ({ user }) => {
                         No recipes found. Be the first to cook!
                     </div>
                 )}
+
             </div>
         </div>
     );

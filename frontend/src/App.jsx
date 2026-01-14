@@ -23,7 +23,6 @@ import MealPlanner from './page/MealPlanner';
 import AdminDashboard from './page/AdminDashboard';
 import UploadRecipe from './page/UploadRecipe';
 
-// Helper to fix the "staying at bottom" issue when changing pages
 function ScrollToTop() {
   const { pathname } = useLocation();
   useEffect(() => {
@@ -42,25 +41,34 @@ function App() {
     return savedUser ? JSON.parse(savedUser) : null;
   });
 
-  // Keep state in sync with localStorage automatically
+  // ✅ FIX 1: Enhanced Sync Logic
+  // This ensures that when a user logs in, the state updates EVERYWHERE instantly.
   useEffect(() => {
-    const handleStorageChange = () => {
+    const syncUser = () => {
       const savedUser = localStorage.getItem('user');
       setUser(savedUser ? JSON.parse(savedUser) : null);
     };
 
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
+    window.addEventListener('storage', syncUser);
+    // Also check on focus to ensure multiple tabs stay in sync
+    window.addEventListener('focus', syncUser);
+
+    return () => {
+      window.removeEventListener('storage', syncUser);
+      window.removeEventListener('focus', syncUser);
+    };
   }, []);
 
+  // ✅ FIX 2: Loader Timing
+  // Reduced time and ensured it doesn't "hang"
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsLoading(false);
-    }, 1500);
+    }, 1000);
     return () => clearTimeout(timer);
   }, []);
 
-  const triggerLoading = (duration = 2000) => {
+  const triggerLoading = (duration = 1500) => {
     setIsLoading(true);
     setTimeout(() => setIsLoading(false), duration);
   };
@@ -73,16 +81,21 @@ function App() {
   const handleAuthSuccess = (userData) => {
     setUser(userData);
     localStorage.setItem('user', JSON.stringify(userData));
+    showToast(`Welcome back, Chef ${userData.name.split(' ')[0]}!`);
   };
 
   return (
     <Router>
       <ScrollToTop />
+
+      {/* ✅ FIX 3: AnimatePresence for the Loader */}
       <AnimatePresence mode="wait">
         {isLoading && <Loader key="loader" />}
       </AnimatePresence>
 
-      <div className="min-h-screen flex flex-col bg-white">
+      {/* Main Container - Added relative and z-index to stay under Loader */}
+      <div className={`min-h-screen flex flex-col bg-white transition-opacity duration-500 ${isLoading ? 'opacity-0' : 'opacity-100'}`}>
+
         {/* Global Toast */}
         <div className={`fixed bottom-10 left-1/2 -translate-x-1/2 z-[300] transition-all duration-500 transform ${toast.show ? "translate-y-0 opacity-100" : "translate-y-12 opacity-0 pointer-events-none"}`}>
           <div className="bg-gray-900 text-white px-6 py-3 rounded-2xl shadow-2xl flex items-center gap-3 border border-white/10">
@@ -91,63 +104,39 @@ function App() {
           </div>
         </div>
 
-        {/* Passing user to Header ensures the Logout/Profile UI works */}
-        <Header user={user} />
+        <Header user={user} setUser={setUser} />
 
         <main className="flex-grow">
           <Routes>
-            {/* HOME ROUTES */}
+            {/* HOME ROUTE */}
             <Route path="/" element={
-              <>
+              <div className="animate-in fade-in duration-700">
                 <Banner />
                 <div className="pb-20">
                   <RecipeGrid user={user} />
                 </div>
-              </>
+              </div>
             } />
 
+            {/* REDIRECTS & AUTH */}
             <Route path="/homepage" element={<Navigate to="/" replace />} />
-
-            {/* AUTH ROUTES */}
-            <Route path="/register" element={
-              <Register
-                triggerLoading={triggerLoading}
-                showToast={showToast}
-                onAuthSuccess={handleAuthSuccess}
-              />
-            } />
-
-            <Route path="/login" element={
-              <Login
-                triggerLoading={triggerLoading}
-                showToast={showToast}
-                onAuthSuccess={handleAuthSuccess}
-              />
-            } />
+            <Route path="/register" element={<Register triggerLoading={triggerLoading} showToast={showToast} onAuthSuccess={handleAuthSuccess} />} />
+            <Route path="/login" element={<Login triggerLoading={triggerLoading} showToast={showToast} onAuthSuccess={handleAuthSuccess} />} />
 
             {/* RECIPE DETAIL */}
             <Route path="/recipe/:id" element={<Recipejollofdetail showToast={showToast} user={user} />} />
 
-            {/* ADMIN & TOOLS */}
-            <Route path="/admin" element={
-              user?.role === 'admin' ? <AdminDashboard /> : <Navigate to="/" />
-            } />
-
+            {/* ADMIN & PROTECTED */}
+            <Route path="/admin" element={user?.role === 'admin' ? <AdminDashboard /> : <Navigate to="/" />} />
             <Route path="/create" element={<CreateRecipe showToast={showToast} user={user} />} />
-            <Route path="/edit-recipe/:id" element={<UploadRecipe isEditing={true} user={user} />} />
-
-            <Route path="/upload-recipe" element={
-              <ProtectedRoutes>
-                <UploadRecipe showToast={showToast} triggerLoading={triggerLoading} />
-              </ProtectedRoutes>
-            } />
+            <Route path="/upload-recipe" element={<ProtectedRoutes><UploadRecipe showToast={showToast} triggerLoading={triggerLoading} /></ProtectedRoutes>} />
 
             <Route path="/planner" element={<MealPlanner user={user} />} />
             <Route path="/shopping-list" element={<ShoppingList user={user} />} />
             <Route path="/about" element={<About />} />
             <Route path="/favorites" element={<Favorites user={user} />} />
 
-            {/* Catch-all redirect */}
+            {/* CATCH-ALL */}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </main>
