@@ -151,13 +151,13 @@ const Navbar = () => {
                 <span className="flex h-3 w-3 shrink-0 rounded-full bg-red-600 shadow-[0_0_10px_rgba(220,38,38,0.5)] animate-pulse ml-2" />
               )}
 
-              {/* <img
+              <img
                 src={user.picture || `https://ui-avatars.com/api/?name=${user.name}&background=f97316&color=fff`}
                 alt="Profile"
                 className="w-8 h-8 rounded-full object-cover border border-white shadow-sm"
               />
               <span className="text-sm font-bold text-gray-700 uppercase">CHEF {user.name?.split(' ')[0]}</span>
-              <FiChevronDown className={`text-gray-400 text-xs transition-transform ${userMenuOpen ? 'rotate-180' : ''}`} /> */}
+              <FiChevronDown className={`text-gray-400 text-xs transition-transform ${userMenuOpen ? 'rotate-180' : ''}`} /> }
             </button>
 
             <AnimatePresence>
