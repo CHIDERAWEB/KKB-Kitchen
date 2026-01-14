@@ -90,7 +90,7 @@ const Navbar = () => {
   };
 
   return (
-    <div className="flex items-center justify-between w-full px-4 py-3 bg-white">
+    <div className="flex items-center justify-between w-full px-4 py-3 ">
       {/* --- DESKTOP NAVIGATION --- */}
       <div className="hidden lg:flex items-center gap-8 font-sans">
 
@@ -139,12 +139,12 @@ const Navbar = () => {
       </div>
 
       {/* --- AUTHENTICATION & USER MENU --- */}
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-2">
         {user ? (
           <div className="relative" ref={userRef}>
             <button
               onClick={() => setUserMenuOpen(!userMenuOpen)}
-              className="relative flex items-center gap-3 p-1 pr-4 bg-white rounded-full hover:bg-orange-50 transition-all border border-gray-100 hover:border-orange-200 shadow-sm"
+              className="relative flex items-center gap-2 p-1 pr-4 bg-white rounded-full hover:bg-orange-50 transition-all border border-gray-100 hover:border-orange-200 shadow-sm"
             >
               {/* 🔴 THE BIG RED NOTIFICATION DOT */}
               {user?.role === 'admin' && pendingCount > 0 && (
@@ -157,7 +157,7 @@ const Navbar = () => {
                 className="w-8 h-8 rounded-full object-cover border border-white shadow-sm"
               />
               <span className="text-sm font-bold text-gray-700 uppercase">CHEF {user.name?.split(' ')[0]}</span>
-              <FiChevronDown className={`text-gray-400 text-xs transition-transform ${userMenuOpen ? 'rotate-180' : ''}`} /> }
+              <FiChevronDown className={`text-gray-400 text-xs transition-transform ${userMenuOpen ? 'rotate-180' : ''}`} />
             </button>
 
             <AnimatePresence>
