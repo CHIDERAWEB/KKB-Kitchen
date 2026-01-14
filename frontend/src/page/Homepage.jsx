@@ -13,8 +13,17 @@ const Homepage = () => {
     const [user, setUser] = useState(null);
 
     useEffect(() => {
+        // --- AUTH LOGIC ---
+        // This checks if a user exists in memory. 
+        // If you logout, 'user' becomes null and the buttons disappear.
         const storedUser = localStorage.getItem('user');
-        if (storedUser) setUser(JSON.parse(storedUser));
+        if (storedUser && storedUser !== "undefined") {
+            try {
+                setUser(JSON.parse(storedUser));
+            } catch (e) {
+                console.error("Auth error");
+            }
+        }
 
         const fetchRecipes = async () => {
             try {
@@ -61,16 +70,18 @@ const Homepage = () => {
                 <div className="flex flex-col lg:flex-row items-center justify-between gap-12">
                     <motion.div initial={{ opacity: 0, x: -50 }} animate={{ opacity: 1, x: 0 }} className="flex-1 space-y-6">
 
-                        {/* ADMIN LINK - Kept as requested but cleaned for design */}
+                        {/* ADMIN LINK - Only appears if user is Admin */}
                         {user?.role === 'admin' && (
-                            <Link to="/admin" className="inline-flex items-center gap-2 bg-black text-white px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-orange-600 transition-all">
-                                Admin Console <Zap size={10} fill="currentColor" />
-                            </Link>
+                            <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
+                                <Link to="/admin" className="inline-flex items-center gap-2 bg-black text-white px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-orange-600 transition-all shadow-lg">
+                                    Admin Console <Zap size={10} fill="currentColor" />
+                                </Link>
+                            </motion.div>
                         )}
 
                         <h1 className="text-6xl md:text-8xl font-black italic text-gray-900 leading-[0.9] tracking-tighter">
                             {user ? (
-                                <>Welcome, <br /><span className="text-orange-500 font-signature text-7xl lowercase">Chef {user.name.split(' ')[0]}!</span></>
+                                <>Welcome, <br /><span className="text-orange-500 font-serif text-7xl lowercase">Chef {user.name.split(' ')[0]}!</span></>
                             ) : (
                                 <>Cook like <br /><span className="text-orange-500 font-serif lowercase">a masterpiece.</span></>
                             )}
@@ -102,7 +113,7 @@ const Homepage = () => {
                     <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} className="flex-1 relative hidden lg:block">
                         <div className="relative w-full aspect-square max-w-md mx-auto">
                             <div className="img-reveal-container h-full w-full">
-                                <img src="https://images.unsplash.com/photo-1504674900247-0877df9cc836?q=80&w=1000&auto=format&fit=crop" className="w-full h-full object-cover shadow-2xl rotate-3 hover:rotate-0 transition-transform duration-700 border-[12px] border-white" alt="Chef's Special" />
+                                <img src="https://images.unsplash.com/photo-1504674900247-0877df9cc836?q=80&w=1000&auto=format&fit=crop" className="w-full h-full object-cover shadow-2xl rotate-3 hover:rotate-0 transition-transform duration-700 border-[12px] border-white rounded-2xl" alt="Chef's Special" />
                             </div>
                             <motion.div animate={{ y: [0, -10, 0] }} transition={{ repeat: Infinity, duration: 3 }} className="absolute -top-6 -right-6 bg-white p-4 rounded-3xl shadow-xl flex items-center gap-3 border border-gray-50">
                                 <div className="h-3 w-3 bg-green-500 rounded-full animate-pulse" />
@@ -202,7 +213,7 @@ const Homepage = () => {
                 )}
             </section>
 
-            {/* --- LOCATION (FIXED MAP SOURCE) --- */}
+            {/* --- LOCATION --- */}
             <section className="px-6 max-w-7xl mx-auto">
                 <div className="bg-gray-50 rounded-[4rem] p-12 flex flex-col lg:flex-row gap-12 items-center">
                     <div className="flex-1 space-y-6">
@@ -217,7 +228,7 @@ const Homepage = () => {
                     <div className="flex-[1.5] w-full h-[400px] rounded-[3rem] overflow-hidden shadow-2xl border-8 border-white">
                         <iframe
                             title="map"
-                            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3964.728531934989!2d3.376269275886071!3d6.4289!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x103b8b1a62000001%3A0xb30e5e01b60f60!2sLagos!5e0!3m2!1sen!2sng!4v1700000000000!5m2!1sen!2sng"
+                            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3964.492192739439!2d3.3768223!3d6.4599643!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x103b8b2ae68280c1%3A0xdc9e87a397c7d60e!2sLagos!5e0!3m2!1sen!2sng!4v1710000000000!5m2!1sen!2sng"
                             width="100%"
                             height="100%"
                             style={{ border: 0 }}
@@ -228,7 +239,7 @@ const Homepage = () => {
                 </div>
             </section>
 
-            {/* --- CHALLENGE (FIXED ARROWRIGHT WARNING) --- */}
+            {/* --- CHALLENGE --- */}
             <motion.section className="mx-6 max-w-7xl lg:mx-auto bg-gray-900 rounded-[5rem] p-16 text-white relative overflow-hidden shadow-2xl">
                 <div className="relative z-10 lg:w-1/2">
                     <div className="inline-flex items-center gap-2 bg-orange-500 px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-[0.2em] mb-10 shadow-lg"><Trophy size={16} /> Jollof Wars 2026</div>
