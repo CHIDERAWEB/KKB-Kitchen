@@ -9,8 +9,6 @@ const Navbar = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [pendingCount, setPendingCount] = useState(0);
-
-  // ✅ VITAL: Tracks user state so Navbar and Homepage update instantly
   const [user, setUser] = useState(null);
 
   const discoverRef = useRef(null);
@@ -19,7 +17,6 @@ const Navbar = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // ✅ LOGIC: Sync user state with LocalStorage on every route/page change
   useEffect(() => {
     const savedUser = localStorage.getItem('user');
     if (savedUser) {
@@ -34,7 +31,6 @@ const Navbar = () => {
     }
   }, [location]);
 
-  // ✅ LOGIC: Fetch Admin Notifications only if logged in as Admin
   useEffect(() => {
     const fetchPendingCount = async () => {
       const token = localStorage.getItem('token');
@@ -52,11 +48,10 @@ const Navbar = () => {
     };
 
     fetchPendingCount();
-    const interval = setInterval(fetchPendingCount, 30000); // Check every 30 seconds
+    const interval = setInterval(fetchPendingCount, 30000);
     return () => clearInterval(interval);
   }, [user]);
 
-  // ✅ LOGIC: Close dropdowns when clicking anywhere outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (discoverRef.current && !discoverRef.current.contains(event.target)) setDiscoverOpen(false);
@@ -82,7 +77,7 @@ const Navbar = () => {
     setKitchenOpen(false);
     setMobileMenuOpen(false);
     setUserMenuOpen(false);
-    window.scrollTo(0, 0); // Reset scroll to top
+    window.scrollTo(0, 0);
   };
 
   const handleLogout = () => {
@@ -131,7 +126,7 @@ const Navbar = () => {
                 <button onClick={() => handleLinkClick('/favorites')} className="flex items-center gap-3 w-full text-left px-4 py-3 text-sm font-bold text-gray-600 hover:bg-orange-50 rounded-xl transition-all"><FiHeart className="text-red-500" /> Favorites</button>
                 <button onClick={() => handleLinkClick('/planner')} className="flex items-center gap-3 w-full text-left px-4 py-3 text-sm font-bold text-gray-600 hover:bg-orange-50 rounded-xl transition-all"><FiCalendar className="text-blue-500" /> Meal Planner</button>
                 <button onClick={() => handleLinkClick('/shopping-list')} className="flex items-center gap-3 w-full text-left px-4 py-3 text-sm font-bold text-gray-600 hover:bg-orange-50 rounded-xl transition-all"><FiShoppingCart className="text-green-500" /> Shopping List</button>
-                <Link to="/create" className="text-gray-600 font-bold hover:text-orange-600 transition-colors uppercase tracking-wider flex items-center gap-3 w-full px-4 py-3 text-sm font-bold text-gray-600 hover:bg-orange-50 rounded-xl transition-all ">Create</Link>
+                <button onClick={() => handleLinkClick('/create')} className="flex items-center gap-3 w-full text-left px-4 py-3 text-sm font-bold text-gray-600 hover:bg-orange-50 rounded-xl transition-all uppercase tracking-wider text-orange-600">Create Recipe</button>
               </motion.div>
             )}
           </AnimatePresence>
@@ -144,57 +139,44 @@ const Navbar = () => {
 
         {/* AUTHENTICATION VIEW */}
         {user ? (
-          <div className="flex items-center gap-3">
-            {user?.role === 'admin' && pendingCount > 0 && (
-              <div className="flex items-center bg-red-50 px-2 py-1 rounded-full border border-red-100 animate-pulse">
-                <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-red-600"></span>
+          <div className="relative" ref={userRef}>
+            <button
+              onClick={() => setUserMenuOpen(!userMenuOpen)}
+              className="relative flex items-center gap-3 p-1 pr-4 bg-white rounded-full hover:bg-orange-50 transition-all border border-gray-100 hover:border-orange-200 shadow-sm"
+            >
+              {user?.role === 'admin' && pendingCount > 0 && (
+                <span className="absolute -top-1 -left-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-600 text-[10px] font-bold text-white border-2 border-white shadow-md">
+                  {pendingCount}
                 </span>
-                <span className="ml-1.5 text-[10px] font-black text-red-600 uppercase tracking-tighter">Action Required</span>
-              </div>
-            )}
+              )}
+              <img
+                src={user.picture || `https://ui-avatars.com/api/?name=${user.name}&background=f97316&color=fff`}
+                alt="Profile"
+                className="w-8 h-8 rounded-full object-cover border border-white shadow-sm"
+              />
+              <span className="text-sm font-bold text-gray-700 uppercase">CHEF {user.name?.split(' ')[0]}</span>
+              <FiChevronDown className={`text-gray-400 text-xs transition-transform ${userMenuOpen ? 'rotate-180' : ''}`} />
+            </button>
 
-            <div className="relative" ref={userRef}>
-              <button
-                onClick={() => setUserMenuOpen(!userMenuOpen)}
-                className="relative flex items-center gap-3 p-1 pr-4 bg-white rounded-full hover:bg-orange-50 transition-all border border-gray-100 hover:border-orange-200 shadow-sm"
-              >
-                {user?.role === 'admin' && pendingCount > 0 && (
-                  <span className="absolute -top-1 -left-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-600 text-[10px] font-bold text-white border-2 border-white shadow-md">
-                    {pendingCount}
-                  </span>
-                )}
-
-                <img
-                  src={user.picture || `https://ui-avatars.com/api/?name=${user.name}&background=f97316&color=fff`}
-                  alt="Profile"
-                  className="w-8 h-8 rounded-full object-cover border border-white shadow-sm"
-                />
-                <span className="text-sm font-bold text-gray-700 uppercase">CHEF {user.name?.split(' ')[0]}</span>
-                <FiChevronDown className={`text-gray-400 text-xs transition-transform ${userMenuOpen ? 'rotate-180' : ''}`} />
-              </button>
-
-              <AnimatePresence>
-                {userMenuOpen && (
-                  <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }} className="absolute right-0 mt-4 w-52 bg-white rounded-2xl shadow-2xl z-[150] border border-gray-100 p-2 overflow-hidden">
-                    {user?.role === 'admin' && (
-                      <button onClick={() => handleLinkClick('/admin')} className="flex items-center justify-between w-full px-4 py-3 text-sm font-black text-purple-600 hover:bg-purple-50 rounded-xl transition-all">
-                        <div className="flex items-center gap-3"><FiShield /> Admin</div>
-                        {pendingCount > 0 && <span className="bg-red-600 text-white text-[10px] px-2 py-0.5 rounded-full">{pendingCount} NEW</span>}
-                      </button>
-                    )}
-                    <button onClick={() => handleLinkClick('/profile')} className="flex items-center gap-3 w-full text-left px-4 py-3 text-sm font-bold text-gray-600 hover:bg-orange-50 rounded-xl transition-all">
-                      <FiUser className="text-orange-500" /> My Profile
+            <AnimatePresence>
+              {userMenuOpen && (
+                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }} className="absolute right-0 mt-4 w-52 bg-white rounded-2xl shadow-2xl z-[150] border border-gray-100 p-2 overflow-hidden">
+                  {user?.role === 'admin' && (
+                    <button onClick={() => handleLinkClick('/admin')} className="flex items-center justify-between w-full px-4 py-3 text-sm font-black text-purple-600 hover:bg-purple-50 rounded-xl transition-all">
+                      <div className="flex items-center gap-3"><FiShield /> Admin</div>
+                      {pendingCount > 0 && <span className="bg-red-600 text-white text-[10px] px-2 py-0.5 rounded-full">{pendingCount} NEW</span>}
                     </button>
-                    <div className="h-px bg-gray-100 my-1 mx-2" />
-                    <button onClick={handleLogout} className="flex items-center gap-3 w-full text-left px-4 py-3 text-sm font-bold text-red-500 hover:bg-red-50 rounded-xl transition-all">
-                      <FiLogOut /> Logout
-                    </button>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
+                  )}
+                  <button onClick={() => handleLinkClick('/profile')} className="flex items-center gap-3 w-full text-left px-4 py-3 text-sm font-bold text-gray-600 hover:bg-orange-50 rounded-xl transition-all">
+                    <FiUser className="text-orange-500" /> My Profile
+                  </button>
+                  <div className="h-px bg-gray-100 my-1 mx-2" />
+                  <button onClick={handleLogout} className="flex items-center gap-3 w-full text-left px-4 py-3 text-sm font-bold text-red-500 hover:bg-red-50 rounded-xl transition-all">
+                    <FiLogOut /> Logout
+                  </button>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         ) : (
           <div className="flex items-center gap-4">
@@ -264,6 +246,7 @@ const Navbar = () => {
               <button onClick={() => handleLinkClick('/favorites')} className="text-left text-lg font-bold text-gray-600">My Favorites</button>
               <button onClick={() => handleLinkClick('/planner')} className="text-left text-lg font-bold text-gray-600">Meal Planner</button>
               <button onClick={() => handleLinkClick('/shopping-list')} className="text-left text-lg font-bold text-gray-600">Shopping List</button>
+              <button onClick={() => handleLinkClick('/create')} className="text-left text-lg font-bold text-orange-600">Create Recipe</button>
 
               {!user && (
                 <div className="mt-auto space-y-4">
