@@ -77,7 +77,7 @@ const Navbar = () => {
     setKitchenOpen(false);
     setMobileMenuOpen(false);
     setUserMenuOpen(false);
-    window.scrollTo(0, 0);
+    // window.scrollTo(0, 0);
   };
 
   const handleLogout = () => {
@@ -85,6 +85,7 @@ const Navbar = () => {
     localStorage.removeItem('user');
     setUser(null);
     setMobileMenuOpen(false);
+    navigate('/Register');
     navigate('/login');
   };
 
