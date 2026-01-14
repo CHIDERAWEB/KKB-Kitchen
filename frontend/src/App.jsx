@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation, Navigate } from 'react-router-dom';
-import { AnimatePresence, motion } from 'framer-motion'; // Added motion
+import { AnimatePresence, motion } from 'framer-motion';
 import { CheckCircle } from 'lucide-react';
 
 // COMPONENTS
@@ -41,7 +41,6 @@ function App() {
     return savedUser ? JSON.parse(savedUser) : null;
   });
 
-  // Sync Auth Logic
   useEffect(() => {
     const syncUser = () => {
       const savedUser = localStorage.getItem('user');
@@ -55,11 +54,10 @@ function App() {
     };
   }, []);
 
-  // Loader Logic
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsLoading(false);
-    }, 1200); // Slightly more time for components to mount
+    }, 1200);
     return () => clearTimeout(timer);
   }, []);
 
@@ -83,70 +81,66 @@ function App() {
     <Router>
       <ScrollToTop />
 
-      {/* 1. MASTER LOADER */}
+      {/* MASTER LOADER */}
       <AnimatePresence mode="wait">
         {isLoading && <Loader key="loader" />}
       </AnimatePresence>
 
-      {/* 2. MAIN APP CONTAINER */}
-      <div className="min-h-screen flex flex-col bg-white relative">
-
-        {/* GLOBAL TOAST - Higher Z-Index than Header */}
-        <div className={`fixed top-24 left-1/2 -translate-x-1/2 z-[200] transition-all duration-500 transform ${toast.show ? "translate-y-0 opacity-100" : "-translate-y-12 opacity-0 pointer-events-none"}`}>
-          <div className="bg-gray-900/95 backdrop-blur-md text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-3 border border-white/10">
-            <CheckCircle className="text-green-400" size={18} />
-            <span className="text-sm font-bold uppercase tracking-widest">{toast.message}</span>
-          </div>
-        </div>
-
-        {/* 3. THE FIXED HEADER */}
-        <Header user={user} setUser={setUser} />
-
-        {/* 4. CONTENT WRAPPER - Added pt-24 to fix the "disappearing" homepage issue */}
-        <motion.main
+      {/* Main content only renders fully when not loading to prevent layout jumps */}
+      {!isLoading && (
+        <motion.div
           initial={{ opacity: 0 }}
-          animate={{ opacity: isLoading ? 0 : 1 }}
-          transition={{ duration: 0.5 }}
-          className="flex-grow pt-20 lg:pt-24" // This pushes the Banner down
+          animate={{ opacity: 1 }}
+          className="min-h-screen flex flex-col bg-white relative"
         >
-          <Routes>
-            {/* HOME ROUTE */}
-            <Route path="/" element={
-              <div className="animate-in fade-in zoom-in-95 duration-1000">
-                <Banner />
-                <div className="max-w-[1400px] mx-auto px-4 md:px-10 pb-20">
-                  <RecipeGrid user={user} />
-                  <Homepage />
-                  <Route path="/homepage" element={<Navigate to="/" replace />} />
+          {/* GLOBAL TOAST */}
+          <div className={`fixed top-24 left-1/2 -translate-x-1/2 z-[200] transition-all duration-500 transform ${toast.show ? "translate-y-0 opacity-100" : "-translate-y-12 opacity-0 pointer-events-none"}`}>
+            <div className="bg-gray-900/95 backdrop-blur-md text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-3 border border-white/10">
+              <CheckCircle className="text-green-400" size={18} />
+              <span className="text-sm font-bold uppercase tracking-widest">{toast.message}</span>
+            </div>
+          </div>
+
+          <Header user={user} setUser={setUser} />
+
+          <main className="flex-grow pt-20 lg:pt-24">
+            <Routes>
+              {/* HOME ROUTE */}
+              <Route path="/" element={
+                <div className="animate-in fade-in zoom-in-95 duration-700">
+                  <Banner />
+                  <div className="max-w-[1400px] mx-auto px-4 md:px-10 pb-20">
+                    <RecipeGrid user={user} />
+                    <Homepage />
+                  </div>
                 </div>
-              </div>
-            } />
+              } />
 
-            {/* AUTH & REDIRECTS */}
-            <Route path="/homepage" element={<Navigate to="/" replace />} />
-            <Route path="/register" element={<Register triggerLoading={triggerLoading} showToast={showToast} onAuthSuccess={handleAuthSuccess} />} />
-            <Route path="/login" element={<Login triggerLoading={triggerLoading} showToast={showToast} onAuthSuccess={handleAuthSuccess} />} />
+              {/* AUTH & REDIRECTS */}
+              <Route path="/register" element={<Register triggerLoading={triggerLoading} showToast={showToast} onAuthSuccess={handleAuthSuccess} />} />
+              <Route path="/login" element={<Login triggerLoading={triggerLoading} showToast={showToast} onAuthSuccess={handleAuthSuccess} />} />
 
-            {/* RECIPE DETAIL */}
-            <Route path="/recipe/:id" element={<Recipejollofdetail showToast={showToast} user={user} />} />
+              {/* RECIPE DETAIL */}
+              <Route path="/recipe/:id" element={<Recipejollofdetail showToast={showToast} user={user} />} />
 
-            {/* PROTECTED ROUTES */}
-            <Route path="/admin" element={user?.role === 'admin' ? <AdminDashboard /> : <Navigate to="/" />} />
-            <Route path="/create" element={<CreateRecipe showToast={showToast} user={user} />} />
-            <Route path="/upload-recipe" element={<ProtectedRoutes><UploadRecipe showToast={showToast} triggerLoading={triggerLoading} /></ProtectedRoutes>} />
+              {/* PROTECTED ROUTES */}
+              <Route path="/admin" element={user?.role === 'admin' ? <AdminDashboard /> : <Navigate to="/" />} />
+              <Route path="/create" element={<CreateRecipe showToast={showToast} user={user} />} />
+              <Route path="/upload-recipe" element={<ProtectedRoutes><UploadRecipe showToast={showToast} triggerLoading={triggerLoading} /></ProtectedRoutes>} />
 
-            <Route path="/planner" element={<MealPlanner user={user} />} />
-            <Route path="/shopping-list" element={<ShoppingList user={user} />} />
-            <Route path="/about" element={<About />} />
-            <Route path="/favorites" element={<Favorites user={user} />} />
+              <Route path="/planner" element={<MealPlanner user={user} />} />
+              <Route path="/shopping-list" element={<ShoppingList user={user} />} />
+              <Route path="/about" element={<About />} />
+              <Route path="/favorites" element={<Favorites user={user} />} />
 
-            {/* CATCH-ALL */}
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-        </motion.main>
+              {/* CATCH-ALL */}
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          </main>
 
-        <Footer />
-      </div>
+          <Footer />
+        </motion.div>
+      )}
     </Router>
   );
 }
