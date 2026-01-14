@@ -1,22 +1,24 @@
 import React, { useState } from 'react';
 import { Camera, Plus, Trash2, Clock, Users, Utensils, Send } from 'lucide-react';
-import { useNavigate } from 'react-router-dom'; // NEW: For redirection
+import { useNavigate } from 'react-router-dom';
 
 const CreateRecipe = ({ showToast }) => {
-    const navigate = useNavigate(); // NEW: Hook to handle page navigation
+    const navigate = useNavigate();
 
     const [title, setTitle] = useState('');
     const [cookTime, setCookTime] = useState('');
     const [servings, setServings] = useState('');
+    const [difficulty, setDifficulty] = useState('Easy'); // NEW STATE
     const [ingredients, setIngredients] = useState(['']);
     const [steps, setSteps] = useState(['']);
     const [imagePreview, setImagePreview] = useState(null);
     const [imageFile, setImageFile] = useState(null);
 
-    const addIngredient = () => setIngredients([...ingredients, '']);
-    const removeIngredient = (index) => setIngredients(ingredients.filter((_, i) => i !== index));
-    const addStep = () => setSteps([...steps, '']);
-    const removeStep = (index) => setSteps(steps.filter((_, i) => i !== index));
+    const addIngredient = () => setIngredients(prev => [...prev, '']);
+    const removeIngredient = (index) => setIngredients(prev => prev.filter((_, i) => i !== index));
+
+    const addStep = () => setSteps(prev => [...prev, '']);
+    const removeStep = (index) => setSteps(prev => prev.filter((_, i) => i !== index));
 
     const handleImageChange = (e) => {
         const file = e.target.files[0];
@@ -39,39 +41,35 @@ const CreateRecipe = ({ showToast }) => {
         formData.append('title', title);
         formData.append('cookTime', cookTime);
         formData.append('servings', servings);
-        formData.append('ingredients', ingredients.filter(i => i.trim() !== '').join(','));
-        formData.append('instructions', steps.filter(s => s.trim() !== '').join('.'));
+        formData.append('difficulty', difficulty); // ADDED TO FORMDATA
+
+        const cleanIngredients = ingredients.filter(i => i.trim() !== '');
+        const cleanSteps = steps.filter(s => s.trim() !== '');
+
+        formData.append('ingredients', JSON.stringify(cleanIngredients));
+        formData.append('instructions', JSON.stringify(cleanSteps));
 
         if (imageFile) {
             formData.append('image', imageFile);
         }
 
         try {
-            // NEW CLOUD NUMBER (Works everywhere in the world)
             const response = await fetch('https://kkb-kitchen-api.onrender.com/api/recipes/create', {
                 method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                },
+                headers: { 'Authorization': `Bearer ${token}` },
                 body: formData
             });
 
             if (response.ok) {
-                // SUCCESS: Notify, then Redirect
                 showToast("Recipe submitted for admin approval! 🚀");
-
-                // Clear state
                 setTitle('');
                 setIngredients(['']);
                 setSteps(['']);
+                setDifficulty('Easy');
                 setImagePreview(null);
                 setImageFile(null);
 
-                // WAIT 2 SECONDS THEN REDIRECT
-                setTimeout(() => {
-                    navigate('/'); // Takes them back to home page
-                }, 2000);
-
+                setTimeout(() => navigate('/'), 2000);
             } else {
                 const errorData = await response.json();
                 showToast(errorData.error || "Submission failed", "error");
@@ -109,8 +107,8 @@ const CreateRecipe = ({ showToast }) => {
                     </div>
 
                     {/* BASIC INFO */}
-                    <div className="grid md:grid-cols-2 gap-6">
-                        <div className="col-span-2">
+                    <div className="grid md:grid-cols-3 gap-6"> {/* Changed to grid-cols-3 */}
+                        <div className="col-span-3">
                             <label className="block text-sm font-bold text-gray-700 mb-2">Recipe Title</label>
                             <input
                                 type="text"
@@ -141,6 +139,19 @@ const CreateRecipe = ({ showToast }) => {
                                 className="w-full p-4 rounded-xl border border-gray-200 outline-none"
                             />
                         </div>
+                        {/* DIFFICULTY DROPDOWN ADDED BESIDE SERVINGS */}
+                        <div>
+                            <label className="flex items-center gap-2 text-sm font-bold text-gray-700 mb-2"><Utensils size={16} /> Difficulty</label>
+                            <select
+                                value={difficulty}
+                                onChange={(e) => setDifficulty(e.target.value)}
+                                className="w-full p-4 rounded-xl border border-gray-200 outline-none bg-white font-bold text-gray-600 appearance-none cursor-pointer focus:ring-2 focus:ring-orange-500"
+                            >
+                                <option value="Easy">Easy 🥗</option>
+                                <option value="Medium">Medium 🍳</option>
+                                <option value="Hard">Hard 👨‍🍳</option>
+                            </select>
+                        </div>
                     </div>
 
                     {/* INGREDIENTS */}
@@ -148,14 +159,17 @@ const CreateRecipe = ({ showToast }) => {
                         <h3 className="text-xl font-bold mb-4 flex items-center gap-2 text-orange-600"><Plus size={20} /> Ingredients</h3>
                         <div className="space-y-3">
                             {ingredients.map((ing, index) => (
-                                <div key={index} className="flex gap-2">
+                                <div key={`ing-${index}`} className="flex gap-2">
                                     <input
                                         type="text"
                                         value={ing}
                                         onChange={(e) => {
-                                            const newIngs = [...ingredients];
-                                            newIngs[index] = e.target.value;
-                                            setIngredients(newIngs);
+                                            const val = e.target.value;
+                                            setIngredients(prev => {
+                                                const newArr = [...prev];
+                                                newArr[index] = val;
+                                                return newArr;
+                                            });
                                         }}
                                         placeholder={`Ingredient ${index + 1}`}
                                         className="flex-1 p-3 border-b-2 border-gray-100 focus:border-orange-500 outline-none"
@@ -166,7 +180,9 @@ const CreateRecipe = ({ showToast }) => {
                                 </div>
                             ))}
                         </div>
-                        <button type="button" onClick={addIngredient} className="mt-4 text-orange-500 font-bold flex items-center gap-1 text-sm"><Plus size={16} /> Add another</button>
+                        <button type="button" onClick={addIngredient} className="mt-4 text-orange-500 font-bold flex items-center gap-1 text-sm bg-orange-50 px-3 py-1.5 rounded-lg hover:bg-orange-100 transition-colors">
+                            <Plus size={16} /> Add another
+                        </button>
                     </div>
 
                     {/* INSTRUCTIONS */}
@@ -174,28 +190,37 @@ const CreateRecipe = ({ showToast }) => {
                         <h3 className="text-xl font-bold mb-4 flex items-center gap-2 text-orange-600"><Utensils size={20} /> Instructions</h3>
                         <div className="space-y-4">
                             {steps.map((step, index) => (
-                                <div key={index} className="flex gap-4 items-start">
-                                    <span className="bg-orange-100 text-orange-600 w-8 h-8 rounded-full flex items-center justify-center font-bold shrink-0">{index + 1}</span>
+                                <div key={`step-${index}`} className="flex gap-4 items-start">
+                                    <span className="bg-orange-500 text-white w-8 h-8 rounded-full flex items-center justify-center font-bold shrink-0 shadow-md">
+                                        {index + 1}
+                                    </span>
                                     <textarea
                                         value={step}
                                         onChange={(e) => {
-                                            const newSteps = [...steps];
-                                            newSteps[index] = e.target.value;
-                                            setSteps(newSteps);
+                                            const val = e.target.value;
+                                            setSteps(prev => {
+                                                const newArr = [...prev];
+                                                newArr[index] = val;
+                                                return newArr;
+                                            });
                                         }}
-                                        placeholder={`Step ${index + 1}`}
-                                        className="flex-1 p-3 bg-gray-50 rounded-xl outline-none focus:ring-1 focus:ring-orange-500"
+                                        placeholder={`Step ${index + 1}: e.g. Wash the rice until clear...`}
+                                        className="flex-1 p-4 bg-gray-50 rounded-2xl outline-none focus:ring-2 focus:ring-orange-500 transition-all min-h-[100px]"
                                     />
                                     {steps.length > 1 && (
-                                        <button type="button" onClick={() => removeStep(index)} className="mt-2 text-red-400"><Trash2 size={18} /></button>
+                                        <button type="button" onClick={() => removeStep(index)} className="mt-2 text-red-400 hover:text-red-600">
+                                            <Trash2 size={18} />
+                                        </button>
                                     )}
                                 </div>
                             ))}
                         </div>
-                        <button type="button" onClick={addStep} className="mt-4 text-orange-500 font-bold flex items-center gap-1 text-sm"><Plus size={16} /> Add step</button>
+                        <button type="button" onClick={addStep} className="mt-4 w-full py-3 border-2 border-dashed border-orange-200 text-orange-500 font-bold rounded-2xl hover:bg-orange-50 transition-all flex items-center justify-center gap-2">
+                            <Plus size={16} /> Add Next Step
+                        </button>
                     </div>
 
-                    <button type="submit" className="w-full bg-orange-500 text-white py-5 rounded-2xl font-black text-xl shadow-lg hover:bg-orange-600 transition-all flex items-center justify-center gap-3">
+                    <button type="submit" className="w-full bg-orange-500 text-white py-5 rounded-[2rem] font-black text-xl shadow-lg shadow-orange-200 hover:bg-orange-600 hover:-translate-y-1 active:translate-y-0 transition-all flex items-center justify-center gap-3">
                         Submit Recipe <Send size={22} />
                     </button>
                 </form>

@@ -137,7 +137,7 @@ const Navbar = () => {
         </div>
 
         <Link to="/about" className="text-gray-600 font-bold hover:text-orange-600 transition-colors text-sm uppercase tracking-wider">About</Link>
-        <Link to="/" className="text-gray-600 font-bold hover:text-orange-600 transition-colors text-sm uppercase tracking-wider">Home</Link>
+        <Link to="/home" className="text-gray-600 font-bold hover:text-orange-600 transition-colors text-sm uppercase tracking-wider">Home</Link>
         <Link to="/create" className="text-gray-600 font-bold hover:text-orange-600 transition-colors text-sm uppercase tracking-wider">Create</Link>
 
         <div className="h-6 w-px bg-gray-200 mx-2" />
