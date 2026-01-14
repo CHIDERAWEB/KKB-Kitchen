@@ -61,7 +61,7 @@ const Homepage = () => {
                 <div className="flex flex-col lg:flex-row items-center justify-between gap-12">
                     <motion.div initial={{ opacity: 0, x: -50 }} animate={{ opacity: 1, x: 0 }} className="flex-1 space-y-6">
 
-                        {/* ADMIN LINK */}
+                        {/* ADMIN LINK - Kept as requested but cleaned for design */}
                         {user?.role === 'admin' && (
                             <Link to="/admin" className="inline-flex items-center gap-2 bg-black text-white px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-widest hover:bg-orange-600 transition-all">
                                 Admin Console <Zap size={10} fill="currentColor" />
@@ -202,7 +202,7 @@ const Homepage = () => {
                 )}
             </section>
 
-            {/* --- LOCATION --- */}
+            {/* --- LOCATION (FIXED MAP SOURCE) --- */}
             <section className="px-6 max-w-7xl mx-auto">
                 <div className="bg-gray-50 rounded-[4rem] p-12 flex flex-col lg:flex-row gap-12 items-center">
                     <div className="flex-1 space-y-6">
@@ -215,18 +215,28 @@ const Homepage = () => {
                         </div>
                     </div>
                     <div className="flex-[1.5] w-full h-[400px] rounded-[3rem] overflow-hidden shadow-2xl border-8 border-white">
-                        <iframe title="map" src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d126839.06498522771!2d3.33624!3d6.524379!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x103b8b2ae68280c1%3A0xdc9e87a3da572931!2sLagos!5e0!3m2!1sen!2sng!4v1641123456789!5m2!1sen!2sng" width="100%" height="100%" style={{ border: 0 }} loading="lazy"></iframe>
+                        <iframe
+                            title="map"
+                            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3964.728531934989!2d3.376269275886071!3d6.4289!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x103b8b1a62000001%3A0xb30e5e01b60f60!2sLagos!5e0!3m2!1sen!2sng!4v1700000000000!5m2!1sen!2sng"
+                            width="100%"
+                            height="100%"
+                            style={{ border: 0 }}
+                            allowFullScreen=""
+                            loading="lazy">
+                        </iframe>
                     </div>
                 </div>
             </section>
 
-            {/* --- CHALLENGE --- */}
+            {/* --- CHALLENGE (FIXED ARROWRIGHT WARNING) --- */}
             <motion.section className="mx-6 max-w-7xl lg:mx-auto bg-gray-900 rounded-[5rem] p-16 text-white relative overflow-hidden shadow-2xl">
                 <div className="relative z-10 lg:w-1/2">
                     <div className="inline-flex items-center gap-2 bg-orange-500 px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-[0.2em] mb-10 shadow-lg"><Trophy size={16} /> Jollof Wars 2026</div>
                     <h2 className="text-6xl md:text-7xl font-black mb-8 leading-[0.9] italic tracking-tighter">Show us your <br /> Smoky Flavor.</h2>
                     <p className="text-gray-400 mb-12 text-xl font-medium max-w-md">Upload your best recipe and compete for the "Golden Ladle" award.</p>
-                    <Link to="/add-recipe" className="bg-white text-black px-14 py-6 rounded-[2.5rem] font-black uppercase text-xs tracking-[0.2em] hover:bg-orange-500 hover:text-white transition-all shadow-xl inline-block">Join Challenge</Link>
+                    <Link to="/add-recipe" className="bg-white text-black px-14 py-6 rounded-[2.5rem] font-black uppercase text-xs tracking-[0.2em] hover:bg-orange-500 hover:text-white transition-all shadow-xl flex items-center gap-3 w-fit">
+                        Join Challenge <ArrowRight size={18} />
+                    </Link>
                 </div>
                 <div className="absolute top-0 right-0 w-1/2 h-full hidden lg:block">
                     <img src="https://images.unsplash.com/photo-1567073383164-ce59bda79c0e?q=80&w=2000&auto=format&fit=crop" className="h-full w-full object-cover opacity-40 mix-blend-overlay grayscale" alt="Jollof" />
