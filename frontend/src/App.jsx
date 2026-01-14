@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation, Navigate } from 'react-router-dom';
-import { AnimatePresence } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion'; // Added motion
 import { CheckCircle } from 'lucide-react';
 
 // COMPONENTS
@@ -35,36 +35,30 @@ function App() {
   const [toast, setToast] = useState({ show: false, message: "" });
   const [isLoading, setIsLoading] = useState(true);
 
-  // Initialize user from localStorage
   const [user, setUser] = useState(() => {
     const savedUser = localStorage.getItem('user');
     return savedUser ? JSON.parse(savedUser) : null;
   });
 
-  // ✅ FIX 1: Enhanced Sync Logic
-  // This ensures that when a user logs in, the state updates EVERYWHERE instantly.
+  // Sync Auth Logic
   useEffect(() => {
     const syncUser = () => {
       const savedUser = localStorage.getItem('user');
       setUser(savedUser ? JSON.parse(savedUser) : null);
     };
-
     window.addEventListener('storage', syncUser);
-    // Also check on focus to ensure multiple tabs stay in sync
     window.addEventListener('focus', syncUser);
-
     return () => {
       window.removeEventListener('storage', syncUser);
       window.removeEventListener('focus', syncUser);
     };
   }, []);
 
-  // ✅ FIX 2: Loader Timing
-  // Reduced time and ensured it doesn't "hang"
+  // Loader Logic
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsLoading(false);
-    }, 1000);
+    }, 1200); // Slightly more time for components to mount
     return () => clearTimeout(timer);
   }, []);
 
@@ -88,37 +82,44 @@ function App() {
     <Router>
       <ScrollToTop />
 
-      {/* ✅ FIX 3: AnimatePresence for the Loader */}
+      {/* 1. MASTER LOADER */}
       <AnimatePresence mode="wait">
         {isLoading && <Loader key="loader" />}
       </AnimatePresence>
 
-      {/* Main Container - Added relative and z-index to stay under Loader */}
-      <div className={`min-h-screen flex flex-col bg-white transition-opacity duration-500 ${isLoading ? 'opacity-0' : 'opacity-100'}`}>
+      {/* 2. MAIN APP CONTAINER */}
+      <div className="min-h-screen flex flex-col bg-white relative">
 
-        {/* Global Toast */}
-        <div className={`fixed bottom-10 left-1/2 -translate-x-1/2 z-[300] transition-all duration-500 transform ${toast.show ? "translate-y-0 opacity-100" : "translate-y-12 opacity-0 pointer-events-none"}`}>
-          <div className="bg-gray-900 text-white px-6 py-3 rounded-2xl shadow-2xl flex items-center gap-3 border border-white/10">
+        {/* GLOBAL TOAST - Higher Z-Index than Header */}
+        <div className={`fixed top-24 left-1/2 -translate-x-1/2 z-[200] transition-all duration-500 transform ${toast.show ? "translate-y-0 opacity-100" : "-translate-y-12 opacity-0 pointer-events-none"}`}>
+          <div className="bg-gray-900/95 backdrop-blur-md text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-3 border border-white/10">
             <CheckCircle className="text-green-400" size={18} />
-            <span className="font-medium whitespace-nowrap">{toast.message}</span>
+            <span className="text-sm font-bold uppercase tracking-widest">{toast.message}</span>
           </div>
         </div>
 
+        {/* 3. THE FIXED HEADER */}
         <Header user={user} setUser={setUser} />
 
-        <main className="flex-grow">
+        {/* 4. CONTENT WRAPPER - Added pt-24 to fix the "disappearing" homepage issue */}
+        <motion.main
+          initial={{ opacity: 0 }}
+          animate={{ opacity: isLoading ? 0 : 1 }}
+          transition={{ duration: 0.5 }}
+          className="flex-grow pt-20 lg:pt-24" // This pushes the Banner down
+        >
           <Routes>
             {/* HOME ROUTE */}
             <Route path="/" element={
-              <div className="animate-in fade-in duration-700">
+              <div className="animate-in fade-in zoom-in-95 duration-1000">
                 <Banner />
-                <div className="pb-20">
+                <div className="max-w-[1400px] mx-auto px-4 md:px-10 pb-20">
                   <RecipeGrid user={user} />
                 </div>
               </div>
             } />
 
-            {/* REDIRECTS & AUTH */}
+            {/* AUTH & REDIRECTS */}
             <Route path="/homepage" element={<Navigate to="/" replace />} />
             <Route path="/register" element={<Register triggerLoading={triggerLoading} showToast={showToast} onAuthSuccess={handleAuthSuccess} />} />
             <Route path="/login" element={<Login triggerLoading={triggerLoading} showToast={showToast} onAuthSuccess={handleAuthSuccess} />} />
@@ -126,7 +127,7 @@ function App() {
             {/* RECIPE DETAIL */}
             <Route path="/recipe/:id" element={<Recipejollofdetail showToast={showToast} user={user} />} />
 
-            {/* ADMIN & PROTECTED */}
+            {/* PROTECTED ROUTES */}
             <Route path="/admin" element={user?.role === 'admin' ? <AdminDashboard /> : <Navigate to="/" />} />
             <Route path="/create" element={<CreateRecipe showToast={showToast} user={user} />} />
             <Route path="/upload-recipe" element={<ProtectedRoutes><UploadRecipe showToast={showToast} triggerLoading={triggerLoading} /></ProtectedRoutes>} />
@@ -139,7 +140,7 @@ function App() {
             {/* CATCH-ALL */}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
-        </main>
+        </motion.main>
 
         <Footer />
       </div>
