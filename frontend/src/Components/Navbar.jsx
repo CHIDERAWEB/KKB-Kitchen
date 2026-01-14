@@ -137,18 +137,18 @@ const Navbar = () => {
 
         <div className="h-6 w-px bg-gray-200 mx-2" />
 
-        {/* AUTHENTICATION VIEW */}
+        {/* --- AUTHENTICATION VIEW --- */}
         {user ? (
           <div className="relative" ref={userRef}>
             <button
               onClick={() => setUserMenuOpen(!userMenuOpen)}
               className="relative flex items-center gap-3 p-1 pr-4 bg-white rounded-full hover:bg-orange-50 transition-all border border-gray-100 hover:border-orange-200 shadow-sm"
             >
+              {/* BIG RED DOT FOR ADMIN */}
               {user?.role === 'admin' && pendingCount > 0 && (
-                <span className="absolute -top-1 -left-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-600 text-[10px] font-bold text-white border-2 border-white shadow-md">
-                  {pendingCount}
-                </span>
+                <span className="flex h-3 w-3 shrink-0 rounded-full bg-red-600 shadow-[0_0_8px_rgba(220,38,38,0.5)] animate-pulse" />
               )}
+
               <img
                 src={user.picture || `https://ui-avatars.com/api/?name=${user.name}&background=f97316&color=fff`}
                 alt="Profile"
@@ -160,17 +160,28 @@ const Navbar = () => {
 
             <AnimatePresence>
               {userMenuOpen && (
-                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }} className="absolute right-0 mt-4 w-52 bg-white rounded-2xl shadow-2xl z-[150] border border-gray-100 p-2 overflow-hidden">
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 10 }}
+                  className="absolute right-0 mt-4 w-52 bg-white rounded-2xl shadow-2xl z-[150] border border-gray-100 p-2 overflow-hidden"
+                >
+                  {/* ADMIN PANEL */}
                   {user?.role === 'admin' && (
                     <button onClick={() => handleLinkClick('/admin')} className="flex items-center justify-between w-full px-4 py-3 text-sm font-black text-purple-600 hover:bg-purple-50 rounded-xl transition-all">
                       <div className="flex items-center gap-3"><FiShield /> Admin</div>
                       {pendingCount > 0 && <span className="bg-red-600 text-white text-[10px] px-2 py-0.5 rounded-full">{pendingCount} NEW</span>}
                     </button>
                   )}
+
+                  {/* PROFILE */}
                   <button onClick={() => handleLinkClick('/profile')} className="flex items-center gap-3 w-full text-left px-4 py-3 text-sm font-bold text-gray-600 hover:bg-orange-50 rounded-xl transition-all">
                     <FiUser className="text-orange-500" /> My Profile
                   </button>
+
                   <div className="h-px bg-gray-100 my-1 mx-2" />
+
+                  {/* LOGOUT */}
                   <button onClick={handleLogout} className="flex items-center gap-3 w-full text-left px-4 py-3 text-sm font-bold text-red-500 hover:bg-red-50 rounded-xl transition-all">
                     <FiLogOut /> Logout
                   </button>
