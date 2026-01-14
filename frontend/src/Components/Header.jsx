@@ -180,8 +180,8 @@ function Header() {
                       </Link>
                     )} */}
 
-                    
-                    <div className="flex items-center gap-2 bg-orange-50 border border-orange-100 px-3 py-1.5 rounded-full shadow-sm">
+
+                    {/* <div className="flex items-center gap-2 bg-orange-50 border border-orange-100 px-3 py-1.5 rounded-full shadow-sm">
                       <div className="h-7 w-7 rounded-full overflow-hidden border border-orange-200 bg-white">
                         {user?.picture ? (
                           <img src={user.picture} alt="Avatar" className="h-full w-full object-cover" />
@@ -192,15 +192,15 @@ function Header() {
                         )}
                       </div>
                       <span className="text-[11px] font-black uppercase text-gray-700 italic pr-1">Chef {user?.name?.split(' ')[0]}</span>
-                    </div>
+                    </div> */}
 
-                    <Link to="/upload-recipe" className="hidden md:flex items-center gap-2 bg-green-600 text-white px-5 py-2.5 rounded-full font-bold text-[10px] uppercase hover:bg-green-700 transition-all shadow-lg shadow-green-100">
+                    {/* <Link to="/upload-recipe" className="hidden md:flex items-center gap-2 bg-green-600 text-white px-5 py-2.5 rounded-full font-bold text-[10px] uppercase hover:bg-green-700 transition-all shadow-lg shadow-green-100">
                       <FiPlusCircle /> Upload
-                    </Link>
+                    </Link> */}
 
-                    <button onClick={handleLogout} className="h-10 w-10 flex items-center justify-center rounded-full bg-gray-100 text-gray-600 hover:bg-red-50 hover:text-red-500 transition-all">
+                    {/* <button onClick={handleLogout} className="h-10 w-10 flex items-center justify-center rounded-full bg-gray-100 text-gray-600 hover:bg-red-50 hover:text-red-500 transition-all">
                       <FiLogOut size={18} />
-                    </button>
+                    </button> */}
                   </div>
                 ) : (
                   <Link to="/register" className="bg-orange-600 text-white px-8 py-3 rounded-full font-bold text-xs uppercase tracking-widest hover:bg-orange-700 transition-all shadow-xl shadow-orange-200">
