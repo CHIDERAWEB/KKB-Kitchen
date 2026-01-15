@@ -24,6 +24,18 @@ import AdminDashboard from './page/AdminDashboard';
 import UploadRecipe from './page/UploadRecipe';
 import Homepage from './page/Homepage';
 
+// Animation wrapper for page content
+const PageWrapper = ({ children }) => (
+  <motion.div
+    initial={{ opacity: 0, y: 10 }}
+    animate={{ opacity: 1, y: 0 }}
+    exit={{ opacity: 0, y: -10 }}
+    transition={{ duration: 0.5, ease: "easeOut" }}
+  >
+    {children}
+  </motion.div>
+);
+
 function ScrollToTop() {
   const { pathname } = useLocation();
   useEffect(() => {
@@ -81,12 +93,10 @@ function App() {
     <Router>
       <ScrollToTop />
 
-      {/* MASTER LOADER */}
       <AnimatePresence mode="wait">
         {isLoading && <Loader key="loader" />}
       </AnimatePresence>
 
-      {/* Main content only renders fully when not loading to prevent layout jumps */}
       {!isLoading && (
         <motion.div
           initial={{ opacity: 0 }}
@@ -104,38 +114,39 @@ function App() {
           <Header user={user} setUser={setUser} />
 
           <main className="flex-grow pt-20 lg:pt-24">
-            <Routes>
-              {/* HOME ROUTE */}
-              <Route path="/" element={
-                <div className="animate-in fade-in zoom-in-95 duration-700">
-                  <Banner />
-                  <div className="max-w-[1400px] mx-auto px-4 md:px-10 pb-20">
-                    <RecipeGrid user={user} />
-                    <Homepage />
-                  </div>
-                </div>
-              } />
+            {/* Added AnimatePresence for smooth page-to-page transitions */}
+            <AnimatePresence mode="wait">
+              <Routes>
+                <Route path="/" element={
+                  <PageWrapper>
+                    <Banner />
+                    <div className="max-w-[1400px] mx-auto px-4 md:px-10 pb-20">
+                      <RecipeGrid user={user} />
+                      <Homepage />
+                    </div>
+                  </PageWrapper>
+                } />
 
-              {/* AUTH & REDIRECTS */}
-              <Route path="/register" element={<Register triggerLoading={triggerLoading} showToast={showToast} onAuthSuccess={handleAuthSuccess} />} />
-              <Route path="/login" element={<Login triggerLoading={triggerLoading} showToast={showToast} onAuthSuccess={handleAuthSuccess} />} />
+                <Route path="/register" element={<Register triggerLoading={triggerLoading} showToast={showToast} onAuthSuccess={handleAuthSuccess} />} />
+                <Route path="/login" element={<Login triggerLoading={triggerLoading} showToast={showToast} onAuthSuccess={handleAuthSuccess} />} />
+                <Route path="/recipe/:id" element={<Recipejollofdetail showToast={showToast} user={user} />} />
 
-              {/* RECIPE DETAIL */}
-              <Route path="/recipe/:id" element={<Recipejollofdetail showToast={showToast} user={user} />} />
+                {/* ADMIN & PROTECTED ROUTES MAINTAINED */}
+                <Route path="/admin" element={user?.role === 'admin' ? <AdminDashboard /> : <Navigate to="/" />} />
+                <Route path="/create" element={<PageWrapper><CreateRecipe showToast={showToast} user={user} /></PageWrapper>} />
+                <Route path="/upload-recipe" element={<ProtectedRoutes><UploadRecipe showToast={showToast} triggerLoading={triggerLoading} /></ProtectedRoutes>} />
 
-              {/* PROTECTED ROUTES */}
-              <Route path="/admin" element={user?.role === 'admin' ? <AdminDashboard /> : <Navigate to="/" />} />
-              <Route path="/create" element={<CreateRecipe showToast={showToast} user={user} />} />
-              <Route path="/upload-recipe" element={<ProtectedRoutes><UploadRecipe showToast={showToast} triggerLoading={triggerLoading} /></ProtectedRoutes>} />
+                <Route path="/planner" element={<PageWrapper><MealPlanner user={user} /></PageWrapper>} />
+                <Route path="/shopping-list" element={<PageWrapper><ShoppingList user={user} /></PageWrapper>} />
 
-              <Route path="/planner" element={<MealPlanner user={user} />} />
-              <Route path="/shopping-list" element={<ShoppingList user={user} />} />
-              <Route path="/about" element={<About />} />
-              <Route path="/favorites" element={<Favorites user={user} />} />
+                {/* ABOUT SECTION ANIMATED */}
+                <Route path="/about" element={<PageWrapper><About /></PageWrapper>} />
 
-              {/* CATCH-ALL */}
-              <Route path="*" element={<Navigate to="/" replace />} />
-            </Routes>
+                <Route path="/favorites" element={<PageWrapper><Favorites user={user} /></PageWrapper>} />
+
+                <Route path="*" element={<Navigate to="/" replace />} />
+              </Routes>
+            </AnimatePresence>
           </main>
 
           <Footer />
