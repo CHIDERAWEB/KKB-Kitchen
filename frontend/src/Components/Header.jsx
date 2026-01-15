@@ -12,7 +12,6 @@ import Navbar from './Navbar';
 
 const socket = io('https://kkb-kitchen-api.onrender.com');
 
-// 1. Animation Variants for Staggered Entry
 const navContainerVariants = {
   hidden: { opacity: 0 },
   visible: {
@@ -33,13 +32,11 @@ const navItemVariants = {
 function Header() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery] = useState("");
-  const [searchResults, setSearchResults] = useState([]);
-  const [searchHistory, setSearchHistory] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [pendingCount, setPendingCount] = useState(0);
   const [showToast, setShowToast] = useState(false);
-  const [toastMessage, setToastMessage] = useState("Recipe has been approved!");
+  const [toastMessage, setToastMessage] = useState("");
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -53,17 +50,26 @@ function Header() {
     token: localStorage.getItem('token')
   });
 
+  // UPDATED SOCKET LOGIC: Listening for both creation and approval
   useEffect(() => {
-    socket.on("recipeApproved", (data) => {
-      setToastMessage(`"${data.title}" has been approved!`);
+    const handleNotification = (data, messagePrefix) => {
+      setToastMessage(`${messagePrefix}: "${data.title}"`);
       setShowToast(true);
       if (user?.role === 'admin') fetchAdminStats();
       setTimeout(() => setShowToast(false), 5000);
-    });
-    return () => socket.off("recipeApproved");
+    };
+
+    socket.on("recipeApproved", (data) => handleNotification(data, "Recipe Approved"));
+    socket.on("recipeCreated", (data) => handleNotification(data, "New Recipe Created"));
+
+    return () => {
+      socket.off("recipeApproved");
+      socket.off("recipeCreated");
+    };
   }, [user]);
 
   const fetchAdminStats = async () => {
+    if (!user?.token) return;
     try {
       const res = await fetch('https://kkb-kitchen-api.onrender.com/api/admin/pending-count', {
         headers: { 'Authorization': `Bearer ${user.token}` }
@@ -82,44 +88,6 @@ function Header() {
   }, [user, location.pathname]);
 
   useEffect(() => {
-    const saved = JSON.parse(localStorage.getItem('kkb_history') || '[]');
-    setSearchHistory(saved);
-  }, []);
-
-  useEffect(() => {
-    const fetchResults = async () => {
-      if (query.length > 1) {
-        setIsSearching(true);
-        try {
-          const res = await fetch(`https://kkb-kitchen-api.onrender.com/api/recipes/search?query=${query}`);
-          const data = await res.json();
-          setSearchResults(data);
-        } catch (err) { console.error(err); }
-        setIsSearching(false);
-      } else {
-        setSearchResults([]);
-      }
-    };
-    const timer = setTimeout(fetchResults, 300);
-    return () => clearTimeout(timer);
-  }, [query]);
-
-  const handleResultClick = (recipeId, title) => {
-    const updated = [title, ...searchHistory.filter(h => h !== title)].slice(0, 5);
-    setSearchHistory(updated);
-    localStorage.setItem('kkb_history', JSON.stringify(updated));
-    setSearchOpen(false);
-    setQuery("");
-    navigate(`/Recipejollofdetail/${recipeId}`);
-  };
-
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    setUser(null);
-    navigate('/login');
-  };
-
-  useEffect(() => {
     const handleClick = (e) => {
       if (profileRef.current && !profileRef.current.contains(e.target)) setProfileOpen(false);
       if (searchWrapperRef.current && !searchWrapperRef.current.contains(e.target)) setSearchOpen(false);
@@ -128,15 +96,22 @@ function Header() {
     return () => document.removeEventListener("mousedown", handleClick);
   }, []);
 
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    setUser(null);
+    navigate('/login');
+  };
+
   return (
     <div className="fixed top-0 left-0 right-0 flex flex-col items-center z-[100] px-4 py-6 pointer-events-none">
+      {/* TOAST NOTIFICATION */}
       <AnimatePresence>
         {showToast && (
           <motion.div
             initial={{ y: -100, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: -100, opacity: 0 }}
-            className="absolute top-4 bg-white border border-green-100 shadow-2xl px-6 py-4 rounded-[2rem] flex items-center gap-4 pointer-events-auto"
+            className="absolute top-4 bg-white border border-green-100 shadow-2xl px-6 py-4 rounded-[2rem] flex items-center gap-4 pointer-events-auto z-[110]"
           >
             <div className="bg-green-100 p-2 rounded-full text-green-600">
               <FiCheckCircle size={20} />
@@ -162,40 +137,41 @@ function Header() {
           </div>
         </Link>
 
-        {/* 2. ANIMATED NAVIGATION */}
         <motion.nav
           variants={navContainerVariants}
           initial="hidden"
           animate="visible"
           className="hidden lg:flex items-center justify-center gap-10 flex-1 h-full"
         >
-          <motion.div variants={navItemVariants}>
-            <NavLink to="/" label="Home" />
-          </motion.div>
+          <motion.div variants={navItemVariants}><NavLink to="/" label="Home" /></motion.div>
+          <motion.div variants={navItemVariants}><NavLink to="/about" label="About" /></motion.div>
 
-          <motion.div variants={navItemVariants}>
-            <NavLink to="/about" label="About" />
-          </motion.div>
-
-          <motion.div variants={navItemVariants} className="relative group h-full flex flex-col items-center justify-center">
-            <motion.span whileHover={{ y: -2 }} className="nav-link flex items-center gap-1 cursor-pointer group-hover:text-orange-600 transition-all">
-              Discover <FiChevronDown className="group-hover:rotate-180 transition-transform duration-300" />
-            </motion.span>
-            <div className="absolute bottom-6 left-0 w-0 h-0.5 bg-orange-600 transition-all duration-300 group-hover:w-full" />
+          <motion.div variants={navItemVariants} className="relative group h-full flex items-center justify-center">
+            <div className="flex flex-col items-center justify-center cursor-pointer">
+              <span className="nav-link flex items-center gap-1 group-hover:text-orange-600 transition-all">
+                Discover <FiChevronDown className="group-hover:rotate-180 transition-transform duration-300" />
+              </span>
+              <div className="absolute bottom-4 left-0 w-0 h-0.5 bg-orange-600 transition-all duration-300 group-hover:w-full" />
+            </div>
             <div className="dropdown-menu">
-              <DropdownItem to="/discover?cat=breakfast" icon={<FiCoffee />} title="Breakfast" subtitle="Morning" />
-              <DropdownItem to="/discover?cat=junk" icon={<FiSmile />} title="Junk Food" subtitle="Treats" />
+              <DropdownItem to="/discover?cat=junk" icon={<FiSmile />} title="Junk" subtitle="Quick Treats" />
+              <DropdownItem to="/discover?cat=breakfast" icon={<FiCoffee />} title="Breakfast" subtitle="Morning Vibes" />
+              <DropdownItem to="/discover?cat=dinner" icon={<FiZap />} title="Dinner" subtitle="Night Specials" />
             </div>
           </motion.div>
 
-          <motion.div variants={navItemVariants} className="relative group h-full flex flex-col items-center justify-center">
-            <motion.span whileHover={{ y: -2 }} className="nav-link flex items-center gap-1 cursor-pointer group-hover:text-orange-600 transition-all">
-              Kitchen <FiChevronDown className="group-hover:rotate-180 transition-transform duration-300" />
-            </motion.span>
-            <div className="absolute bottom-6 left-0 w-0 h-0.5 bg-orange-600 transition-all duration-300 group-hover:w-full" />
+          <motion.div variants={navItemVariants} className="relative group h-full flex items-center justify-center">
+            <div className="flex flex-col items-center justify-center cursor-pointer">
+              <span className="nav-link flex items-center gap-1 group-hover:text-orange-600 transition-all">
+                Kitchen <FiChevronDown className="group-hover:rotate-180 transition-transform duration-300" />
+              </span>
+              <div className="absolute bottom-4 left-0 w-0 h-0.5 bg-orange-600 transition-all duration-300 group-hover:w-full" />
+            </div>
             <div className="dropdown-menu">
               <DropdownItem to="/create" icon={<FiPlusCircle />} title="Create" subtitle="New magic" />
-              <DropdownItem to="/favorites" icon={<FiHeart />} title="Favorites" subtitle="Saved" />
+              <DropdownItem to="/favorites" icon={<FiHeart />} title="Favourite" subtitle="Your Loves" />
+              <DropdownItem to="/shopping-list" icon={<FiCheckCircle />} title="Shopping List" subtitle="Groceries" />
+              <DropdownItem to="/planner" icon={<FiBarChart2 />} title="Meal Planner" subtitle="Schedule" />
             </div>
           </motion.div>
         </motion.nav>
@@ -279,7 +255,6 @@ function Header() {
                   <input autoFocus value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search recipes..." className="w-full px-6 h-14 outline-none font-bold text-gray-800 bg-transparent text-xl" />
                   <FiX onClick={() => { setSearchOpen(false); setQuery("") }} className="cursor-pointer text-gray-300 hover:text-red-500" size={30} />
                 </div>
-                {/* Search result content remains the same... */}
               </div>
             </motion.div>
           )}
@@ -289,16 +264,15 @@ function Header() {
       <style>{`
         .nav-link { @apply text-[11px] font-black uppercase text-gray-400 transition-colors tracking-[0.2em] cursor-pointer; }
         .dropdown-menu { 
-          @apply absolute top-full left-1/2 -translate-x-1/2 w-[280px] bg-white rounded-[2.5rem] shadow-2xl 
+          @apply absolute top-[70%] left-1/2 -translate-x-1/2 w-[280px] bg-white rounded-[2.5rem] shadow-2xl 
           border border-gray-100 p-3 opacity-0 invisible translate-y-6 group-hover:opacity-100 group-hover:visible 
-          group-hover:translate-y-0 group-hover:pointer-events-auto pointer-events-none transition-all duration-500 ease-out z-[200]; 
+          group-hover:translate-y-0 transition-all duration-500 ease-out z-[200] pointer-events-auto; 
         }
       `}</style>
     </div>
   );
 }
 
-// 3. Helper Component for Nav Items
 const NavLink = ({ to, label }) => (
   <Link to={to} className="relative group py-2">
     <motion.span whileHover={{ y: -2 }} className="nav-link inline-block">
