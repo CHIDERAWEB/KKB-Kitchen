@@ -48,27 +48,40 @@ function Header() {
   const profileRef = useRef(null);
   const searchWrapperRef = useRef(null);
 
-  // --- 1. IDENTITY LOGIC ---
-  const [user, setUser] = useState(() => {
-    const savedUser = JSON.parse(localStorage.getItem('user'));
-    const token = localStorage.getItem('token');
-    if (!savedUser || !token) return null;
-    return {
-      ...savedUser,
-      displayName: savedUser.name?.toLowerCase().startsWith('chief')
-        ? savedUser.name
-        : `Chief ${savedUser.name?.split(' ')[0] || 'KKB'}`,
-      picture: savedUser.avatar || savedUser.picture || `https://ui-avatars.com/api/?name=${savedUser.name}&background=ea580c&color=fff`,
-      token
+  // --- 1. UPDATED IDENTITY LOGIC (FIXED) ---
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    const syncUser = () => {
+      const savedUser = JSON.parse(localStorage.getItem('user'));
+      const token = localStorage.getItem('token');
+
+      if (savedUser && token) {
+        setUser({
+          ...savedUser,
+          displayName: savedUser.name?.toLowerCase().startsWith('chief')
+            ? savedUser.name
+            : `Chief ${savedUser.name?.split(' ')[0] || 'KKB'}`,
+          picture: savedUser.avatar || savedUser.picture || `https://ui-avatars.com/api/?name=${savedUser.name}&background=ea580c&color=fff`,
+          token
+        });
+      } else {
+        setUser(null);
+      }
     };
-  });
+
+    syncUser();
+    // Listen for storage changes if login happens in another tab
+    window.addEventListener('storage', syncUser);
+    return () => window.removeEventListener('storage', syncUser);
+  }, [location.pathname]); // Re-check whenever the route changes
 
   // --- 2. RESTRICTION GATEKEEPER ---
   const handleRestrictedAction = (e, destination) => {
-    if (user) return; // Allow access if logged in
+    if (user) return;
 
-    e.preventDefault(); // Stop navigation
-    setSearchOpen(false); // Close search if open
+    e.preventDefault();
+    setSearchOpen(false);
 
     const isReturningUser = localStorage.getItem('was_user_before');
 
@@ -182,7 +195,6 @@ function Header() {
   }, []);
 
   const handleLogout = () => {
-    // Set flag before clearing so we know they were a user
     localStorage.setItem('was_user_before', 'true');
     localStorage.removeItem('token');
     localStorage.removeItem('user');
@@ -233,18 +245,11 @@ function Header() {
               <span className="nav-link">Discover</span>
               <FiChevronDown className="text-gray-400 transition-transform duration-300 group-hover:rotate-180 group-hover:text-orange-600" />
             </div>
-
-            {/* Dropdown Container with Pointer Arrow */}
-            <div className="absolute top-full left-0 mt-3 w-64 bg-white rounded-[2rem] shadow-[0_20px_50px_rgba(0,0,0,0.15)] border border-gray-50 p-4 opacity-0 invisible group-hover:opacity-100 group-hover:visible translate-y-2 group-hover:translate-y-0 transition-all duration-300 z-50">
-
-              {/* Pointer Arrow */}
+            <div className="dropdown-menu">
               <div className="absolute -top-2 left-6 w-4 h-4 bg-white rotate-45 border-t border-l border-gray-50"></div>
-
-              <div className="flex flex-col gap-1 relative z-10">
-                <DropdownItem onClick={(e) => handleRestrictedAction(e, '/discover')} to="/discover?cat=junk" icon={<FiSmile />} title="Junk" subtitle="Quick Treats" />
-                <DropdownItem onClick={(e) => handleRestrictedAction(e, '/discover')} to="/discover?cat=breakfast" icon={<FiCoffee />} title="Breakfast" subtitle="Morning Vibes" />
-                <DropdownItem onClick={(e) => handleRestrictedAction(e, '/discover')} to="/discover?cat=dinner" icon={<FiZap />} title="Dinner" subtitle="Night Specials" />
-              </div>
+              <DropdownItem onClick={(e) => handleRestrictedAction(e, '/discover')} to="/discover?cat=junk" icon={<FiSmile />} title="Junk" subtitle="Quick Treats" />
+              <DropdownItem onClick={(e) => handleRestrictedAction(e, '/discover')} to="/discover?cat=breakfast" icon={<FiCoffee />} title="Breakfast" subtitle="Morning Vibes" />
+              <DropdownItem onClick={(e) => handleRestrictedAction(e, '/discover')} to="/discover?cat=dinner" icon={<FiZap />} title="Dinner" subtitle="Night Specials" />
             </div>
           </motion.div>
 
@@ -254,18 +259,11 @@ function Header() {
               <span className="nav-link">Kitchen</span>
               <FiChevronDown className="text-gray-400 transition-transform duration-300 group-hover:rotate-180 group-hover:text-orange-600" />
             </div>
-
-            {/* Dropdown Container with Pointer Arrow */}
-            <div className="absolute top-full left-0 mt-3 w-64 bg-white rounded-[2rem] shadow-[0_20px_50px_rgba(0,0,0,0.15)] border border-gray-50 p-4 opacity-0 invisible group-hover:opacity-100 group-hover:visible translate-y-2 group-hover:translate-y-0 transition-all duration-300 z-50">
-
-              {/* Pointer Arrow */}
+            <div className="dropdown-menu">
               <div className="absolute -top-2 left-6 w-4 h-4 bg-white rotate-45 border-t border-l border-gray-50"></div>
-
-              <div className="flex flex-col gap-1 relative z-10">
-                <DropdownItem onClick={(e) => handleRestrictedAction(e, '/create')} to="/create" icon={<FiPlusCircle />} title="Create" subtitle="New magic" />
-                <DropdownItem onClick={(e) => handleRestrictedAction(e, '/favorites')} to="/favorites" icon={<FiHeart />} title="Favourite" subtitle="Your Loves" />
-                <DropdownItem onClick={(e) => handleRestrictedAction(e, '/planner')} to="/planner" icon={<FiBarChart2 />} title="Meal Planner" subtitle="Schedule" />
-              </div>
+              <DropdownItem onClick={(e) => handleRestrictedAction(e, '/create')} to="/create" icon={<FiPlusCircle />} title="Create" subtitle="New magic" />
+              <DropdownItem onClick={(e) => handleRestrictedAction(e, '/favorites')} to="/favorites" icon={<FiHeart />} title="Favourite" subtitle="Your Loves" />
+              <DropdownItem onClick={(e) => handleRestrictedAction(e, '/planner')} to="/planner" icon={<FiBarChart2 />} title="Meal Planner" subtitle="Schedule" />
             </div>
           </motion.div>
         </motion.nav>
@@ -279,7 +277,7 @@ function Header() {
           {user ? (
             <div className="relative" ref={profileRef}>
               <motion.button whileHover={{ scale: 1.02 }} onClick={() => setProfileOpen(!profileOpen)}
-                className="flex items-center gap-3 bg-white border border-gray-100 p-1.5 pr-4 rounded-full shadow-sm">
+                className="flex items-center gap-3 bg-white border border-gray-100 p-1.5 pr-4 rounded-full shadow-sm cursor-pointer">
                 <div className="relative">
                   <img src={user.picture} className="h-9 w-9 rounded-full object-cover border-2 border-orange-50" alt="Avatar" />
                   {user.role === 'admin' && pendingCount > 0 && (
@@ -296,7 +294,12 @@ function Header() {
               </motion.button>
               <AnimatePresence>
                 {profileOpen && (
-                  <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 15 }} className="absolute top-[120%] right-0 w-64 bg-white rounded-[2.5rem] shadow-2xl border border-gray-50 p-3 z-[300]">
+                  <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 15 }}
+                    className="absolute top-[120%] right-0 w-64 bg-white rounded-[2.5rem] shadow-2xl border border-gray-50 p-3 z-[300]">
+
+                    {/* Added Profile Arrow for consistency */}
+                    <div className="absolute -top-2 right-6 w-4 h-4 bg-white rotate-45 border-t border-l border-gray-50"></div>
+
                     {user.role === 'admin' && (
                       <DropdownItem to="/admin" icon={<FiLayout />} title="Admin Panel" subtitle={`Manage (${pendingCount})`} />
                     )}
@@ -321,8 +324,7 @@ function Header() {
           )}
           <Navbar user={user} />
         </div>
-
-        {/* --- ADVANCED SEARCH OVERLAY --- */}
+        {/* ... (Search Overlay and Styles remain untouched) ... */}
         <AnimatePresence>
           {searchOpen && (
             <motion.div ref={searchWrapperRef} initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}
@@ -371,7 +373,7 @@ function Header() {
       <style>{`
         .nav-link { @apply text-[11px] font-black uppercase text-gray-400 transition-colors tracking-[0.2em] cursor-pointer hover:text-orange-600; }
         .dropdown-menu { 
-          @apply absolute top-[100%] left-0 w-[280px] bg-white rounded-[2.5rem] shadow-2xl 
+          @apply absolute top-[100%] left-0 w-[280px] bg-white rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.15)] 
           border border-gray-100 p-3 opacity-0 invisible translate-y-4 group-hover:opacity-100 group-hover:visible 
           group-hover:translate-y-0 transition-all duration-300 ease-out z-[200] pointer-events-auto flex flex-col gap-1; 
         }
