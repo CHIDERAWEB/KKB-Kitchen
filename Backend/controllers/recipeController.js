@@ -1,7 +1,7 @@
 import { prisma } from '../config/db.js';
 import { v2 as cloudinary } from 'cloudinary';
 
-// 1. CREATE RECIPE (Maintained your logic)
+
 export const createRecipe = async (req, res) => {
     try {
         if (!req.file) {
@@ -27,6 +27,15 @@ export const createRecipe = async (req, res) => {
             }
         });
 
+        // NOTIFICATION LOGIC: Emit to all connected clients
+        const io = req.app.get('socketio');
+        if (io) {
+            io.emit("recipeCreated", {
+                title: newRecipe.title,
+                author: req.user.name || "A Chef"
+            });
+        }
+
         return res.status(201).json({ message: "Recipe created!", recipe: newRecipe });
 
     } catch (err) {
@@ -35,7 +44,7 @@ export const createRecipe = async (req, res) => {
     }
 };
 
-// 2. GET ALL RECIPES
+
 export const getAllRecipes = async (req, res) => {
     try {
         const recipes = await prisma.recipe.findMany({
@@ -48,7 +57,7 @@ export const getAllRecipes = async (req, res) => {
     }
 };
 
-// 3. GET SINGLE RECIPE (UPDATED: Added view increment)
+
 export const getRecipeById = async (req, res) => {
     try {
         const { id } = req.params;
@@ -56,7 +65,6 @@ export const getRecipeById = async (req, res) => {
 
         if (isNaN(recipeId)) return res.status(400).json({ message: "Invalid ID format" });
 
-        // This is the part that was missing! It increments views on every fetch
         const recipe = await prisma.recipe.update({
             where: { id: recipeId },
             data: { views: { increment: 1 } },
@@ -75,15 +83,13 @@ export const getRecipeById = async (req, res) => {
     }
 }
 
-// 4. NEW: UPDATE RECIPE (For the Admin Edit Button)
+
 export const updateRecipe = async (req, res) => {
     try {
         const { id } = req.params;
         const recipeId = parseInt(id);
-
         let updateData = { ...req.body };
 
-        // If a new image is uploaded, handle Cloudinary
         if (req.file) {
             const result = await cloudinary.uploader.upload(req.file.path, { folder: 'recipes' });
             updateData.imageUrl = result.secure_url;
@@ -98,9 +104,15 @@ export const updateRecipe = async (req, res) => {
                     : updateData.ingredients,
                 instructions: updateData.instructions,
                 imageUrl: updateData.imageUrl,
-                status: updateData.status // Can change back to pending or approved
+                status: updateData.status
             }
         });
+
+
+        if (updateData.status === 'approved') {
+            const io = req.app.get('socketio');
+            if (io) io.emit("recipeApproved", { title: updated.title });
+        }
 
         res.json({ message: "Recipe updated successfully!", recipe: updated });
     } catch (error) {
@@ -108,7 +120,29 @@ export const updateRecipe = async (req, res) => {
     }
 };
 
-// 5. TOGGLE LIKE (Ensured consistency)
+
+export const searchRecipes = async (req, res) => {
+    try {
+        const { q } = req.query;
+
+        if (!q) return res.json([]);
+
+        const results = await prisma.recipe.findMany({
+            where: {
+                title: {
+                    contains: q,
+                    mode: 'insensitive'
+                }
+            },
+            include: { author: { select: { name: true } } }
+        });
+        res.json(results);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+
 export const toggleLike = async (req, res) => {
     try {
         const { id } = req.params;
@@ -136,8 +170,6 @@ export const toggleLike = async (req, res) => {
     }
 };
 
-// ... Rest of your functions (getPopular, search, addComment, getPendingCount) remain exactly the same ...
-// Just make sure to EXPORT the new updateRecipe function
 
 export const getPopularRecipes = async (req, res) => {
     try {
@@ -152,41 +184,45 @@ export const getPopularRecipes = async (req, res) => {
     }
 };
 
-export const searchRecipes = async (req, res) => {
+
+export const addComment = async (req, res) => {
     try {
-        const { query } = req.query;
-        const results = await prisma.recipe.findMany({
-            where: {
-                title: { contains: query, mode: 'insensitive' }
-            },
-            include: { author: { select: { name: true } } }
+        const { id } = req.params;
+        const { text, userName } = req.body;
+        const recipeId = parseInt(id);
+        const userId = req.user.id;
+
+        const newComment = await prisma.comment.create({
+            data: {
+                text,
+                userName: userName || "Anonymous Chef",
+                recipeId: recipeId,
+                userId: userId
+            }
         });
-        res.json(results);
+
+        res.status(201).json(newComment);
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        res.status(500).json({ message: "Could not post comment" });
     }
 };
 
-// --- UPDATE COMMENT (NEW: For the Save button) ---
+
 export const updateComment = async (req, res) => {
     try {
-        const { id } = req.params; // Comment ID
+        const { id } = req.params;
         const { text } = req.body;
         const commentId = parseInt(id);
         const userId = req.user.id;
         const userRole = req.user.role;
 
-        // 1. Find the comment
         const comment = await prisma.comment.findUnique({ where: { id: commentId } });
         if (!comment) return res.status(404).json({ message: "Comment not found" });
 
-        // 2. Security: Only the creator of the comment or an Admin can edit it
-        // We check if the comment.userId matches the logged-in user
         if (comment.userId !== userId && userRole !== 'admin') {
             return res.status(403).json({ message: "You can only edit your own comments" });
         }
 
-        // 3. Update it
         const updatedComment = await prisma.comment.update({
             where: { id: commentId },
             data: { text: text }
@@ -194,60 +230,20 @@ export const updateComment = async (req, res) => {
 
         res.json(updatedComment);
     } catch (error) {
-        console.error("Update Comment Error:", error);
         res.status(500).json({ error: "Failed to update comment" });
     }
 };
 
-// --- ADD COMMENT (UPDATED: Added userId for security) ---
-export const addComment = async (req, res) => {
-    try {
-        const { id } = req.params; // Recipe ID
-        const { text, userName } = req.body;
-        const recipeId = parseInt(id);
-        const userId = req.user.id; // From your auth middleware
-
-        const newComment = await prisma.comment.create({
-            data: {
-                text,
-                userName: userName || "Anonymous Chef",
-                recipeId: recipeId,
-                userId: userId // CRITICAL: This links the comment to your account
-            }
-        });
-
-        res.status(201).json(newComment);
-    } catch (error) {
-        console.error("Comment Error:", error);
-        res.status(500).json({ message: "Could not post comment" });
-    }
-};
-
-export const getPendingCount = async (req, res) => {
-    try {
-        const count = await prisma.recipe.count({
-            where: { status: 'pending' }
-        });
-        res.json({ count });
-    } catch (error) {
-        res.status(500).json({ error: "Error counting pending recipes" });
-    }
-};
 
 export const deleteComment = async (req, res) => {
     try {
-        const { id } = req.params; // Comment ID
+        const { id } = req.params;
         const commentId = parseInt(id);
-        const userId = req.user.id; // From your auth middleware
         const userRole = req.user.role;
 
         const comment = await prisma.comment.findUnique({ where: { id: commentId } });
-
         if (!comment) return res.status(404).json({ message: "Comment not found" });
 
-        // Security: Only Admin or the Author can delete
-        // Note: This assumes you store 'authorId' in your Comment model. 
-        // If you only store 'userName', check against the name or allow Admin only.
         if (userRole !== 'admin') {
             return res.status(403).json({ message: "Not authorized to delete this" });
         }
@@ -259,3 +255,14 @@ export const deleteComment = async (req, res) => {
     }
 };
 
+// 11. GET PENDING COUNT
+export const getPendingCount = async (req, res) => {
+    try {
+        const count = await prisma.recipe.count({
+            where: { status: 'pending' }
+        });
+        res.json({ count });
+    } catch (error) {
+        res.status(500).json({ error: "Error counting pending recipes" });
+    }
+};
