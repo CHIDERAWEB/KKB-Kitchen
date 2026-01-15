@@ -239,17 +239,21 @@ function Header() {
           <motion.div variants={navItemVariants}><Link to="/" className="nav-link">Home</Link></motion.div>
           <motion.div variants={navItemVariants}><Link to="/about" className="nav-link">About</Link></motion.div>
 
+
           {/* DISCOVER DROPDOWN */}
           <motion.div variants={navItemVariants} className="relative group h-full flex items-center">
             <div className="flex items-center gap-1 cursor-pointer py-2 group-hover:text-orange-600 transition-all">
               <span className="nav-link">Discover</span>
               <FiChevronDown className="text-gray-400 transition-transform duration-300 group-hover:rotate-180 group-hover:text-orange-600" />
             </div>
-            <div className="dropdown-menu">
-              <div className="absolute -top-2 left-6 w-4 h-4 bg-white rotate-45 border-t border-l border-gray-50"></div>
-              <DropdownItem onClick={(e) => handleRestrictedAction(e, '/discover')} to="/discover?cat=junk" icon={<FiSmile />} title="Junk" subtitle="Quick Treats" />
-              <DropdownItem onClick={(e) => handleRestrictedAction(e, '/discover')} to="/discover?cat=breakfast" icon={<FiCoffee />} title="Breakfast" subtitle="Morning Vibes" />
-              <DropdownItem onClick={(e) => handleRestrictedAction(e, '/discover')} to="/discover?cat=dinner" icon={<FiZap />} title="Dinner" subtitle="Night Specials" />
+
+            {/* Fixed Dropdown Container */}
+            <div className="absolute top-full left-0 mt-2 w-64 bg-white rounded-3xl shadow-2xl border border-gray-100 p-4 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-50">
+              <div className="flex flex-col gap-2">
+                <DropdownItem onClick={(e) => handleRestrictedAction(e, '/discover')} to="/discover?cat=junk" icon={<FiSmile />} title="Junk" subtitle="Quick Treats" />
+                <DropdownItem onClick={(e) => handleRestrictedAction(e, '/discover')} to="/discover?cat=breakfast" icon={<FiCoffee />} title="Breakfast" subtitle="Morning Vibes" />
+                <DropdownItem onClick={(e) => handleRestrictedAction(e, '/discover')} to="/discover?cat=dinner" icon={<FiZap />} title="Dinner" subtitle="Night Specials" />
+              </div>
             </div>
           </motion.div>
 
@@ -259,11 +263,14 @@ function Header() {
               <span className="nav-link">Kitchen</span>
               <FiChevronDown className="text-gray-400 transition-transform duration-300 group-hover:rotate-180 group-hover:text-orange-600" />
             </div>
-            <div className="dropdown-menu">
-              <div className="absolute -top-2 left-6 w-4 h-4 bg-white rotate-45 border-t border-l border-gray-50"></div>
-              <DropdownItem onClick={(e) => handleRestrictedAction(e, '/create')} to="/create" icon={<FiPlusCircle />} title="Create" subtitle="New magic" />
-              <DropdownItem onClick={(e) => handleRestrictedAction(e, '/favorites')} to="/favorites" icon={<FiHeart />} title="Favourite" subtitle="Your Loves" />
-              <DropdownItem onClick={(e) => handleRestrictedAction(e, '/planner')} to="/planner" icon={<FiBarChart2 />} title="Meal Planner" subtitle="Schedule" />
+
+            {/* Fixed Dropdown Container */}
+            <div className="absolute top-full left-0 mt-2 w-64 bg-white rounded-3xl shadow-2xl border border-gray-100 p-4 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-50">
+              <div className="flex flex-col gap-2">
+                <DropdownItem onClick={(e) => handleRestrictedAction(e, '/create')} to="/create" icon={<FiPlusCircle />} title="Create" subtitle="New magic" />
+                <DropdownItem onClick={(e) => handleRestrictedAction(e, '/favorites')} to="/favorites" icon={<FiHeart />} title="Favourite" subtitle="Your Loves" />
+                <DropdownItem onClick={(e) => handleRestrictedAction(e, '/planner')} to="/planner" icon={<FiBarChart2 />} title="Meal Planner" subtitle="Schedule" />
+              </div>
             </div>
           </motion.div>
         </motion.nav>
