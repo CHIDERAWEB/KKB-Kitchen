@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   FiSearch, FiX, FiChevronDown, FiPlusCircle, FiHeart,
   FiCoffee, FiSmile, FiZap, FiBarChart2, FiLogOut,
-  FiLayout, FiUser, FiCheckCircle
+  FiLayout, FiCheckCircle
 } from 'react-icons/fi';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { io } from 'socket.io-client';
@@ -32,7 +32,7 @@ const navItemVariants = {
 function Header() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery] = useState("");
-  const [searchResults, setSearchResults] = useState([]); // Added for results
+  const [searchResults, setSearchResults] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [pendingCount, setPendingCount] = useState(0);
@@ -158,6 +158,7 @@ function Header() {
           </div>
         </Link>
 
+        {/* --- REFACTORED NAV --- */}
         <motion.nav
           variants={navContainerVariants}
           initial="hidden"
@@ -169,10 +170,11 @@ function Header() {
 
           {/* DISCOVER DROPDOWN */}
           <motion.div variants={navItemVariants} className="relative group h-full flex items-center">
-            <div className="flex items-center gap-1 cursor-pointer">
+            <div className="flex items-center gap-1 cursor-pointer py-2">
               <span className="nav-link group-hover:text-orange-600 transition-all">Discover</span>
               <FiChevronDown className="text-gray-400 group-hover:rotate-180 transition-transform duration-300 group-hover:text-orange-600" />
             </div>
+            {/* DROPDOWN MENU CONTAINER */}
             <div className="dropdown-menu">
               <DropdownItem to="/discover?cat=junk" icon={<FiSmile />} title="Junk" subtitle="Quick Treats" />
               <DropdownItem to="/discover?cat=breakfast" icon={<FiCoffee />} title="Breakfast" subtitle="Morning Vibes" />
@@ -182,10 +184,11 @@ function Header() {
 
           {/* KITCHEN DROPDOWN */}
           <motion.div variants={navItemVariants} className="relative group h-full flex items-center">
-            <div className="flex items-center gap-1 cursor-pointer">
+            <div className="flex items-center gap-1 cursor-pointer py-2">
               <span className="nav-link group-hover:text-orange-600 transition-all">Kitchen</span>
               <FiChevronDown className="text-gray-400 group-hover:rotate-180 transition-transform duration-300 group-hover:text-orange-600" />
             </div>
+            {/* DROPDOWN MENU CONTAINER */}
             <div className="dropdown-menu">
               <DropdownItem to="/create" icon={<FiPlusCircle />} title="Create" subtitle="New magic" />
               <DropdownItem to="/favorites" icon={<FiHeart />} title="Favourite" subtitle="Your Loves" />
@@ -252,12 +255,11 @@ function Header() {
                   <input autoFocus value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search recipes..." className="w-full px-6 h-14 outline-none font-bold text-gray-800 bg-transparent text-xl" />
                   <FiX onClick={() => { setSearchOpen(false); setQuery(""); setSearchResults([]) }} className="cursor-pointer text-gray-300 hover:text-red-500" size={30} />
                 </div>
-                {/* SEARCH RESULTS LIST */}
                 {searchResults.length > 0 && (
                   <div className="max-h-[400px] overflow-y-auto p-4 grid grid-cols-1 md:grid-cols-2 gap-2">
                     {searchResults.map((recipe) => (
                       <Link key={recipe._id} to={`/recipe/${recipe._id}`} onClick={() => setSearchOpen(false)} className="flex items-center gap-4 p-3 hover:bg-orange-50 rounded-2xl transition-all">
-                        <img src={recipe.image} className="w-12 h-12 rounded-xl object-cover" alt={recipe.title} />
+                        <img src={recipe.imageUrl || recipe.image} className="w-12 h-12 rounded-xl object-cover" alt={recipe.title} />
                         <div>
                           <p className="text-sm font-black text-gray-800">{recipe.title}</p>
                           <p className="text-[10px] text-gray-400 uppercase font-bold">{recipe.category}</p>
@@ -274,8 +276,10 @@ function Header() {
 
       <style>{`
         .nav-link { @apply text-[11px] font-black uppercase text-gray-400 transition-colors tracking-[0.2em] cursor-pointer; }
+        
+        /* THE CRITICAL FIX */
         .dropdown-menu { 
-          @apply absolute top-[60px] left-1/2 -translate-x-1/2 w-[280px] bg-white rounded-[2.5rem] shadow-2xl 
+          @apply absolute top-[100%] left-0 w-[280px] bg-white rounded-[2.5rem] shadow-2xl 
           border border-gray-100 p-3 opacity-0 invisible translate-y-4 group-hover:opacity-100 group-hover:visible 
           group-hover:translate-y-0 transition-all duration-300 ease-out z-[200] pointer-events-auto; 
         }
@@ -296,7 +300,7 @@ const DropdownItem = ({ to, icon, title, subtitle }) => (
     <div className="p-3 bg-white text-orange-600 rounded-2xl group-hover/item:bg-orange-600 group-hover/item:text-white transition-all shadow-sm">
       {React.cloneElement(icon, { size: 18 })}
     </div>
-    <div className="flex flex-col">
+    <div className="flex flex-col text-left">
       <span className="text-[10px] font-black uppercase text-gray-800 leading-tight">{title}</span>
       <span className="text-[8px] font-bold text-gray-400 uppercase">{subtitle}</span>
     </div>
