@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  FiSearch, FiX, FiChevronDown, FiPlusCircle, FiHeart, FiClock,
+  FiSearch, FiX, FiChevronDown, FiPlusCircle, FiHeart,
   FiCoffee, FiSmile, FiZap, FiBarChart2, FiLogOut,
-  FiLayout, FiUser, FiTrash2, FiChevronRight, FiCheckCircle
+  FiLayout, FiUser, FiCheckCircle
 } from 'react-icons/fi';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { io } from 'socket.io-client';
@@ -32,6 +32,7 @@ const navItemVariants = {
 function Header() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery] = useState("");
+  const [searchResults, setSearchResults] = useState([]); // Added for results
   const [isSearching, setIsSearching] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [pendingCount, setPendingCount] = useState(0);
@@ -50,7 +51,30 @@ function Header() {
     token: localStorage.getItem('token')
   });
 
-  // UPDATED SOCKET LOGIC: Listening for both creation and approval
+  // --- SEARCH LOGIC ---
+  useEffect(() => {
+    const fetchResults = async () => {
+      if (query.length < 2) {
+        setSearchResults([]);
+        return;
+      }
+      setIsSearching(true);
+      try {
+        const res = await fetch(`https://kkb-kitchen-api.onrender.com/api/recipes/search?q=${query}`);
+        const data = await res.json();
+        setSearchResults(data);
+      } catch (err) {
+        console.error("Search Error:", err);
+      } finally {
+        setIsSearching(false);
+      }
+    };
+
+    const debounce = setTimeout(fetchResults, 300);
+    return () => clearTimeout(debounce);
+  }, [query]);
+
+  // --- NOTIFICATION LOGIC ---
   useEffect(() => {
     const handleNotification = (data, messagePrefix) => {
       setToastMessage(`${messagePrefix}: "${data.title}"`);
@@ -104,18 +128,15 @@ function Header() {
 
   return (
     <div className="fixed top-0 left-0 right-0 flex flex-col items-center z-[100] px-4 py-6 pointer-events-none">
-      {/* TOAST NOTIFICATION */}
       <AnimatePresence>
         {showToast && (
           <motion.div
             initial={{ y: -100, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
+            animate={{ y: 90, opacity: 1 }}
             exit={{ y: -100, opacity: 0 }}
-            className="absolute top-4 bg-white border border-green-100 shadow-2xl px-6 py-4 rounded-[2rem] flex items-center gap-4 pointer-events-auto z-[110]"
+            className="absolute bg-white border border-green-100 shadow-2xl px-6 py-4 rounded-[2rem] flex items-center gap-4 pointer-events-auto z-[110]"
           >
-            <div className="bg-green-100 p-2 rounded-full text-green-600">
-              <FiCheckCircle size={20} />
-            </div>
+            <div className="bg-green-100 p-2 rounded-full text-green-600"><FiCheckCircle size={20} /></div>
             <div>
               <p className="text-[10px] font-black uppercase text-gray-800 tracking-tight">Chef Notification</p>
               <p className="text-[9px] font-bold text-gray-400 uppercase tracking-tighter">{toastMessage}</p>
@@ -146,12 +167,11 @@ function Header() {
           <motion.div variants={navItemVariants}><NavLink to="/" label="Home" /></motion.div>
           <motion.div variants={navItemVariants}><NavLink to="/about" label="About" /></motion.div>
 
-          <motion.div variants={navItemVariants} className="relative group h-full flex items-center justify-center">
-            <div className="flex flex-col items-center justify-center cursor-pointer">
-              <span className="nav-link flex items-center gap-1 group-hover:text-orange-600 transition-all">
-                Discover <FiChevronDown className="group-hover:rotate-180 transition-transform duration-300" />
-              </span>
-              <div className="absolute bottom-4 left-0 w-0 h-0.5 bg-orange-600 transition-all duration-300 group-hover:w-full" />
+          {/* DISCOVER DROPDOWN */}
+          <motion.div variants={navItemVariants} className="relative group h-full flex items-center">
+            <div className="flex items-center gap-1 cursor-pointer">
+              <span className="nav-link group-hover:text-orange-600 transition-all">Discover</span>
+              <FiChevronDown className="text-gray-400 group-hover:rotate-180 transition-transform duration-300 group-hover:text-orange-600" />
             </div>
             <div className="dropdown-menu">
               <DropdownItem to="/discover?cat=junk" icon={<FiSmile />} title="Junk" subtitle="Quick Treats" />
@@ -160,17 +180,15 @@ function Header() {
             </div>
           </motion.div>
 
-          <motion.div variants={navItemVariants} className="relative group h-full flex items-center justify-center">
-            <div className="flex flex-col items-center justify-center cursor-pointer">
-              <span className="nav-link flex items-center gap-1 group-hover:text-orange-600 transition-all">
-                Kitchen <FiChevronDown className="group-hover:rotate-180 transition-transform duration-300" />
-              </span>
-              <div className="absolute bottom-4 left-0 w-0 h-0.5 bg-orange-600 transition-all duration-300 group-hover:w-full" />
+          {/* KITCHEN DROPDOWN */}
+          <motion.div variants={navItemVariants} className="relative group h-full flex items-center">
+            <div className="flex items-center gap-1 cursor-pointer">
+              <span className="nav-link group-hover:text-orange-600 transition-all">Kitchen</span>
+              <FiChevronDown className="text-gray-400 group-hover:rotate-180 transition-transform duration-300 group-hover:text-orange-600" />
             </div>
             <div className="dropdown-menu">
               <DropdownItem to="/create" icon={<FiPlusCircle />} title="Create" subtitle="New magic" />
               <DropdownItem to="/favorites" icon={<FiHeart />} title="Favourite" subtitle="Your Loves" />
-              <DropdownItem to="/shopping-list" icon={<FiCheckCircle />} title="Shopping List" subtitle="Groceries" />
               <DropdownItem to="/planner" icon={<FiBarChart2 />} title="Meal Planner" subtitle="Schedule" />
             </div>
           </motion.div>
@@ -197,7 +215,7 @@ function Header() {
                   {user.role === 'admin' && pendingCount > 0 && (
                     <span className="absolute -top-1 -right-1 flex h-4 w-4">
                       <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                      <span className="relative flex items-center justify-center rounded-full h-4 w-4 bg-red-600 text-[8px] text-white font-black">{pendingCount}</span>
+                      <span className="relative flex items-center justify-center rounded-full h-4 w-4 bg-red-600 text-white font-black text-[8px]">{pendingCount}</span>
                     </span>
                   )}
                 </div>
@@ -206,32 +224,14 @@ function Header() {
                   <p className="text-[8px] font-bold text-orange-500 uppercase tracking-tighter">{user.role}</p>
                 </div>
               </motion.button>
-
               <AnimatePresence>
                 {profileOpen && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 15, scale: 0.95 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: 15, scale: 0.95 }}
-                    className="absolute top-[120%] right-0 w-64 bg-white rounded-[2.5rem] shadow-2xl border border-gray-50 p-3 z-[300] pointer-events-auto"
-                  >
-                    {user.role === 'admin' ? (
-                      <>
-                        <DropdownItem to="/admin" icon={<FiLayout className="text-orange-600" />} title="Admin Panel" subtitle={`${pendingCount} Pending`} />
-                        <DropdownItem to="/profile" icon={<FiUser />} title="Admin Profile" subtitle="Account" />
-                      </>
-                    ) : (
-                      <>
-                        <DropdownItem to="/profile" icon={<FiUser />} title="My Profile" subtitle="Cook Details" />
-                        <DropdownItem to="/favorites" icon={<FiHeart />} title="My Favorites" subtitle="Loved Items" />
-                      </>
-                    )}
-                    <div className="mt-2 pt-2 border-t border-gray-50">
-                      <button onClick={handleLogout} className="flex items-center gap-4 w-full p-4 hover:bg-red-50 rounded-[1.8rem] transition-all group/out text-left">
-                        <div className="p-2.5 bg-red-100 text-red-500 rounded-xl group-hover/out:bg-red-500 group-hover/out:text-white transition-all"><FiLogOut size={18} /></div>
-                        <span className="text-[10px] font-black uppercase text-gray-800">Logout</span>
-                      </button>
-                    </div>
+                  <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 15 }} className="absolute top-[120%] right-0 w-64 bg-white rounded-[2.5rem] shadow-2xl border border-gray-50 p-3 z-[300]">
+                    <DropdownItem to="/admin" icon={<FiLayout />} title="Admin Panel" subtitle="Manage" />
+                    <button onClick={handleLogout} className="flex items-center gap-4 w-full p-4 hover:bg-red-50 rounded-[1.8rem] transition-all text-left">
+                      <div className="p-2.5 bg-red-100 text-red-500 rounded-xl"><FiLogOut size={18} /></div>
+                      <span className="text-[10px] font-black uppercase text-gray-800">Logout</span>
+                    </button>
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -242,19 +242,30 @@ function Header() {
           <Navbar user={user} />
         </div>
 
+        {/* SEARCH OVERLAY */}
         <AnimatePresence>
           {searchOpen && (
-            <motion.div
-              ref={searchWrapperRef}
-              initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}
-              className="absolute top-[115%] left-0 right-0 flex justify-center pointer-events-auto px-4"
-            >
+            <motion.div ref={searchWrapperRef} initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="absolute top-[115%] left-0 right-0 flex justify-center pointer-events-auto px-4">
               <div className="w-full max-w-5xl bg-white rounded-[3.5rem] shadow-2xl border border-orange-50 overflow-hidden">
                 <div className="p-8 flex items-center border-b border-gray-50 bg-gray-50/20">
                   <FiZap className={isSearching ? "animate-pulse text-orange-500" : "text-gray-300"} size={26} />
                   <input autoFocus value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search recipes..." className="w-full px-6 h-14 outline-none font-bold text-gray-800 bg-transparent text-xl" />
-                  <FiX onClick={() => { setSearchOpen(false); setQuery("") }} className="cursor-pointer text-gray-300 hover:text-red-500" size={30} />
+                  <FiX onClick={() => { setSearchOpen(false); setQuery(""); setSearchResults([]) }} className="cursor-pointer text-gray-300 hover:text-red-500" size={30} />
                 </div>
+                {/* SEARCH RESULTS LIST */}
+                {searchResults.length > 0 && (
+                  <div className="max-h-[400px] overflow-y-auto p-4 grid grid-cols-1 md:grid-cols-2 gap-2">
+                    {searchResults.map((recipe) => (
+                      <Link key={recipe._id} to={`/recipe/${recipe._id}`} onClick={() => setSearchOpen(false)} className="flex items-center gap-4 p-3 hover:bg-orange-50 rounded-2xl transition-all">
+                        <img src={recipe.image} className="w-12 h-12 rounded-xl object-cover" alt={recipe.title} />
+                        <div>
+                          <p className="text-sm font-black text-gray-800">{recipe.title}</p>
+                          <p className="text-[10px] text-gray-400 uppercase font-bold">{recipe.category}</p>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                )}
               </div>
             </motion.div>
           )}
@@ -264,9 +275,9 @@ function Header() {
       <style>{`
         .nav-link { @apply text-[11px] font-black uppercase text-gray-400 transition-colors tracking-[0.2em] cursor-pointer; }
         .dropdown-menu { 
-          @apply absolute top-[70%] left-1/2 -translate-x-1/2 w-[280px] bg-white rounded-[2.5rem] shadow-2xl 
-          border border-gray-100 p-3 opacity-0 invisible translate-y-6 group-hover:opacity-100 group-hover:visible 
-          group-hover:translate-y-0 transition-all duration-500 ease-out z-[200] pointer-events-auto; 
+          @apply absolute top-[60px] left-1/2 -translate-x-1/2 w-[280px] bg-white rounded-[2.5rem] shadow-2xl 
+          border border-gray-100 p-3 opacity-0 invisible translate-y-4 group-hover:opacity-100 group-hover:visible 
+          group-hover:translate-y-0 transition-all duration-300 ease-out z-[200] pointer-events-auto; 
         }
       `}</style>
     </div>
@@ -275,10 +286,8 @@ function Header() {
 
 const NavLink = ({ to, label }) => (
   <Link to={to} className="relative group py-2">
-    <motion.span whileHover={{ y: -2 }} className="nav-link inline-block">
-      {label}
-    </motion.span>
-    <motion.div className="absolute bottom-0 left-0 w-0 h-0.5 bg-orange-600 transition-all duration-300 group-hover:w-full" />
+    <motion.span whileHover={{ y: -2 }} className="nav-link inline-block">{label}</motion.span>
+    <div className="absolute bottom-0 left-0 w-0 h-0.5 bg-orange-600 transition-all duration-300 group-hover:w-full" />
   </Link>
 );
 
