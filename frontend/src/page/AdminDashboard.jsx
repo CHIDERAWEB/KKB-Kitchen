@@ -141,25 +141,48 @@ const AdminDashboard = () => {
         }
     };
 
-    const handleRejectSubmit = async () => {
-        try {
-            const res = await fetch(`https://kkb-kitchen-api.onrender.com/api/admin/delete/${selectedRecipe.id}`, {
-                method: 'DELETE',
-                headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-                body: JSON.stringify({ reason: rejectionReason })
-            });
+    // --- UPDATED REJECT SUBMIT ---
+const handleRejectSubmit = async () => {
+    if (!rejectionReason.trim()) {
+        toast.error("Please provide a reason for the Chef!");
+        return;
+    }
 
-            if (res.ok) {
-                toast.error('Recipe Rejected');
-                addtoHistory(`Rejected: ${selectedRecipe.title}`, 'error');
-                setShowRejectModal(false);
-                setRejectionReason('');
-                fetchData(true); 
-            }
-        } catch (err) {
-            toast.error("Error");
+    // Check if ID is stored as _id or id
+    const recipeId = selectedRecipe._id || selectedRecipe.id;
+
+    try {
+        // CHANGED: URL updated to match your backend router.put('/reject/:id', ...)
+        const res = await fetch(`https://kkb-kitchen-api.onrender.com/api/admin/reject/${recipeId}`, {
+            method: 'PUT',
+            headers: { 
+                'Authorization': `Bearer ${token}`, 
+                'Content-Type': 'application/json' 
+            },
+            // CHANGED: Only sending the adminNote as expected by a standard controller
+            body: JSON.stringify({ 
+                adminNote: rejectionReason 
+            })
+        });
+
+        // Add this to debug if it fails again
+        if (!res.ok) {
+            const errorText = await res.text();
+            console.error("Server says:", errorText);
+            throw new Error("Rejection failed");
         }
-    };
+
+        toast.error('Recipe Rejected & Feedback Sent');
+        addtoHistory(`Rejected with Feedback: ${selectedRecipe.title}`, 'error');
+        setShowRejectModal(false);
+        setRejectionReason('');
+        fetchData(true); 
+        
+    } catch (err) {
+        console.error("Reject Error:", err);
+        toast.error("Rejection Sync Failed. Check Console.");
+    }
+};
 
     const filteredHistory = history.filter(item => 
         item.msg.toLowerCase().includes(historySearch.toLowerCase())
@@ -187,15 +210,16 @@ const AdminDashboard = () => {
                             <div className="p-3 bg-red-100 text-red-600 rounded-2xl"><FiAlertCircle size={24}/></div>
                             <h3 className="text-2xl font-black text-red-600 uppercase tracking-tighter">Reject Recipe?</h3>
                         </div>
+                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 px-1">Chef's Feedback Statement</p>
                         <textarea
                             className="w-full p-4 bg-gray-50 border-2 border-gray-100 rounded-2xl mb-6 outline-none focus:border-red-400 text-sm font-medium transition-all"
-                            placeholder="State rejection reason..."
+                            placeholder="Why is this being rejected? User will see this..."
                             value={rejectionReason}
                             onChange={(e) => setRejectionReason(e.target.value)}
                         />
                         <div className="flex gap-3">
                             <button onClick={() => setShowRejectModal(false)} className="flex-1 py-4 font-bold text-gray-400 uppercase text-xs hover:text-gray-600 transition-colors">Go Back</button>
-                            <button onClick={handleRejectSubmit} className="flex-1 py-4 bg-red-600 text-white rounded-2xl font-bold uppercase text-xs tracking-widest shadow-lg shadow-red-200 active:scale-95 transition-all">Confirm Reject</button>
+                            <button onClick={handleRejectSubmit} className="flex-1 py-4 bg-red-600 text-white rounded-2xl font-bold uppercase text-xs tracking-widest shadow-lg shadow-red-200 active:scale-95 transition-all">Send & Reject</button>
                         </div>
                     </div>
                 </div>

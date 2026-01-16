@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Heart, Share2, Clock, ChevronLeft, CheckCircle, Utensils, MessageSquare, Eye, Trash2, Printer, Save, X } from 'lucide-react';
+import { Heart, Share2, Clock, ChevronLeft, CheckCircle, Utensils, MessageSquare, Eye, Trash2, Printer, Save, X, ShieldCheck } from 'lucide-react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 
 const Recipejollofdetail = ({ showToast }) => {
@@ -11,7 +11,6 @@ const Recipejollofdetail = ({ showToast }) => {
     const [isLiked, setIsLiked] = useState(false);
     const [newCommentText, setNewCommentText] = useState("");
 
-    // --- STATES FOR INLINE EDITING ---
     const [editingCommentId, setEditingCommentId] = useState(null);
     const [editText, setEditText] = useState("");
 
@@ -19,7 +18,6 @@ const Recipejollofdetail = ({ showToast }) => {
     const token = localStorage.getItem('token');
 
     useEffect(() => {
-        // 🚨 GATEKEEPER LOGIC: If no token, redirect to login immediately
         if (!token) {
             if (showToast) showToast("Please login or register to view full recipes! 🔐");
             navigate('/login');
@@ -29,16 +27,14 @@ const Recipejollofdetail = ({ showToast }) => {
         const fetchRecipeData = async () => {
             try {
                 setLoading(true);
-                // Added Authorization header to the fetch request
                 const response = await fetch(`https://kkb-kitchen-api.onrender.com/api/recipes/${id}`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
 
                 if (!response.ok) throw new Error("Recipe not found");
-
                 const data = await response.json();
 
-                // CLEANUP LOGIC: Fixes the spaces and bunched instructions
+                // Format Logic
                 const formattedData = {
                     ...data,
                     ingredients: Array.isArray(data.ingredients)
@@ -53,6 +49,7 @@ const Recipejollofdetail = ({ showToast }) => {
 
                 setRecipe(formattedData);
 
+                // Liked Status Check
                 const userId = user?.id || user?._id;
                 if (data.likedBy && userId) {
                     setIsLiked(data.likedBy.some(u => {
@@ -61,6 +58,7 @@ const Recipejollofdetail = ({ showToast }) => {
                     }));
                 }
 
+                // Recommendations
                 const recRes = await fetch(`https://kkb-kitchen-api.onrender.com/api/recipes/all`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
@@ -80,7 +78,7 @@ const Recipejollofdetail = ({ showToast }) => {
 
         if (id) fetchRecipeData();
         window.scrollTo(0, 0);
-    }, [id, navigate, token]); // Added dependencies for the protection logic
+    }, [id, navigate, token, showToast]);
 
     const handlePrint = () => window.print();
 
@@ -93,17 +91,23 @@ const Recipejollofdetail = ({ showToast }) => {
         const userId = user?.id || user?._id;
         if (!userId) return showToast("Please login to like recipes! 🔐");
         try {
-            await fetch(`https://kkb-kitchen-api.onrender.com/api/recipes/${id}/like`, {
+            const response = await fetch(`https://kkb-kitchen-api.onrender.com/api/recipes/${id}/like`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                 body: JSON.stringify({ userId: userId })
             });
-            setIsLiked(!isLiked);
-            setRecipe(prev => ({
-                ...prev,
-                likedBy: !isLiked ? [...(prev.likedBy || []), userId] : prev.likedBy.filter(u => (typeof u === 'object' ? (u.id !== userId && u._id !== userId) : u !== userId))
-            }));
-            showToast(!isLiked ? "Added to favorites! ❤️" : "Removed from favorites");
+
+            if (response.ok) {
+                setIsLiked(!isLiked);
+                // Dynamically update the count in the UI
+                setRecipe(prev => ({
+                    ...prev,
+                    likedBy: !isLiked 
+                        ? [...(prev.likedBy || []), userId] 
+                        : prev.likedBy.filter(u => (typeof u === 'object' ? (u.id !== userId && u._id !== userId) : u !== userId))
+                }));
+                showToast(!isLiked ? "Added to favorites! ❤️" : "Removed from favorites");
+            }
         } catch (err) { console.error(err); }
     };
 
@@ -161,7 +165,7 @@ const Recipejollofdetail = ({ showToast }) => {
     };
 
     if (loading) return <div className="h-screen flex items-center justify-center font-black text-orange-500 italic text-3xl animate-pulse">Gathering Ingredients...</div>;
-    if (!recipe) return <div className="text-center pt-20 h-screen font-bold text-2xl">Recipe not found</div>;
+    if (!recipe) return <div className="text-center pt-20 h-screen font-bold text-2xl uppercase tracking-widest">Recipe not found</div>;
 
     return (
         <div className="min-h-screen bg-white pb-20">
@@ -177,12 +181,12 @@ const Recipejollofdetail = ({ showToast }) => {
             <div className="max-w-4xl mx-auto -mt-24 relative bg-white rounded-t-[3rem] p-8 md:p-12 shadow-2xl print-area">
                 <div className="flex justify-between items-center mb-8 pb-6 border-b no-print">
                     <div className="flex gap-4">
-                        <div className="bg-blue-50 px-4 py-2 rounded-full text-xs font-bold flex items-center gap-2"><Eye size={14} /> {recipe.views || 0}</div>
-                        <div className="bg-red-50 px-4 py-2 rounded-full text-xs font-bold flex items-center gap-2"><Heart size={14} /> {recipe.likedBy?.length || 0}</div>
+                        <div className="bg-blue-50 px-4 py-2 rounded-full text-xs font-bold flex items-center gap-2 text-blue-600"><Eye size={14} /> {recipe.views || 0}</div>
+                        <div className="bg-red-50 px-4 py-2 rounded-full text-xs font-bold flex items-center gap-2 text-red-600"><Heart size={14} /> {recipe.likedBy?.length || 0}</div>
                     </div>
                     <div className="flex gap-3">
                         <button onClick={handlePrint} className="p-4 bg-orange-100 text-orange-600 rounded-full hover:bg-orange-200 transition-all"><Printer size={24} /></button>
-                        <button onClick={handleLike} className={`p-4 rounded-full transition-all shadow-md ${isLiked ? 'bg-red-500 text-white' : 'bg-gray-50'}`}><Heart size={24} fill={isLiked ? "white" : "none"} /></button>
+                        <button onClick={handleLike} className={`p-4 rounded-full transition-all shadow-md ${isLiked ? 'bg-red-500 text-white' : 'bg-gray-50 text-gray-400'}`}><Heart size={24} fill={isLiked ? "white" : "none"} /></button>
                         <button onClick={handleShare} className="p-4 bg-gray-900 text-white rounded-full"><Share2 size={24} /></button>
                     </div>
                 </div>
@@ -222,7 +226,7 @@ const Recipejollofdetail = ({ showToast }) => {
                     </h3>
 
                     <div className="flex flex-col md:flex-row gap-4 mb-12">
-                        <input type="text" value={newCommentText} onChange={(e) => setNewCommentText(e.target.value)} placeholder="Secret tips?" className="flex-1 bg-gray-50 rounded-2xl p-5 outline-none font-bold border-2 border-transparent focus:border-orange-500 transition-all" />
+                        <input type="text" value={newCommentText} onChange={(e) => setNewCommentText(e.target.value)} placeholder="Got secret tips or feedback?" className="flex-1 bg-gray-50 rounded-2xl p-5 outline-none font-bold border-2 border-transparent focus:border-orange-500 transition-all" />
                         <button onClick={handlePostComment} className="bg-orange-500 text-white px-10 py-4 rounded-2xl font-black uppercase hover:bg-orange-600 transition-all">Post</button>
                     </div>
 
@@ -230,13 +234,16 @@ const Recipejollofdetail = ({ showToast }) => {
                         {recipe.comments?.map((c) => {
                             const cId = c.id || c._id;
                             const isEditing = editingCommentId === cId;
-                            const isOwner = user && (c.userId === user.id || c.userName === user.name);
+                            const isOwner = user && (c.userId === user.id || c.userId === user._id || c.userName === user.name);
                             const isAdmin = user?.role === 'admin';
 
                             return (
                                 <div key={cId} className="bg-white p-8 rounded-[2rem] border-2 border-gray-100 relative group shadow-sm hover:border-orange-100 transition-all">
                                     <div className="flex justify-between items-center mb-4">
-                                        <span className="font-black text-xl text-gray-900">@{c.userName || 'Chef'}</span>
+                                        <div className="flex items-center gap-2">
+                                            <span className="font-black text-xl text-gray-900">@{c.userName || 'Chef'}</span>
+                                            {c.role === 'admin' && <ShieldCheck size={16} className="text-blue-500" />}
+                                        </div>
                                         <div className="flex items-center gap-3">
                                             <span className="text-[10px] bg-gray-100 px-3 py-1 rounded-full text-gray-500 font-black uppercase">
                                                 {c.createdAt ? new Date(c.createdAt).toLocaleDateString() : 'Just now'}
@@ -282,6 +289,7 @@ const Recipejollofdetail = ({ showToast }) => {
                     </div>
                 </div>
 
+                {/* --- RECOMMENDATIONS --- */}
                 <div className="no-print mt-20">
                     <h3 className="text-3xl font-black mb-8 italic uppercase tracking-tighter">You might also like...</h3>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-6">

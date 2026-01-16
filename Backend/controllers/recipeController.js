@@ -278,10 +278,10 @@ export const getPendingCount = async (req, res) => {
 export const rejectRecipe = async (req, res) => {
     try {
         const { id } = req.params;
-        const { reason } = req.body; // The reason typed in the modal
+        const { adminNote } = req.body; // Match the frontend key
         const recipeId = parseInt(id);
 
-        // 1. Find recipe to get author details before deleting
+        // 1. Check if recipe exists
         const recipe = await prisma.recipe.findUnique({
             where: { id: recipeId },
             include: { author: true }
@@ -289,25 +289,30 @@ export const rejectRecipe = async (req, res) => {
 
         if (!recipe) return res.status(404).json({ error: "Recipe not found" });
 
-        // 2. Delete the recipe
-        await prisma.recipe.delete({ where: { id: recipeId } });
+        // 2. UPDATE instead of DELETE
+        // This keeps the recipe in the DB so the user can see the feedback
+        const updatedRecipe = await prisma.recipe.update({
+            where: { id: recipeId },
+            data: { 
+                status: 'rejected',
+                adminNote: adminNote // Save the feedback here
+            }
+        });
 
-        // 3. Notify the Chef via Socket
+        // 3. Notify via Socket
         const io = req.app.get('socketio');
         if (io) {
-            // Send specific rejection alert to the author
             io.emit("recipeRejected", {
                 authorId: recipe.authorId,
                 title: recipe.title,
-                reason: reason || "No specific reason provided."
+                reason: adminNote || "No specific reason provided."
             });
 
-            // Update the Admin's badge count globally
             const updatedCount = await prisma.recipe.count({ where: { status: 'pending' } });
             io.emit("updatePendingCount", { count: updatedCount });
         }
 
-        res.json({ message: "Recipe rejected successfully" });
+        res.json({ message: "Recipe rejected and feedback saved", recipe: updatedRecipe });
     } catch (error) {
         console.error("Reject Error:", error);
         res.status(500).json({ error: "Failed to reject recipe" });
