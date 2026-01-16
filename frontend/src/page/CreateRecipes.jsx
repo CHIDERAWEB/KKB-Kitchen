@@ -1,22 +1,36 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Camera, Plus, Trash2, Clock, Users, Utensils, Send } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { io } from 'socket.io-client';
 
-const socket = io('https://kkb-kitchen-api.onrender.com');
-
 const CreateRecipe = ({ showToast }) => {
     const navigate = useNavigate();
 
+    // --- SOCKET MAINTENANCE ---
+    // Using a ref ensures we keep the same socket instance across renders
+    const socketRef = useRef(null);
+
+    useEffect(() => {
+        // Initialize socket only once when component mounts
+        socketRef.current = io('https://kkb-kitchen-api.onrender.com');
+
+        // Cleanup connection when user leaves the page
+        return () => {
+            if (socketRef.current) socketRef.current.disconnect();
+        };
+    }, []);
+
+    // --- STATE ---
     const [title, setTitle] = useState('');
     const [cookTime, setCookTime] = useState('');
     const [servings, setServings] = useState('');
-    const [difficulty, setDifficulty] = useState('Easy'); // NEW STATE
+    const [difficulty, setDifficulty] = useState('Easy');
     const [ingredients, setIngredients] = useState(['']);
     const [steps, setSteps] = useState(['']);
     const [imagePreview, setImagePreview] = useState(null);
     const [imageFile, setImageFile] = useState(null);
 
+    // --- HANDLERS ---
     const addIngredient = () => setIngredients(prev => [...prev, '']);
     const removeIngredient = (index) => setIngredients(prev => prev.filter((_, i) => i !== index));
 
@@ -44,7 +58,7 @@ const CreateRecipe = ({ showToast }) => {
         formData.append('title', title);
         formData.append('cookTime', cookTime);
         formData.append('servings', servings);
-        formData.append('difficulty', difficulty); // ADDED TO FORMDATA
+        formData.append('difficulty', difficulty);
 
         const cleanIngredients = ingredients.filter(i => i.trim() !== '');
         const cleanSteps = steps.filter(s => s.trim() !== '');
@@ -57,33 +71,39 @@ const CreateRecipe = ({ showToast }) => {
         }
 
         try {
-            const response = await fetch('https://kkb-kitchen-api.onrender.com/api/recipes/pending-count', {
+            // UPDATED: Correct endpoint for creating recipes
+            const response = await fetch('https://kkb-kitchen-api.onrender.com/api/recipes/create', {
                 method: 'POST',
                 headers: { 'Authorization': `Bearer ${token}` },
                 body: formData
             });
 
             if (response.ok) {
-                // --- INSTANT NOTIFICATION TRIGGER ---
-                // This tells the socket server a new recipe exists, 
-                // which then tells the Header to show the toast and badge.
-                socket.emit("recipeCreated", { title: title });
+                // Trigger real-time notification to Admin Header
+                if (socketRef.current) {
+                    socketRef.current.emit("recipeCreated", { title: title });
+                }
 
                 showToast("Recipe submitted for admin approval! 🚀");
+
+                // Reset all states
                 setTitle('');
                 setIngredients(['']);
                 setSteps(['']);
                 setDifficulty('Easy');
+                setCookTime('');
+                setServings('');
                 setImagePreview(null);
                 setImageFile(null);
 
+                // Delay navigation slightly so user sees the success toast
                 setTimeout(() => navigate('/'), 2000);
             } else {
                 const errorData = await response.json();
                 showToast(errorData.error || "Submission failed", "error");
             }
         } catch (err) {
-            console.error("Fetch Error:", err);
+            console.error("Submission Error:", err);
             showToast("Backend connection failed!", "error");
         }
     };
@@ -115,7 +135,7 @@ const CreateRecipe = ({ showToast }) => {
                     </div>
 
                     {/* BASIC INFO */}
-                    <div className="grid md:grid-cols-3 gap-6"> {/* Changed to grid-cols-3 */}
+                    <div className="grid md:grid-cols-3 gap-6">
                         <div className="col-span-3">
                             <label className="block text-sm font-bold text-gray-700 mb-2">Recipe Title</label>
                             <input
@@ -134,7 +154,7 @@ const CreateRecipe = ({ showToast }) => {
                                 value={cookTime}
                                 onChange={(e) => setCookTime(e.target.value)}
                                 placeholder="45 mins"
-                                className="w-full p-4 rounded-xl border border-gray-200 outline-none"
+                                className="w-full p-4 rounded-xl border border-gray-200 outline-none focus:ring-2 focus:ring-orange-500"
                             />
                         </div>
                         <div>
@@ -144,16 +164,15 @@ const CreateRecipe = ({ showToast }) => {
                                 value={servings}
                                 onChange={(e) => setServings(e.target.value)}
                                 placeholder="4 People"
-                                className="w-full p-4 rounded-xl border border-gray-200 outline-none"
+                                className="w-full p-4 rounded-xl border border-gray-200 outline-none focus:ring-2 focus:ring-orange-500"
                             />
                         </div>
-                        {/* DIFFICULTY DROPDOWN ADDED BESIDE SERVINGS */}
                         <div>
                             <label className="flex items-center gap-2 text-sm font-bold text-gray-700 mb-2"><Utensils size={16} /> Difficulty</label>
                             <select
                                 value={difficulty}
                                 onChange={(e) => setDifficulty(e.target.value)}
-                                className="w-full p-4 rounded-xl border border-gray-200 outline-none bg-white font-bold text-gray-600 appearance-none cursor-pointer focus:ring-2 focus:ring-orange-500"
+                                className="w-full p-4 rounded-xl border border-gray-200 outline-none bg-white font-bold text-gray-600 cursor-pointer focus:ring-2 focus:ring-orange-500"
                             >
                                 <option value="Easy">Easy 🥗</option>
                                 <option value="Medium">Medium 🍳</option>
@@ -172,18 +191,17 @@ const CreateRecipe = ({ showToast }) => {
                                         type="text"
                                         value={ing}
                                         onChange={(e) => {
-                                            const val = e.target.value;
-                                            setIngredients(prev => {
-                                                const newArr = [...prev];
-                                                newArr[index] = val;
-                                                return newArr;
-                                            });
+                                            const newArr = [...ingredients];
+                                            newArr[index] = e.target.value;
+                                            setIngredients(newArr);
                                         }}
                                         placeholder={`Ingredient ${index + 1}`}
                                         className="flex-1 p-3 border-b-2 border-gray-100 focus:border-orange-500 outline-none"
                                     />
                                     {ingredients.length > 1 && (
-                                        <button type="button" onClick={() => removeIngredient(index)} className="text-red-400 hover:text-red-600"><Trash2 size={18} /></button>
+                                        <button type="button" onClick={() => removeIngredient(index)} className="text-red-400 hover:text-red-600">
+                                            <Trash2 size={18} />
+                                        </button>
                                     )}
                                 </div>
                             ))}
@@ -205,12 +223,9 @@ const CreateRecipe = ({ showToast }) => {
                                     <textarea
                                         value={step}
                                         onChange={(e) => {
-                                            const val = e.target.value;
-                                            setSteps(prev => {
-                                                const newArr = [...prev];
-                                                newArr[index] = val;
-                                                return newArr;
-                                            });
+                                            const newArr = [...steps];
+                                            newArr[index] = e.target.value;
+                                            setSteps(newArr);
                                         }}
                                         placeholder={`Step ${index + 1}: e.g. Wash the rice until clear...`}
                                         className="flex-1 p-4 bg-gray-50 rounded-2xl outline-none focus:ring-2 focus:ring-orange-500 transition-all min-h-[100px]"
