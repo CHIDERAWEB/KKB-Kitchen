@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
 import { Camera, Plus, Trash2, Clock, Users, Utensils, Send } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { io } from 'socket.io-client';
+
+const socket = io('https://kkb-kitchen-api.onrender.com');
 
 const CreateRecipe = ({ showToast }) => {
     const navigate = useNavigate();
@@ -61,6 +64,11 @@ const CreateRecipe = ({ showToast }) => {
             });
 
             if (response.ok) {
+                // --- INSTANT NOTIFICATION TRIGGER ---
+                // This tells the socket server a new recipe exists, 
+                // which then tells the Header to show the toast and badge.
+                socket.emit("recipeCreated", { title: title });
+
                 showToast("Recipe submitted for admin approval! 🚀");
                 setTitle('');
                 setIngredients(['']);
