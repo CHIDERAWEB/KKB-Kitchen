@@ -1,8 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-// Added FiEdit2 for the edit button icon
-import { FiUsers, FiClock, FiCheckCircle, FiDatabase, FiRefreshCw, FiEdit2 } from 'react-icons/fi';
+import { FiUsers, FiClock, FiCheckCircle, FiDatabase, FiRefreshCw, FiEdit2, FiAlertCircle } from 'react-icons/fi';
 import toast, { Toaster } from 'react-hot-toast';
+import confetti from 'canvas-confetti';
+import { io } from 'socket.io-client';
 
 const AdminDashboard = () => {
     const [activeTab, setActiveTab] = useState('recipes');
@@ -12,8 +13,16 @@ const AdminDashboard = () => {
     const [searchTerm, setSearchTerm] = useState("");
     const [expandedId, setExpandedId] = useState(null);
     const [loading, setLoading] = useState(true);
-    const navigate = useNavigate();
 
+    const socketRef = useRef(null);
+    // Notification Sound Object
+    const notificationSound = new Audio('https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3');
+
+    const [showRejectModal, setShowRejectModal] = useState(false);
+    const [selectedRecipe, setSelectedRecipe] = useState(null);
+    const [rejectionReason, setRejectionReason] = useState('');
+
+    const navigate = useNavigate();
     const user = JSON.parse(localStorage.getItem('user'));
     const token = localStorage.getItem('token');
 
@@ -22,11 +31,36 @@ const AdminDashboard = () => {
             navigate('/');
             return;
         }
+
+        socketRef.current = io('https://kkb-kitchen-api.onrender.com');
+
+        socketRef.current.on("recipeCreated", (data) => {
+            // Play Sound
+            notificationSound.play().catch(e => console.log("Audio play blocked by browser"));
+
+            toast(`New Recipe: "${data.title}" by ${data.author}`, {
+                icon: '🔔',
+                duration: 6000,
+                style: {
+                    borderRadius: '20px',
+                    background: '#f97316',
+                    color: '#fff',
+                    fontWeight: 'bold',
+                    border: '2px solid white'
+                },
+            });
+
+            fetchData();
+        });
+
         fetchData();
+
+        return () => {
+            if (socketRef.current) socketRef.current.disconnect();
+        };
     }, []);
 
     const fetchData = async () => {
-        setLoading(true);
         try {
             const res = await fetch('https://kkb-kitchen-api.onrender.com/api/admin/data', {
                 headers: { 'Authorization': `Bearer ${token}` }
@@ -41,7 +75,7 @@ const AdminDashboard = () => {
             const userData = await userRes.json();
             setAllUsers(userData || []);
         } catch (err) {
-            toast.error("Server connection lost. Please check backend.");
+            toast.error("Server connection lost.");
         } finally {
             setLoading(false);
         }
@@ -54,6 +88,13 @@ const AdminDashboard = () => {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             if (res.ok) {
+                confetti({
+                    particleCount: 150,
+                    spread: 70,
+                    origin: { y: 0.6 },
+                    colors: ['#f97316', '#fbbf24', '#ffffff']
+                });
+
                 toast.success('Recipe Approved! It is now live. ✅');
                 setPendingRecipes(prev => prev.filter(r => r.id !== id));
                 setStats(prev => ({
@@ -67,25 +108,35 @@ const AdminDashboard = () => {
         }
     };
 
-    const handleDelete = async (id) => {
-        if (window.confirm("Delete permanently?")) {
-            try {
-                const res = await fetch(`https://kkb-kitchen-api.onrender.com/api/admin/delete/${id}`, {
-                    method: 'DELETE',
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                if (res.ok) {
-                    toast.error('Recipe deleted successfully. 🗑️');
-                    setPendingRecipes(prev => prev.filter(r => r.id !== id));
-                    setStats(prev => ({
-                        ...prev,
-                        total: (prev.total || 0) - 1,
-                        pending: (prev.pending || 0) - 1
-                    }));
-                }
-            } catch (err) {
-                toast.error("Delete failed.");
+    const handleRejectSubmit = async () => {
+        if (!rejectionReason.trim()) {
+            toast.error("Please provide a reason for rejection.");
+            return;
+        }
+
+        try {
+            const res = await fetch(`https://kkb-kitchen-api.onrender.com/api/admin/reject/${selectedRecipe.id}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ reason: rejectionReason })
+            });
+
+            if (res.ok) {
+                toast.error('Recipe rejected and user notified. 🗑️');
+                setPendingRecipes(prev => prev.filter(r => r.id !== selectedRecipe.id));
+                setStats(prev => ({
+                    ...prev,
+                    total: (prev.total || 0) - 1,
+                    pending: (prev.pending || 0) - 1
+                }));
+                setShowRejectModal(false);
+                setRejectionReason('');
             }
+        } catch (err) {
+            toast.error("Rejection failed.");
         }
     };
 
@@ -114,13 +165,38 @@ const AdminDashboard = () => {
     if (loading) return (
         <div className="flex flex-col items-center justify-center min-h-screen space-y-4">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500"></div>
-            <p className="font-bold text-orange-500 uppercase tracking-widest">Initialising Admin Panel...</p>
+            <p className="font-bold text-orange-500 uppercase tracking-widest text-xs">Initialising Admin Panel...</p>
         </div>
     );
 
     return (
-        <div className="max-w-6xl mx-auto p-6 min-h-screen bg-gray-50">
+        <div className="max-w-6xl mx-auto p-6 min-h-screen bg-gray-50 relative">
             <Toaster position="top-right" reverseOrder={false} />
+
+            {/* --- REJECTION MODAL --- */}
+            {showRejectModal && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+                    <div className="bg-white w-full max-w-md rounded-[2.5rem] p-8 shadow-2xl animate-in zoom-in duration-200">
+                        <div className="flex items-center gap-3 text-red-600 mb-4">
+                            <FiAlertCircle size={28} />
+                            <h3 className="text-2xl font-black italic uppercase tracking-tighter">Reject Recipe?</h3>
+                        </div>
+                        <p className="text-gray-600 mb-6 text-sm font-medium">
+                            Briefly explain to <span className="text-orange-600 font-bold">{selectedRecipe?.author?.name}</span> why this isn't ready.
+                        </p>
+                        <textarea
+                            className="w-full p-4 bg-gray-50 border-2 border-gray-100 rounded-2xl outline-none focus:border-red-400 transition-all min-h-[120px] mb-6 font-medium text-sm"
+                            placeholder="e.g., Image quality is low or instructions are unclear..."
+                            value={rejectionReason}
+                            onChange={(e) => setRejectionReason(e.target.value)}
+                        />
+                        <div className="flex gap-3">
+                            <button onClick={() => setShowRejectModal(false)} className="flex-1 py-4 font-black text-xs uppercase tracking-widest text-gray-400 hover:bg-gray-100 rounded-2xl transition-all">Cancel</button>
+                            <button onClick={handleRejectSubmit} className="flex-1 py-4 bg-red-600 text-white font-black text-xs uppercase tracking-widest rounded-2xl shadow-lg shadow-red-200 hover:bg-red-700 transition-all">Confirm Reject</button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* --- HEADER --- */}
             <div className="flex justify-between items-start mb-10">
@@ -128,12 +204,7 @@ const AdminDashboard = () => {
                     <h1 className="text-4xl font-black text-gray-900 uppercase tracking-tighter">Admin Panel</h1>
                     <p className="text-gray-500 font-medium italic">Shielding the kitchen, {user?.name} 🛡️</p>
                 </div>
-                <button
-                    onClick={fetchData}
-                    className="p-3 bg-white rounded-full shadow-sm hover:rotate-180 transition-all duration-500 text-gray-400 hover:text-orange-500 border border-gray-100"
-                >
-                    <FiRefreshCw size={20} />
-                </button>
+                <button onClick={fetchData} className="p-3 bg-white rounded-full shadow-sm hover:rotate-180 transition-all duration-500 text-gray-400 hover:text-orange-500 border border-gray-100"><FiRefreshCw size={20} /></button>
             </div>
 
             {/* --- STATS CARDS --- */}
@@ -144,13 +215,12 @@ const AdminDashboard = () => {
                 <StatCard icon={<FiUsers size={24} />} label="Chefs" value={allUsers.length} color="purple" />
             </div>
 
-            {/* --- TABS --- */}
+            {/* --- TABS & SEARCH --- */}
             <div className="flex gap-8 mb-8 border-b border-gray-200">
                 <TabButton label={`Queue (${pendingRecipes.length})`} active={activeTab === 'recipes'} onClick={() => setActiveTab('recipes')} />
                 <TabButton label={`Chefs (${allUsers.length})`} active={activeTab === 'users'} onClick={() => setActiveTab('users')} />
             </div>
 
-            {/* --- SEARCH --- */}
             <input
                 type="text"
                 placeholder={activeTab === 'recipes' ? "Search recipes..." : "Search chefs..."}
@@ -163,32 +233,25 @@ const AdminDashboard = () => {
                 <div className="space-y-4">
                     {pendingRecipes.filter(r => r.title?.toLowerCase().includes(searchTerm.toLowerCase())).map(recipe => (
                         <div key={recipe.id} className="bg-white rounded-[2rem] p-6 shadow-sm border border-gray-100 transition-all hover:shadow-md">
-                            <div className="flex justify-between items-center">
-                                <div className="flex items-center gap-4">
+                            <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+                                <div className="flex items-center gap-4 w-full">
                                     {recipe.imageUrl && <img src={recipe.imageUrl} className="w-16 h-16 rounded-2xl object-cover border" alt="preview" />}
                                     <div>
                                         <h3 className="text-xl font-black text-gray-800">{recipe.title}</h3>
                                         <p className="text-[10px] text-gray-400 font-bold uppercase tracking-tight">By {recipe.author?.name || 'Chef'}</p>
                                     </div>
                                 </div>
-                                <div className="flex gap-3">
-                                    {/* --- ADDED EDIT BUTTON --- */}
-                                    <button
-                                        onClick={() => navigate(`/edit-recipe/${recipe.id}`)}
-                                        className="bg-blue-50 text-blue-600 px-4 py-2 rounded-full font-black text-xs uppercase hover:bg-blue-100 transition-all flex items-center gap-2"
-                                    >
-                                        <FiEdit2 size={14} /> Edit
-                                    </button>
-
-                                    <button onClick={() => handleApprove(recipe.id)} className="bg-green-500 text-white px-6 py-2 rounded-full font-black text-xs uppercase hover:bg-green-600 shadow-md transition-all active:scale-95">Approve</button>
-                                    <button onClick={() => handleDelete(recipe.id)} className="bg-red-50 text-red-500 px-6 py-2 rounded-full font-black text-xs uppercase hover:bg-red-100 transition-all">Reject</button>
+                                <div className="flex gap-2 w-full md:w-auto">
+                                    <button onClick={() => navigate(`/edit-recipe/${recipe.id}`)} className="bg-blue-50 text-blue-600 px-4 py-2 rounded-full font-black text-[10px] uppercase hover:bg-blue-100 flex items-center gap-1"><FiEdit2 size={12} /> Edit</button>
+                                    <button onClick={() => handleApprove(recipe.id)} className="bg-green-500 text-white px-6 py-2 rounded-full font-black text-[10px] uppercase hover:bg-green-600 shadow-md transition-all active:scale-95">Approve</button>
+                                    <button onClick={() => { setSelectedRecipe(recipe); setShowRejectModal(true); }} className="bg-red-50 text-red-500 px-6 py-2 rounded-full font-black text-[10px] uppercase hover:bg-red-100 transition-all">Reject</button>
                                 </div>
                             </div>
                             <button onClick={() => setExpandedId(expandedId === recipe.id ? null : recipe.id)} className="text-orange-600 text-[10px] font-black uppercase tracking-widest mt-4">
                                 {expandedId === recipe.id ? "Close ▲" : "Review Content ▼"}
                             </button>
                             {expandedId === recipe.id && (
-                                <div className="mt-6 pt-6 border-t text-sm text-gray-600 grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div className="mt-6 pt-6 border-t text-sm text-gray-600 grid grid-cols-1 md:grid-cols-2 gap-6 animate-in slide-in-from-top-2 duration-300">
                                     <div className="bg-gray-50 p-5 rounded-2xl">
                                         <strong className="block mb-2 uppercase text-[10px] font-black text-gray-400">Ingredients</strong>
                                         <p>{Array.isArray(recipe.ingredients) ? recipe.ingredients.join(', ') : recipe.ingredients}</p>

@@ -274,3 +274,42 @@ export const getPendingCount = async (req, res) => {
         res.status(500).json({ error: "Error counting pending recipes" });
     }
 };
+
+export const rejectRecipe = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { reason } = req.body; // The reason typed in the modal
+        const recipeId = parseInt(id);
+
+        // 1. Find recipe to get author details before deleting
+        const recipe = await prisma.recipe.findUnique({
+            where: { id: recipeId },
+            include: { author: true }
+        });
+
+        if (!recipe) return res.status(404).json({ error: "Recipe not found" });
+
+        // 2. Delete the recipe
+        await prisma.recipe.delete({ where: { id: recipeId } });
+
+        // 3. Notify the Chef via Socket
+        const io = req.app.get('socketio');
+        if (io) {
+            // Send specific rejection alert to the author
+            io.emit("recipeRejected", {
+                authorId: recipe.authorId,
+                title: recipe.title,
+                reason: reason || "No specific reason provided."
+            });
+
+            // Update the Admin's badge count globally
+            const updatedCount = await prisma.recipe.count({ where: { status: 'pending' } });
+            io.emit("updatePendingCount", { count: updatedCount });
+        }
+
+        res.json({ message: "Recipe rejected successfully" });
+    } catch (error) {
+        console.error("Reject Error:", error);
+        res.status(500).json({ error: "Failed to reject recipe" });
+    }
+};

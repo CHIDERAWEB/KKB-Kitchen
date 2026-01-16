@@ -44,6 +44,7 @@ const CreateRecipe = ({ showToast }) => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         const token = localStorage.getItem('token');
+        const user = JSON.parse(localStorage.getItem('user')); // Get user info for socket
 
         if (!token) {
             showToast("Please log in first!", "error");
@@ -57,8 +58,13 @@ const CreateRecipe = ({ showToast }) => {
         formData.append('cookTime', cookTime);
         formData.append('servings', servings);
         formData.append('difficulty', difficulty);
-        formData.append('ingredients', JSON.stringify(ingredients.filter(i => i.trim() !== '')));
-        formData.append('instructions', JSON.stringify(steps.filter(s => s.trim() !== '')));
+
+        // Clean lists to remove empty strings
+        const filteredIngredients = ingredients.filter(i => i.trim() !== '');
+        const filteredSteps = steps.filter(s => s.trim() !== '');
+
+        formData.append('ingredients', JSON.stringify(filteredIngredients));
+        formData.append('instructions', JSON.stringify(filteredSteps));
 
         if (imageFile) {
             formData.append('image', imageFile);
@@ -71,13 +77,17 @@ const CreateRecipe = ({ showToast }) => {
                 body: formData
             });
 
+            const data = await response.json();
+
             if (response.ok) {
-                // Notify Admin via Socket
+                // --- SOCKET NOTIFICATION ---
                 if (socketRef.current) {
-                    socketRef.current.emit("recipeCreated", { title: title });
+                    socketRef.current.emit("recipeCreated", {
+                        title: title,
+                        author: user?.name || "A Chef"
+                    });
                 }
 
-                // Show the big success overlay
                 setShowSuccess(true);
 
                 // Reset form
@@ -87,11 +97,9 @@ const CreateRecipe = ({ showToast }) => {
                 setImagePreview(null);
                 setImageFile(null);
 
-                // Send them home after they see the success message
                 setTimeout(() => navigate('/'), 3000);
             } else {
-                const errorData = await response.json();
-                showToast(errorData.error || "Submission failed", "error");
+                showToast(data.error || "Submission failed", "error");
                 setIsSubmitting(false);
             }
         } catch (err) {
@@ -103,8 +111,7 @@ const CreateRecipe = ({ showToast }) => {
 
     return (
         <div className="relative min-h-screen bg-gray-50 pb-20 pt-10 px-4">
-
-            {/* 1. SUCCESS OVERLAY (Shows after upload) */}
+            {/* SUCCESS OVERLAY */}
             {showSuccess && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-orange-600/95 backdrop-blur-md transition-all duration-500">
                     <div className="text-center text-white p-10 transform scale-110">
@@ -122,7 +129,7 @@ const CreateRecipe = ({ showToast }) => {
                 </div>
             )}
 
-            {/* 2. MAIN FORM CONTAINER */}
+            {/* FORM CONTAINER */}
             <div className={`max-w-3xl mx-auto bg-white rounded-[2.5rem] shadow-xl overflow-hidden border border-gray-100 transition-all duration-500 ${showSuccess ? 'opacity-0 translate-y-10' : 'opacity-100'}`}>
                 <div className="bg-orange-500 p-8 text-white text-center">
                     <h1 className="text-3xl font-black">Share Your Recipe</h1>
@@ -271,8 +278,8 @@ const CreateRecipe = ({ showToast }) => {
                         type="submit"
                         disabled={isSubmitting}
                         className={`w-full py-5 rounded-[2rem] font-black text-xl shadow-lg transition-all flex items-center justify-center gap-3 ${isSubmitting
-                                ? 'bg-gray-400 cursor-not-allowed shadow-none'
-                                : 'bg-orange-500 text-white shadow-orange-200 hover:bg-orange-600 hover:-translate-y-1 active:translate-y-0'
+                            ? 'bg-gray-400 cursor-not-allowed shadow-none'
+                            : 'bg-orange-500 text-white shadow-orange-200 hover:bg-orange-600 hover:-translate-y-1 active:translate-y-0'
                             }`}
                     >
                         {isSubmitting ? (
