@@ -4,7 +4,7 @@ import { protect, isAdmin } from '../middleware/authMiddleware.js';
 
 import {
     approveRecipe,
-    deleteRecipe,
+    rejectRecipe,
     getAdminData,
     updateRecipeByAdmin,
     getAllUsers,
@@ -22,7 +22,8 @@ router.get('/data', protect, isAdmin, getAdminData);
 router.put('/approve/:id', protect, isAdmin, approveRecipe);
 
 // 3. Delete a recipe
-router.delete('/delete/:id', protect, isAdmin, deleteRecipe);
+// Better to use PUT for rejection feedback
+router.put('/reject/:id', protect, isAdmin, rejectRecipe);
 
 // 4. Update/Fix a recipe
 router.put('/update/:id', protect, isAdmin, updateRecipeByAdmin);

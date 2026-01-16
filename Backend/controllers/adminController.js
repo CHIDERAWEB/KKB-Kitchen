@@ -5,23 +5,22 @@ export const getAdminData = async (req, res) => {
     try {
         console.log("Fetching admin stats and recipes...");
 
-        // 1. Get counts for the stats cards
-        const total = await prisma.recipe.count();
-        const pendingCount = await prisma.recipe.count({ where: { status: 'pending' } });
-        const approvedCount = await prisma.recipe.count({ where: { status: 'approved' } });
+        // Optimized: Fetch counts and recipes in parallel to speed up dashboard load
+        const [total, pendingCount, approvedCount, pendingRecipes] = await Promise.all([
+            prisma.recipe.count(),
+            prisma.recipe.count({ where: { status: 'pending' } }),
+            prisma.recipe.count({ where: { status: 'approved' } }),
+            prisma.recipe.findMany({
+                where: { status: 'pending' },
+                include: {
+                    author: {
+                        select: { name: true, email: true }
+                    }
+                },
+                orderBy: { createdAt: 'desc' }
+            })
+        ]);
 
-        // 2. Fetch the actual recipes that need approval
-        const pendingRecipes = await prisma.recipe.findMany({
-            where: { status: 'pending' },
-            include: {
-                author: {
-                    select: { name: true, email: true } // This helps show who wrote it
-                }
-            },
-            orderBy: { createdAt: 'desc' }
-        });
-
-        // 3. Send the single, final response
         return res.status(200).json({
             stats: {
                 total,
@@ -36,21 +35,20 @@ export const getAdminData = async (req, res) => {
         return res.status(500).json({ error: "Failed to fetch admin data" });
     }
 };
+
 // 2. APPROVE RECIPE
 export const approveRecipe = async (req, res) => {
     try {
         const { id } = req.params;
+        if (!id || isNaN(id)) return res.status(400).json({ error: "Invalid recipe ID" });
 
-        // 1. Update the recipe status in Prisma
         const updatedRecipe = await prisma.recipe.update({
             where: { id: parseInt(id) },
             data: { status: 'approved' }
         });
 
-        // 2. TRIGGER SOCKET NOTIFICATION
-        // We get the 'socketio' instance that you (should) have attached to the 'app' object in server.js
+        // TRIGGER SOCKET NOTIFICATION
         const io = req.app.get('socketio');
-
         if (io) {
             io.emit('recipeApproved', {
                 id: updatedRecipe.id,
@@ -59,36 +57,57 @@ export const approveRecipe = async (req, res) => {
             });
         }
 
-        res.status(200).json({
+        return res.status(200).json({
             message: "Recipe approved! ✅",
             recipe: updatedRecipe
         });
 
     } catch (error) {
         console.error("Approve Error:", error);
-        res.status(500).json({ error: "Failed to approve recipe" });
+        return res.status(500).json({ error: "Failed to approve recipe" });
     }
 };
 
-// 3. DELETE RECIPE
-export const deleteRecipe = async (req, res) => {
+// 3. DELETE RECIPE (Rejection)
+// Change deleteRecipe to rejectRecipe
+export const rejectRecipe = async (req, res) => {
     try {
         const { id } = req.params;
-        await prisma.recipe.delete({
-            where: { id: parseInt(id) }
+        const { reason } = req.body; // This is the "statement" you wrote
+
+        if (!id || isNaN(id)) return res.status(400).json({ error: "Invalid recipe ID" });
+
+        const updated = await prisma.recipe.update({
+            where: { id: parseInt(id) },
+            data: { 
+                status: 'rejected',
+                adminNote: reason || "No reason provided by admin." 
+            }
         });
-        res.status(200).json({ message: "Deleted! 🗑️" });
+
+        // Optional: Notify the user via Socket if they are online
+        const io = req.app.get('socketio');
+        if (io) {
+            io.emit('recipeRejected', {
+                recipeId: updated.id,
+                authorId: updated.authorId,
+                reason: reason
+            });
+        }
+
+        return res.status(200).json({ message: "Recipe rejected and feedback sent! 📩" });
     } catch (error) {
-        console.error("Delete Error:", error);
-        res.status(500).json({ error: "Failed to delete" });
+        console.error("Reject Error:", error);
+        return res.status(500).json({ error: "Failed to process rejection" });
     }
 };
-
-// 4. UPDATE/EDIT (FIXED THE CRASHING BUGS HERE)
+// 4. UPDATE/EDIT
 export const updateRecipeByAdmin = async (req, res) => {
     try {
         const { id } = req.params;
-        const { title, cookTime, servings, ingredients, instructions, adminNote } = req.body; // Added adminNote here
+        if (!id || isNaN(id)) return res.status(400).json({ error: "Invalid recipe ID" });
+
+        const { title, cookTime, servings, ingredients, instructions, adminNote } = req.body;
 
         const updated = await prisma.recipe.update({
             where: { id: parseInt(id) },
@@ -98,10 +117,10 @@ export const updateRecipeByAdmin = async (req, res) => {
                 servings,
                 ingredients: Array.isArray(ingredients) ? ingredients : [ingredients],
                 instructions: Array.isArray(instructions) ? instructions : [instructions],
-                adminNote: adminNote || "" // Safety check
+                adminNote: adminNote || "" 
             }
         });
-        // Removed the double res.status calls that were crashing the server
+
         return res.status(200).json({ message: "Changes saved! 📝", recipe: updated });
     } catch (error) {
         console.error("Update Error:", error);
@@ -116,10 +135,10 @@ export const getAllUsers = async (req, res) => {
             select: { id: true, name: true, email: true, role: true, createdAt: true },
             orderBy: { createdAt: 'desc' }
         });
-        res.status(200).json(users);
+        return res.status(200).json(users);
     } catch (error) {
         console.error("Get Users Error:", error);
-        res.status(500).json({ error: "Failed to fetch users" });
+        return res.status(500).json({ error: "Failed to fetch users" });
     }
 };
 
@@ -128,15 +147,16 @@ export const toggleUserRole = async (req, res) => {
     try {
         const { id } = req.params;
         const { role } = req.body;
+        if (!id || isNaN(id)) return res.status(400).json({ error: "Invalid user ID" });
 
         const updatedUser = await prisma.user.update({
             where: { id: parseInt(id) },
             data: { role: role }
         });
-        res.status(200).json({ message: `User is now a ${role}`, user: updatedUser });
+
+        return res.status(200).json({ message: `User is now a ${role}`, user: updatedUser });
     } catch (error) {
         console.error("Toggle Role Error:", error);
-        res.status(500).json({ error: "Failed to update role" });
+        return res.status(500).json({ error: "Failed to update role" });
     }
 };
-
