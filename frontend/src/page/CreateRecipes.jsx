@@ -57,7 +57,7 @@ const CreateRecipe = ({ showToast }) => {
         }
 
         try {
-            const response = await fetch('https://kkb-kitchen-api.onrender.com/api/recipes/create', {
+            const response = await fetch('https://kkb-kitchen-api.onrender.com/api/recipes/pending-count', {
                 method: 'POST',
                 headers: { 'Authorization': `Bearer ${token}` },
                 body: formData
