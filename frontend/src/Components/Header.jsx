@@ -51,6 +51,7 @@ function Header() {
   // --- 1. UPDATED IDENTITY LOGIC (FIXED) ---
   const [user, setUser] = useState(null);
 
+  // 1. Keep your existing user sync effect
   useEffect(() => {
     const syncUser = () => {
       const savedUser = JSON.parse(localStorage.getItem('user'));
@@ -74,6 +75,36 @@ function Header() {
     window.addEventListener('storage', syncUser);
     return () => window.removeEventListener('storage', syncUser);
   }, [location.pathname]);
+
+  // 2. ADD THIS: Dedicated Socket Effect for Notifications
+  useEffect(() => {
+    // Only connect if the user is an admin
+    const savedUser = JSON.parse(localStorage.getItem('user'));
+    if (savedUser?.role !== 'admin') return;
+
+    const socket = io('https://kkb-kitchen-api.onrender.com');
+
+    socket.on("connect", () => {
+      console.log("Admin connected to notification server ✅");
+    });
+
+    socket.on("recipeCreated", (data) => {
+      console.log("New recipe event received:", data);
+
+      // Update the badge count directly from the server data
+      if (data.pendingCount !== undefined) {
+        setPendingCount(data.pendingCount);
+      }
+
+      // Show the popup
+      showToast(`New Recipe: "${data.title}" by ${data.author} 🚀`);
+    });
+
+    return () => {
+      socket.off("recipeCreated");
+      socket.disconnect();
+    };
+  }, []); // Empty dependency array means this stays alive throughout the session
 
   // --- 2. RESTRICTION GATEKEEPER ---
   const handleRestrictedAction = (e, destination) => {
