@@ -28,11 +28,19 @@ export const createRecipe = async (req, res) => {
         });
 
         // NOTIFICATION LOGIC: Emit to all connected clients
+        // --- UPDATED NOTIFICATION LOGIC ---
         const io = req.app.get('socketio');
         if (io) {
+            // Fetch the updated count of all pending recipes
+            const updatedPendingCount = await prisma.recipe.count({
+                where: { status: 'pending' }
+            });
+
+            // Emit the event with BOTH the message and the new count
             io.emit("recipeCreated", {
                 title: newRecipe.title,
-                author: req.user.name || "A Chef"
+                author: req.user.name || "A Chef",
+                pendingCount: updatedPendingCount // Add this line
             });
         }
 

@@ -71,10 +71,9 @@ function Header() {
     };
 
     syncUser();
-    // Listen for storage changes if login happens in another tab
     window.addEventListener('storage', syncUser);
     return () => window.removeEventListener('storage', syncUser);
-  }, [location.pathname]); // Re-check whenever the route changes
+  }, [location.pathname]);
 
   // --- 2. RESTRICTION GATEKEEPER ---
   const handleRestrictedAction = (e, destination) => {
@@ -104,10 +103,15 @@ function Header() {
 
   // --- 3. ADMIN STATS FETCH ---
   const fetchAdminStats = async () => {
-    if (!user?.token || user?.role !== 'admin') return;
+    // Check localStorage directly to ensure we have the latest token for the fetch
+    const savedToken = user?.token || localStorage.getItem('token');
+    const savedUser = JSON.parse(localStorage.getItem('user'));
+
+    if (!savedToken || savedUser?.role !== 'admin') return;
+
     try {
       const res = await fetch('https://kkb-kitchen-api.onrender.com/api/admin/pending-count', {
-        headers: { 'Authorization': `Bearer ${user.token}` }
+        headers: { 'Authorization': `Bearer ${savedToken}` }
       });
       const data = await res.json();
       setPendingCount(data.count || 0);
@@ -158,14 +162,21 @@ function Header() {
     return () => clearTimeout(debounce);
   }, [query]);
 
-  // --- 6. NOTIFICATION & REAL-TIME LOGIC ---
+  // --- 6. FIXED NOTIFICATION & REAL-TIME LOGIC ---
   useEffect(() => {
+    // Initial fetch when user object is available
     if (user?.role === 'admin') fetchAdminStats();
 
     const handleNotification = (data, messagePrefix) => {
       setToastMessage(`${messagePrefix}: "${data.title}"`);
       setShowToast(true);
-      if (user?.role === 'admin') fetchAdminStats();
+
+      // INSTANT FIX: If admin, refresh the badge count right now
+      const currentStoredUser = JSON.parse(localStorage.getItem('user'));
+      if (currentStoredUser?.role === 'admin') {
+        fetchAdminStats();
+      }
+
       setTimeout(() => setShowToast(false), 5000);
     };
 
@@ -176,7 +187,7 @@ function Header() {
       socket.off("recipeApproved");
       socket.off("recipeCreated");
     };
-  }, [user]);
+  }, [user]); // Runs when user logs in or state changes
 
   useEffect(() => {
     if (user?.role === 'admin') {
@@ -331,7 +342,6 @@ function Header() {
           )}
           <Navbar user={user} />
         </div>
-        {/* ... (Search Overlay and Styles remain untouched) ... */}
         <AnimatePresence>
           {searchOpen && (
             <motion.div ref={searchWrapperRef} initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}
