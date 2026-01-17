@@ -14,7 +14,9 @@ import {
     updateRecipe,
     updateComment,
     rejectRecipe, // Import this
-    rateRecipe    // Import this
+    rateRecipe  ,  // Import this
+    deleteRecipe
+
 } from '../controllers/recipeController.js';
 
 const router = express.Router();
@@ -42,5 +44,6 @@ router.delete('/comments/:id', protect, deleteComment);
 router.post('/create', protect, upload.single('image'), createRecipe);
 router.put('/:id', protect, upload.single('image'), updateRecipe);
 router.post('/:id/reject', protect, isAdmin, rejectRecipe); // NEW: Route for Admin Rejection
+router.delete('/:id', protect, deleteRecipe); // Deletes it forever
 
 export default router;

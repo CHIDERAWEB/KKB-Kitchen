@@ -324,3 +324,36 @@ export const rateRecipe = async (req, res) => {
         res.status(500).json({ error: "Failed to save rating" });
     }
 };
+
+export const deleteRecipe = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const recipeId = parseInt(id);
+
+        // 1. Find it
+        const recipe = await prisma.recipe.findUnique({ where: { id: recipeId } });
+        if (!recipe) return res.status(404).json({ error: "Recipe not found" });
+
+        // 2. Security: Only Admin or Owner can delete
+        if (req.user.role !== 'admin' && recipe.authorId !== req.user.id) {
+            return res.status(403).json({ error: "Unauthorized" });
+        }
+
+        // 3. Delete related comments first (to avoid foreign key errors)
+        await prisma.comment.deleteMany({ where: { recipeId: recipeId } });
+
+        // 4. Delete the recipe permanently
+        await prisma.recipe.delete({ where: { id: recipeId } });
+
+        // 5. Update the Socket count
+        const io = req.app.get('socketio');
+        if (io) {
+            const count = await prisma.recipe.count({ where: { status: 'pending' } });
+            io.emit("updatePendingCount", { count });
+        }
+
+        res.json({ message: "Recipe deleted forever!" });
+    } catch (error) {
+        res.status(500).json({ error: "Delete failed" });
+    }
+};
