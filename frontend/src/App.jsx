@@ -23,6 +23,7 @@ import MealPlanner from './page/MealPlanner';
 import AdminDashboard from './page/AdminDashboard';
 import UploadRecipe from './page/UploadRecipe';
 import Homepage from './page/Homepage';
+import Revisions from './page/Revisions'
 
 // Animation wrapper for page content
 const PageWrapper = ({ children }) => (
@@ -130,6 +131,7 @@ function App() {
                 <Route path="/register" element={<Register triggerLoading={triggerLoading} showToast={showToast} onAuthSuccess={handleAuthSuccess} />} />
                 <Route path="/login" element={<Login triggerLoading={triggerLoading} showToast={showToast} onAuthSuccess={handleAuthSuccess} />} />
                 <Route path="/recipe/:id" element={<Recipejollofdetail showToast={showToast} user={user} />} />
+                <Route path="/revisions" element={<Revisions user={user} />} />
 
                 {/* ADMIN & PROTECTED ROUTES MAINTAINED */}
                 <Route path="/admin" element={user?.role === 'admin' ? <AdminDashboard /> : <Navigate to="/" />} />
