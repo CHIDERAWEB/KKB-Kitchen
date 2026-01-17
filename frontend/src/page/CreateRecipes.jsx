@@ -11,7 +11,7 @@ const CreateRecipe = ({ showToast }) => {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [showSuccess, setShowSuccess] = useState(false);
     const [title, setTitle] = useState('');
-    const [cookTime, setCookTime] = useState('');
+    const [cookTime, setCookTime] = useState(''); // Local state matches UI label
     const [servings, setServings] = useState('');
     const [difficulty, setDifficulty] = useState('Easy');
     const [ingredients, setIngredients] = useState(['']);
@@ -44,7 +44,7 @@ const CreateRecipe = ({ showToast }) => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         const token = localStorage.getItem('token');
-        const user = JSON.parse(localStorage.getItem('user')); // Get user info for socket
+        const user = JSON.parse(localStorage.getItem('user'));
 
         if (!token) {
             showToast("Please log in first!", "error");
@@ -55,7 +55,8 @@ const CreateRecipe = ({ showToast }) => {
 
         const formData = new FormData();
         formData.append('title', title);
-        formData.append('cookTime', cookTime);
+        // --- CHANGED TO MATCH BACKEND KEY ---
+        formData.append('cookingTime', cookTime); 
         formData.append('servings', servings);
         formData.append('difficulty', difficulty);
 
@@ -63,7 +64,8 @@ const CreateRecipe = ({ showToast }) => {
         const filteredIngredients = ingredients.filter(i => i.trim() !== '');
         const filteredSteps = steps.filter(s => s.trim() !== '');
 
-        formData.append('ingredients', JSON.stringify(filteredIngredients));
+        // Sending as strings because your backend split(',') or handles Array.isArray
+        formData.append('ingredients', filteredIngredients.join(', '));
         formData.append('instructions', JSON.stringify(filteredSteps));
 
         if (imageFile) {
@@ -92,6 +94,8 @@ const CreateRecipe = ({ showToast }) => {
 
                 // Reset form
                 setTitle('');
+                setCookTime('');
+                setServings('');
                 setIngredients(['']);
                 setSteps(['']);
                 setImagePreview(null);

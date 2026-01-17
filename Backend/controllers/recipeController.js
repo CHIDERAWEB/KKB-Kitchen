@@ -1,7 +1,6 @@
 import { prisma } from '../config/db.js';
 import { v2 as cloudinary } from 'cloudinary';
 
-
 export const createRecipe = async (req, res) => {
     try {
         if (!req.file) {
@@ -21,6 +20,10 @@ export const createRecipe = async (req, res) => {
                 instructions: Array.isArray(req.body.instructions)
                     ? req.body.instructions
                     : [req.body.instructions],
+                // --- NEW FIELDS ADDED ---
+                difficulty: req.body.difficulty || "Easy",
+                servings: req.body.servings || "1",
+                cookingTime: req.body.cookingTime || "0",
                 imageUrl: result.secure_url,
                 authorId: req.user.id,
                 status: "pending"
@@ -28,19 +31,16 @@ export const createRecipe = async (req, res) => {
         });
 
         // NOTIFICATION LOGIC: Emit to all connected clients
-        // --- UPDATED NOTIFICATION LOGIC ---
         const io = req.app.get('socketio');
         if (io) {
-            // Fetch the updated count of all pending recipes
             const updatedPendingCount = await prisma.recipe.count({
                 where: { status: 'pending' }
             });
 
-            // Emit the event with BOTH the message and the new count
             io.emit("recipeCreated", {
                 title: newRecipe.title,
                 author: req.user.name || "A Chef",
-                pendingCount: updatedPendingCount // Add this line
+                pendingCount: updatedPendingCount 
             });
         }
 
@@ -51,7 +51,6 @@ export const createRecipe = async (req, res) => {
         return res.status(500).json({ error: "Server failed to process recipe" });
     }
 };
-
 
 export const getAllRecipes = async (req, res) => {
     try {
@@ -64,7 +63,6 @@ export const getAllRecipes = async (req, res) => {
         res.status(500).json([]);
     }
 };
-
 
 export const getRecipeById = async (req, res) => {
     try {
@@ -91,7 +89,6 @@ export const getRecipeById = async (req, res) => {
     }
 }
 
-
 export const updateRecipe = async (req, res) => {
     try {
         const { id } = req.params;
@@ -111,11 +108,14 @@ export const updateRecipe = async (req, res) => {
                     ? updateData.ingredients.split(',').map(i => i.trim())
                     : updateData.ingredients,
                 instructions: updateData.instructions,
+                // --- UPDATE NEW FIELDS ---
+                difficulty: updateData.difficulty,
+                servings: updateData.servings,
+                cookingTime: updateData.cookingTime,
                 imageUrl: updateData.imageUrl,
                 status: updateData.status
             }
         });
-
 
         if (updateData.status === 'approved') {
             const io = req.app.get('socketio');
@@ -128,19 +128,13 @@ export const updateRecipe = async (req, res) => {
     }
 };
 
-
 export const searchRecipes = async (req, res) => {
     try {
         const { q } = req.query;
-
         if (!q) return res.json([]);
-
         const results = await prisma.recipe.findMany({
             where: {
-                title: {
-                    contains: q,
-                    mode: 'insensitive'
-                }
+                title: { contains: q, mode: 'insensitive' }
             },
             include: { author: { select: { name: true } } }
         });
@@ -149,7 +143,6 @@ export const searchRecipes = async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 };
-
 
 export const toggleLike = async (req, res) => {
     try {
@@ -163,9 +156,7 @@ export const toggleLike = async (req, res) => {
         let likes = recipe.likedBy || [];
         const isAlreadyLiked = likes.includes(userId);
 
-        likes = isAlreadyLiked
-            ? likes.filter(i => i !== userId)
-            : [...likes, userId];
+        likes = isAlreadyLiked ? likes.filter(i => i !== userId) : [...likes, userId];
 
         const updatedRecipe = await prisma.recipe.update({
             where: { id: recipeId },
@@ -177,7 +168,6 @@ export const toggleLike = async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 };
-
 
 export const getPopularRecipes = async (req, res) => {
     try {
@@ -191,7 +181,6 @@ export const getPopularRecipes = async (req, res) => {
         res.status(500).json({ error: "Failed to fetch popular recipes" });
     }
 };
-
 
 export const addComment = async (req, res) => {
     try {
@@ -214,7 +203,6 @@ export const addComment = async (req, res) => {
         res.status(500).json({ message: "Could not post comment" });
     }
 };
-
 
 export const updateComment = async (req, res) => {
     try {
@@ -242,7 +230,6 @@ export const updateComment = async (req, res) => {
     }
 };
 
-
 export const deleteComment = async (req, res) => {
     try {
         const { id } = req.params;
@@ -263,12 +250,9 @@ export const deleteComment = async (req, res) => {
     }
 };
 
-// 11. GET PENDING COUNT
 export const getPendingCount = async (req, res) => {
     try {
-        const count = await prisma.recipe.count({
-            where: { status: 'pending' }
-        });
+        const count = await prisma.recipe.count({ where: { status: 'pending' } });
         res.json({ count });
     } catch (error) {
         res.status(500).json({ error: "Error counting pending recipes" });
@@ -278,10 +262,9 @@ export const getPendingCount = async (req, res) => {
 export const rejectRecipe = async (req, res) => {
     try {
         const { id } = req.params;
-        const { adminNote } = req.body; // Match the frontend key
+        const { adminNote } = req.body;
         const recipeId = parseInt(id);
 
-        // 1. Check if recipe exists
         const recipe = await prisma.recipe.findUnique({
             where: { id: recipeId },
             include: { author: true }
@@ -289,17 +272,14 @@ export const rejectRecipe = async (req, res) => {
 
         if (!recipe) return res.status(404).json({ error: "Recipe not found" });
 
-        // 2. UPDATE instead of DELETE
-        // This keeps the recipe in the DB so the user can see the feedback
         const updatedRecipe = await prisma.recipe.update({
             where: { id: recipeId },
             data: { 
                 status: 'rejected',
-                adminNote: adminNote // Save the feedback here
+                adminNote: adminNote 
             }
         });
 
-        // 3. Notify via Socket
         const io = req.app.get('socketio');
         if (io) {
             io.emit("recipeRejected", {
@@ -316,5 +296,31 @@ export const rejectRecipe = async (req, res) => {
     } catch (error) {
         console.error("Reject Error:", error);
         res.status(500).json({ error: "Failed to reject recipe" });
+    }
+};
+
+// --- NEW: RATE RECIPE ---
+export const rateRecipe = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { rating, userId } = req.body;
+        const recipeId = parseInt(id);
+
+        const recipe = await prisma.recipe.findUnique({ where: { id: recipeId } });
+        if (!recipe) return res.status(404).json({ error: "Recipe not found" });
+
+        // Store as array of objects in JSON column
+        let currentRatings = recipe.ratings || [];
+        currentRatings = currentRatings.filter(r => r.userId !== userId);
+        currentRatings.push({ userId, value: parseInt(rating) });
+
+        const updatedRecipe = await prisma.recipe.update({
+            where: { id: recipeId },
+            data: { ratings: currentRatings }
+        });
+
+        res.json({ message: "Rating saved!", ratings: updatedRecipe.ratings });
+    } catch (error) {
+        res.status(500).json({ error: "Failed to save rating" });
     }
 };

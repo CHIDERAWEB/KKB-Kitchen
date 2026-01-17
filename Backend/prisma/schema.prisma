@@ -1,54 +1,48 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
-    provider     = "prisma-client-js"
- }
-
+  provider = "prisma-client-js"
+}
 
 datasource db {
   provider = "postgresql"
- }
+}
 
-// This matches your PRD's Account Creation requirements [cite: 25]
 model User {
   id        Int      @id @default(autoincrement())
   name      String
   email     String   @unique
-  password  String   // This will store the hashed password
-  recipes   Recipe[] // Relation for Recipe Uploads [cite: 30]
+  password  String
   createdAt DateTime @default(now())
-  role  String  @default("user")
+  role      String   @default("user")
+  recipes   Recipe[]
 }
 
-// Foundation for the Recipe Discovery feature [cite: 26]
 model Recipe {
-  id          Int      @id @default(autoincrement())
-  title       String
-  ingredients String[]
+  id           Int       @id @default(autoincrement())
+  title        String
+  ingredients  String[]
   instructions String[]
-  imageUrl    String?  // For Cloudinary storage [cite: 60]
-  author      User     @relation(fields: [authorId], references: [id])
-  authorId    Int
-  likedBy      Int[]     // Stores IDs of users who liked this
-  comments     Comment[] // Relation to comments
-  status       String   @default("pending")
-  views        Int       @default(0) // New: Total views counter
-  createdAt DateTime @default(now())
+  imageUrl     String?
+  authorId     Int
+  createdAt    DateTime  @default(now())
+  likedBy      Int[]
+  views        Int       @default(0)
   adminNote    String?
-  updatedAt    DateTime @updatedAt
+  updatedAt    DateTime  @updatedAt
+  status       String    @default("pending")
+  cookingTime  String?
+  difficulty   String?
+  ratings      Json?
+  servings     String?
+  comments     Comment[]
+  author       User      @relation(fields: [authorId], references: [id])
 }
-
 
 model Comment {
   id        Int      @id @default(autoincrement())
   text      String
   recipeId  Int
-  recipe    Recipe   @relation(fields: [recipeId], references: [id], onDelete: Cascade)
   userId    Int
-  userName  String   // Storing name for quick display
+  userName  String
   createdAt DateTime @default(now())
+  recipe    Recipe   @relation(fields: [recipeId], references: [id], onDelete: Cascade)
 }

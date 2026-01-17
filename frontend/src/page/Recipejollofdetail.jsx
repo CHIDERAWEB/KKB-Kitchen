@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Heart, Share2, Clock, ChevronLeft, CheckCircle, Utensils, MessageSquare, Eye, Trash2, Printer, Save, X, ShieldCheck } from 'lucide-react';
+import { Heart, Share2, Clock, ChevronLeft, CheckCircle, Utensils, MessageSquare, Eye, Trash2, Printer, Save, X, ShieldCheck, AlertCircle, Edit, Star, Flame, Users } from 'lucide-react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 
 const Recipejollofdetail = ({ showToast }) => {
@@ -10,6 +10,10 @@ const Recipejollofdetail = ({ showToast }) => {
     const [loading, setLoading] = useState(true);
     const [isLiked, setIsLiked] = useState(false);
     const [newCommentText, setNewCommentText] = useState("");
+    
+    // Rating State
+    const [hoverRating, setHoverRating] = useState(0);
+    const [userRating, setUserRating] = useState(0);
 
     const [editingCommentId, setEditingCommentId] = useState(null);
     const [editText, setEditText] = useState("");
@@ -34,7 +38,6 @@ const Recipejollofdetail = ({ showToast }) => {
                 if (!response.ok) throw new Error("Recipe not found");
                 const data = await response.json();
 
-                // Format Logic
                 const formattedData = {
                     ...data,
                     ingredients: Array.isArray(data.ingredients)
@@ -48,9 +51,14 @@ const Recipejollofdetail = ({ showToast }) => {
                 };
 
                 setRecipe(formattedData);
-
-                // Liked Status Check
+                
+                // --- LOAD USER'S RATING ---
                 const userId = user?.id || user?._id;
+                if (data.ratings && userId) {
+                    const existingRating = data.ratings.find(r => (r.userId || r.user) === userId);
+                    if (existingRating) setUserRating(existingRating.value);
+                }
+
                 if (data.likedBy && userId) {
                     setIsLiked(data.likedBy.some(u => {
                         const likedUserId = typeof u === 'object' ? (u.id || u._id) : u;
@@ -58,7 +66,6 @@ const Recipejollofdetail = ({ showToast }) => {
                     }));
                 }
 
-                // Recommendations
                 const recRes = await fetch(`https://kkb-kitchen-api.onrender.com/api/recipes/all`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
@@ -80,6 +87,25 @@ const Recipejollofdetail = ({ showToast }) => {
         window.scrollTo(0, 0);
     }, [id, navigate, token, showToast]);
 
+    // --- HANDLE RATING ---
+    const handleRating = async (val) => {
+        const userId = user?.id || user?._id;
+        if (!userId) return showToast("Login to rate! 🔐");
+        
+        try {
+            const response = await fetch(`https://kkb-kitchen-api.onrender.com/api/recipes/${id}/rate`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify({ rating: val })
+            });
+
+            if (response.ok) {
+                setUserRating(val);
+                showToast(`You rated this ${val} stars! ⭐`);
+            }
+        } catch (err) { console.error(err); }
+    };
+
     const handlePrint = () => window.print();
 
     const handleShare = () => {
@@ -99,7 +125,6 @@ const Recipejollofdetail = ({ showToast }) => {
 
             if (response.ok) {
                 setIsLiked(!isLiked);
-                // Dynamically update the count in the UI
                 setRecipe(prev => ({
                     ...prev,
                     likedBy: !isLiked 
@@ -119,7 +144,8 @@ const Recipejollofdetail = ({ showToast }) => {
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                 body: JSON.stringify({
                     text: newCommentText,
-                    userName: user?.name || user?.username || "Guest Chef"
+                    userName: user?.name || user?.username || "Guest Chef",
+                    userImage: user?.profileImage || user?.image || ""
                 })
             });
             const savedComment = await response.json();
@@ -179,6 +205,30 @@ const Recipejollofdetail = ({ showToast }) => {
             </div>
 
             <div className="max-w-4xl mx-auto -mt-24 relative bg-white rounded-t-[3rem] p-8 md:p-12 shadow-2xl print-area">
+                
+                {recipe.status === 'rejected' && (
+                    <div className="mb-10 no-print border-2 border-red-100 bg-red-50 p-6 rounded-[2rem] shadow-sm">
+                        <div className="flex items-center justify-between mb-4">
+                            <div className="flex items-center gap-3">
+                                <div className="bg-red-500 p-2 rounded-xl text-white shadow-lg">
+                                    <AlertCircle size={20} />
+                                </div>
+                                <div>
+                                    <h4 className="text-red-600 font-black italic uppercase text-lg leading-tight">Revision Needed</h4>
+                                    <p className="text-red-400 text-[10px] font-bold uppercase tracking-widest">Status: {recipe.status}</p>
+                                </div>
+                            </div>
+                            <Link to={`/edit-recipe/${recipe._id || recipe.id}`} className="bg-white text-red-500 p-3 rounded-full shadow-md hover:scale-110 transition-transform">
+                                <Edit size={20} />
+                            </Link>
+                        </div>
+                        <div className="bg-white/60 p-4 rounded-2xl border border-red-50">
+                            <p className="text-gray-500 text-[10px] font-black uppercase mb-1">Admin Feedback:</p>
+                            <p className="text-gray-700 font-bold italic">"{recipe.adminNote || "No specific note provided. Please review recipe details and resubmit."}"</p>
+                        </div>
+                    </div>
+                )}
+
                 <div className="flex justify-between items-center mb-8 pb-6 border-b no-print">
                     <div className="flex gap-4">
                         <div className="bg-blue-50 px-4 py-2 rounded-full text-xs font-bold flex items-center gap-2 text-blue-600"><Eye size={14} /> {recipe.views || 0}</div>
@@ -191,7 +241,54 @@ const Recipejollofdetail = ({ showToast }) => {
                     </div>
                 </div>
 
-                <h1 className="text-5xl md:text-7xl font-black mb-10 italic uppercase leading-none tracking-tighter text-gray-900">{recipe.title}</h1>
+                <h1 className="text-5xl md:text-7xl font-black mb-6 italic uppercase leading-none tracking-tighter text-gray-900">{recipe.title}</h1>
+
+                {/* --- METADATA BAR (Now matches your CreateRecipe fields) --- */}
+                <div className="flex flex-wrap gap-6 mb-10 bg-gray-50 p-6 rounded-[2rem]">
+                    <div className="flex items-center gap-3">
+                        <div className="bg-orange-500 p-2 rounded-lg text-white"><Flame size={18}/></div>
+                        <div>
+                            <p className="text-[10px] font-black text-gray-400 uppercase">Difficulty</p>
+                            <p className="font-bold text-gray-700">{recipe.difficulty || "Medium"}</p>
+                        </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                        <div className="bg-orange-500 p-2 rounded-lg text-white"><Users size={18}/></div>
+                        <div>
+                            <p className="text-[10px] font-black text-gray-400 uppercase">Servings</p>
+                            <p className="font-bold text-gray-700">{recipe.servings || "4"}</p>
+                        </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                        <div className="bg-orange-500 p-2 rounded-lg text-white"><Clock size={18}/></div>
+                        <div>
+                            <p className="text-[10px] font-black text-gray-400 uppercase">Cook Time</p>
+                            <p className="font-bold text-gray-700">{recipe.cookingTime || "45 mins"}</p>
+                        </div>
+                    </div>
+                </div>
+
+                {/* --- STAR RATING SYSTEM --- */}
+                <div className="mb-12 no-print p-6 bg-yellow-50/50 rounded-3xl border border-yellow-100">
+                    <p className="font-black italic uppercase text-sm text-orange-600 mb-3">Rate this Kitchen Masterpiece</p>
+                    <div className="flex items-center gap-2">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                            <button
+                                key={star}
+                                onMouseEnter={() => setHoverRating(star)}
+                                onMouseLeave={() => setHoverRating(0)}
+                                onClick={() => handleRating(star)}
+                                className="transition-transform hover:scale-125"
+                            >
+                                <Star 
+                                    size={36} 
+                                    className={`${(hoverRating || userRating) >= star ? 'text-yellow-400 fill-yellow-400' : 'text-gray-200'} transition-colors`} 
+                                />
+                            </button>
+                        ))}
+                        {userRating > 0 && <span className="ml-4 font-black text-gray-400 uppercase text-xs">You rated: {userRating}/5</span>}
+                    </div>
+                </div>
 
                 <div className="grid md:grid-cols-2 gap-12 mb-20">
                     <div>
@@ -234,28 +331,38 @@ const Recipejollofdetail = ({ showToast }) => {
                         {recipe.comments?.map((c) => {
                             const cId = c.id || c._id;
                             const isEditing = editingCommentId === cId;
-                            const isOwner = user && (c.userId === user.id || c.userId === user._id || c.userName === user.name);
+                            const isOwner = user && (c.userId === user.id || c.userId === user._id);
                             const isAdmin = user?.role === 'admin';
 
                             return (
                                 <div key={cId} className="bg-white p-8 rounded-[2rem] border-2 border-gray-100 relative group shadow-sm hover:border-orange-100 transition-all">
                                     <div className="flex justify-between items-center mb-4">
-                                        <div className="flex items-center gap-2">
-                                            <span className="font-black text-xl text-gray-900">@{c.userName || 'Chef'}</span>
-                                            {c.role === 'admin' && <ShieldCheck size={16} className="text-blue-500" />}
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-orange-100 shadow-sm bg-gray-100 shrink-0">
+                                                <img 
+                                                    src={c.userImage || `https://ui-avatars.com/api/?name=${c.userName}&background=random`} 
+                                                    alt={c.userName} 
+                                                    className="w-full h-full object-cover"
+                                                />
+                                            </div>
+                                            <div className="flex flex-col">
+                                                <div className="flex items-center gap-1">
+                                                    <span className="font-black text-lg text-gray-900 leading-none">{c.userName || 'Chef'}</span>
+                                                    {(c.role === 'admin' || isAdmin) && <ShieldCheck size={14} className="text-blue-500" />}
+                                                </div>
+                                                <span className="text-[10px] text-gray-400 font-bold uppercase tracking-tight">
+                                                    {c.createdAt ? new Date(c.createdAt).toLocaleDateString() : 'Just now'}
+                                                </span>
+                                            </div>
                                         </div>
                                         <div className="flex items-center gap-3">
-                                            <span className="text-[10px] bg-gray-100 px-3 py-1 rounded-full text-gray-500 font-black uppercase">
-                                                {c.createdAt ? new Date(c.createdAt).toLocaleDateString() : 'Just now'}
-                                            </span>
-
                                             {(isOwner || isAdmin) && !isEditing && (
                                                 <div className="flex gap-2">
                                                     <button
                                                         onClick={() => { setEditingCommentId(cId); setEditText(c.text); }}
                                                         className="text-gray-400 hover:text-orange-500 transition-colors"
                                                     >
-                                                        <Utensils size={18} />
+                                                        <Edit size={18} />
                                                     </button>
                                                     <button
                                                         onClick={() => handleDeleteComment(cId)}
@@ -281,7 +388,7 @@ const Recipejollofdetail = ({ showToast }) => {
                                             </div>
                                         </div>
                                     ) : (
-                                        <p className="text-gray-600 font-bold italic">"{c.text}"</p>
+                                        <p className="text-gray-600 font-bold italic pl-1 shadow-orange-50/50">"{c.text}"</p>
                                     )}
                                 </div>
                             );
