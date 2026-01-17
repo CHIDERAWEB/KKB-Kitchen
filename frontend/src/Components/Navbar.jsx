@@ -17,6 +17,33 @@ const Navbar = ({ user, pendingCount, handleLogout }) => {
   const [isListening, setIsListening] = useState(false);
   const navigate = useNavigate();
 
+  // --- NEW: REJECTION NOTIFICATION LOGIC ---
+  useEffect(() => {
+    const checkRejections = async () => {
+      if (!user) return; // Only check if logged in
+
+      try {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`https://kkb-kitchen-api.onrender.com/api/recipes/my-recipes`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await response.json();
+
+        if (response.ok && Array.isArray(data)) {
+          const rejected = data.filter(r => r.status === 'rejected');
+          if (rejected.length > 0) {
+            alert(`👋 Hi ${user.name}! You have ${rejected.length} recipe(s) that need revision. Check your dashboard!`);
+          }
+        }
+      } catch (err) {
+        console.error("Notification check failed", err);
+      }
+    };
+
+    checkRejections();
+  }, [user]); 
+  // ------------------------------------------
+
   // Voice Search Logic
   const startVoiceSearch = () => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;

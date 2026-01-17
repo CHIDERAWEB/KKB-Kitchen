@@ -1,6 +1,7 @@
 import { prisma } from '../config/db.js';
 import { v2 as cloudinary } from 'cloudinary';
 
+// 1. CREATE RECIPE
 export const createRecipe = async (req, res) => {
     try {
         if (!req.file) {
@@ -20,17 +21,15 @@ export const createRecipe = async (req, res) => {
                 instructions: Array.isArray(req.body.instructions)
                     ? req.body.instructions
                     : [req.body.instructions],
-                // --- NEW FIELDS ADDED ---
                 difficulty: req.body.difficulty || "Easy",
                 servings: req.body.servings || "1",
                 cookingTime: req.body.cookingTime || "0",
                 imageUrl: result.secure_url,
                 authorId: req.user.id,
-                status: "pending"
+                status: "pending" // All new recipes start locked
             }
         });
 
-        // NOTIFICATION LOGIC: Emit to all connected clients
         const io = req.app.get('socketio');
         if (io) {
             const updatedPendingCount = await prisma.recipe.count({
@@ -52,9 +51,12 @@ export const createRecipe = async (req, res) => {
     }
 };
 
+// 2. GET ALL RECIPES (Public Grid - Filtered)
 export const getAllRecipes = async (req, res) => {
     try {
         const recipes = await prisma.recipe.findMany({
+            // Only show APPROVED recipes to the public grid
+            where: { status: 'approved' }, 
             include: { author: { select: { name: true } } },
             orderBy: { createdAt: 'desc' }
         });
@@ -64,6 +66,7 @@ export const getAllRecipes = async (req, res) => {
     }
 };
 
+// 3. GET RECIPE BY ID (Increments views)
 export const getRecipeById = async (req, res) => {
     try {
         const { id } = req.params;
@@ -89,6 +92,7 @@ export const getRecipeById = async (req, res) => {
     }
 }
 
+// 4. UPDATE RECIPE (General Editing)
 export const updateRecipe = async (req, res) => {
     try {
         const { id } = req.params;
@@ -108,12 +112,11 @@ export const updateRecipe = async (req, res) => {
                     ? updateData.ingredients.split(',').map(i => i.trim())
                     : updateData.ingredients,
                 instructions: updateData.instructions,
-                // --- UPDATE NEW FIELDS ---
                 difficulty: updateData.difficulty,
                 servings: updateData.servings,
                 cookingTime: updateData.cookingTime,
                 imageUrl: updateData.imageUrl,
-                status: updateData.status
+                status: updateData.status // Allows admin to change status via general update
             }
         });
 
@@ -128,13 +131,15 @@ export const updateRecipe = async (req, res) => {
     }
 };
 
+// 5. SEARCH RECIPES
 export const searchRecipes = async (req, res) => {
     try {
         const { q } = req.query;
         if (!q) return res.json([]);
         const results = await prisma.recipe.findMany({
             where: {
-                title: { contains: q, mode: 'insensitive' }
+                title: { contains: q, mode: 'insensitive' },
+                status: 'approved' // Don't search pending/rejected ones
             },
             include: { author: { select: { name: true } } }
         });
@@ -144,6 +149,7 @@ export const searchRecipes = async (req, res) => {
     }
 };
 
+// 6. TOGGLE LIKE
 export const toggleLike = async (req, res) => {
     try {
         const { id } = req.params;
@@ -169,9 +175,11 @@ export const toggleLike = async (req, res) => {
     }
 };
 
+// 7. GET POPULAR RECIPES
 export const getPopularRecipes = async (req, res) => {
     try {
         const popularRecipes = await prisma.recipe.findMany({
+            where: { status: 'approved' },
             take: 6,
             orderBy: { views: 'desc' },
             include: { author: { select: { name: true } } }
@@ -182,6 +190,7 @@ export const getPopularRecipes = async (req, res) => {
     }
 };
 
+// 8. COMMENT LOGIC
 export const addComment = async (req, res) => {
     try {
         const { id } = req.params;
@@ -250,6 +259,7 @@ export const deleteComment = async (req, res) => {
     }
 };
 
+// 9. ADMIN PANEL LOGIC
 export const getPendingCount = async (req, res) => {
     try {
         const count = await prisma.recipe.count({ where: { status: 'pending' } });
@@ -299,7 +309,7 @@ export const rejectRecipe = async (req, res) => {
     }
 };
 
-// --- NEW: RATE RECIPE ---
+// 10. RATE RECIPE
 export const rateRecipe = async (req, res) => {
     try {
         const { id } = req.params;
@@ -309,7 +319,6 @@ export const rateRecipe = async (req, res) => {
         const recipe = await prisma.recipe.findUnique({ where: { id: recipeId } });
         if (!recipe) return res.status(404).json({ error: "Recipe not found" });
 
-        // Store as array of objects in JSON column
         let currentRatings = recipe.ratings || [];
         currentRatings = currentRatings.filter(r => r.userId !== userId);
         currentRatings.push({ userId, value: parseInt(rating) });
@@ -325,27 +334,26 @@ export const rateRecipe = async (req, res) => {
     }
 };
 
+// 11. PERMANENT DELETE (Hard Delete)
 export const deleteRecipe = async (req, res) => {
     try {
         const { id } = req.params;
         const recipeId = parseInt(id);
 
-        // 1. Find it
         const recipe = await prisma.recipe.findUnique({ where: { id: recipeId } });
         if (!recipe) return res.status(404).json({ error: "Recipe not found" });
 
-        // 2. Security: Only Admin or Owner can delete
+        // Security: Admin or Author only
         if (req.user.role !== 'admin' && recipe.authorId !== req.user.id) {
             return res.status(403).json({ error: "Unauthorized" });
         }
 
-        // 3. Delete related comments first (to avoid foreign key errors)
+        // Wipe related comments
         await prisma.comment.deleteMany({ where: { recipeId: recipeId } });
 
-        // 4. Delete the recipe permanently
+        // Wipe the recipe
         await prisma.recipe.delete({ where: { id: recipeId } });
 
-        // 5. Update the Socket count
         const io = req.app.get('socketio');
         if (io) {
             const count = await prisma.recipe.count({ where: { status: 'pending' } });
@@ -354,6 +362,7 @@ export const deleteRecipe = async (req, res) => {
 
         res.json({ message: "Recipe deleted forever!" });
     } catch (error) {
+        console.error("Delete Error:", error);
         res.status(500).json({ error: "Delete failed" });
     }
 };

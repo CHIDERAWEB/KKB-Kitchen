@@ -2,17 +2,37 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { FiClock, FiChevronRight, FiLock, FiEye, FiStar } from 'react-icons/fi';
+import { io } from 'socket.io-client'; // ✅ Added for real-time updates
 
-// ✅ Receive 'user' as a prop from App.js
 const RecipeGrid = ({ user }) => {
     const [recipes, setRecipes] = useState([]);
     const [loading, setLoading] = useState(true);
     const navigate = useNavigate();
 
+    // ✅ Real-time Rejection Listener
+    useEffect(() => {
+        const socket = io('https://kkb-kitchen-api.onrender.com');
+
+        socket.on('recipeRejected', (data) => {
+            // Check if the rejected recipe belongs to the logged-in user
+            if (user && data.authorId === user.id) {
+                // 1. Show the message
+                alert(`❌ Recipe Rejected: "${data.title}"\nReason: ${data.reason}`);
+                
+                // 2. Remove it from the grid instantly
+                setRecipes((prev) => prev.filter(r => (r._id || r.id) !== data.recipeId));
+            } else {
+                // If it's not the user's recipe, just remove it from the general feed
+                setRecipes((prev) => prev.filter(r => (r._id || r.id) !== data.recipeId));
+            }
+        });
+
+        return () => socket.disconnect();
+    }, [user]);
+
     useEffect(() => {
         const fetchRecipes = async () => {
             try {
-                // Render APIs spin down after inactivity. 
                 const response = await fetch('https://kkb-kitchen-api.onrender.com/api/recipes/all');
                 const data = await response.json();
                 setRecipes(data);
@@ -33,7 +53,6 @@ const RecipeGrid = ({ user }) => {
             return;
         }
 
-        // Handle Pending status logic
         if (status === 'pending' && user?.role !== 'admin') {
             alert("👨‍🍳 Chef is still tasting this one! Check back once it's approved.");
             return;
@@ -74,7 +93,6 @@ const RecipeGrid = ({ user }) => {
                         const isPending = recipe.status === 'pending';
                         const currentId = recipe._id || recipe.id;
                         
-                        // Calculate Rating
                         const rating = recipe.ratings?.length > 0 
                             ? (recipe.ratings.reduce((acc, r) => acc + r.value, 0) / recipe.ratings.length).toFixed(1) 
                             : "5.0";
@@ -89,7 +107,6 @@ const RecipeGrid = ({ user }) => {
                                 className={`group bg-white rounded-[3rem] shadow-sm hover:shadow-2xl transition-all duration-500 overflow-hidden border-2 border-gray-50 flex flex-col relative ${isPending ? 'cursor-default' : 'cursor-pointer'}`}
                                 onClick={() => !isPending && handleProtectedNavigation(recipe, recipe.status)}
                             >
-                                {/* Image Container */}
                                 <div className="relative h-72 overflow-hidden">
                                     <img
                                         src={recipe.imageUrl || recipe.image || 'https://via.placeholder.com/400x300?text=No+Image'}
@@ -97,7 +114,6 @@ const RecipeGrid = ({ user }) => {
                                         className={`w-full h-full object-cover transition-transform duration-700 ${!isPending ? 'group-hover:scale-110' : 'blur-[3px] opacity-60'}`}
                                     />
 
-                                    {/* Star Rating Badge */}
                                     {!isPending && (
                                         <div className="absolute top-5 left-5 bg-orange-500 text-white px-3 py-1.5 rounded-2xl shadow-lg flex items-center gap-1.5 border border-orange-400">
                                             <FiStar size={14} fill="currentColor" />
@@ -122,7 +138,6 @@ const RecipeGrid = ({ user }) => {
                                     </div>
                                 </div>
 
-                                {/* Content */}
                                 <div className="p-8 flex-1 flex flex-col">
                                     <h3 className={`text-2xl font-black italic uppercase leading-tight mb-6 transition-colors line-clamp-2 ${!isPending ? 'text-gray-900 group-hover:text-orange-600' : 'text-gray-400'}`}>
                                         {recipe.title || recipe.name}
