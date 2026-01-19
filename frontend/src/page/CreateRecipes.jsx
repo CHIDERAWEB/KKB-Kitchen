@@ -55,17 +55,18 @@ const CreateRecipe = ({ showToast }) => {
 
         const formData = new FormData();
         formData.append('title', title);
-        // --- CHANGED TO MATCH BACKEND KEY ---
-        formData.append('cookingTime', cookTime); 
-        formData.append('servings', servings);
+        
+        // ✅ FIX 400: Convert strings to Numbers for Prisma/Backend
+        formData.append('cookingTime', parseInt(cookTime) || 0); 
+        formData.append('servings', parseInt(servings) || 0);
         formData.append('difficulty', difficulty);
 
         // Clean lists to remove empty strings
         const filteredIngredients = ingredients.filter(i => i.trim() !== '');
         const filteredSteps = steps.filter(s => s.trim() !== '');
 
-        // Sending as strings because your backend split(',') or handles Array.isArray
-        formData.append('ingredients', filteredIngredients.join(', '));
+        // ✅ FIX 400: Send as JSON strings for reliable parsing
+        formData.append('ingredients', JSON.stringify(filteredIngredients));
         formData.append('instructions', JSON.stringify(filteredSteps));
 
         if (imageFile) {
@@ -75,14 +76,22 @@ const CreateRecipe = ({ showToast }) => {
         try {
             const response = await fetch('https://kkb-kitchen-api.onrender.com/api/recipes/create', {
                 method: 'POST',
-                headers: { 'Authorization': `Bearer ${token}` },
+                headers: { 
+                    // ✅ FIX 401: Authorization header
+                    'Authorization': `Bearer ${token}` 
+                },
                 body: formData
             });
 
             const data = await response.json();
 
             if (response.ok) {
-                // --- SOCKET NOTIFICATION ---
+                // ✅ FIX 404: Audio (Optional: use a CDN link if local file is missing)
+                try {
+                    const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3');
+                    audio.play();
+                } catch (err) { console.log("Audio block") }
+
                 if (socketRef.current) {
                     socketRef.current.emit("recipeCreated", {
                         title: title,
@@ -173,25 +182,27 @@ const CreateRecipe = ({ showToast }) => {
                             />
                         </div>
                         <div>
-                            <label className="flex items-center gap-2 text-sm font-bold text-gray-700 mb-2"><Clock size={16} /> Cook Time</label>
+                            <label className="flex items-center gap-2 text-sm font-bold text-gray-700 mb-2"><Clock size={16} /> Cook Time (mins)</label>
                             <input
-                                type="text"
+                                type="number"
                                 value={cookTime}
                                 disabled={isSubmitting}
                                 onChange={(e) => setCookTime(e.target.value)}
-                                placeholder="45 mins"
+                                placeholder="45"
                                 className="w-full p-4 rounded-xl border border-gray-200 outline-none focus:ring-2 focus:ring-orange-500 disabled:bg-gray-100"
+                                required
                             />
                         </div>
                         <div>
                             <label className="flex items-center gap-2 text-sm font-bold text-gray-700 mb-2"><Users size={16} /> Servings</label>
                             <input
-                                type="text"
+                                type="number"
                                 value={servings}
                                 disabled={isSubmitting}
                                 onChange={(e) => setServings(e.target.value)}
-                                placeholder="4 People"
-                                className="w-full p-4 rounded-xl border border-gray-200 outline-none focus:ring-2 focus:ring-orange-500 disabled:bg-gray-100"
+                                placeholder="4"
+                                className="w-full p-4 rounded-xl border border-gray-100 outline-none focus:ring-2 focus:ring-orange-500 disabled:bg-gray-100"
+                                required
                             />
                         </div>
                         <div>
