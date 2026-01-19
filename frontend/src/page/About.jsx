@@ -30,12 +30,14 @@ const About = () => {
                     className="relative"
                 >
                     {/* The "Doll" Frame */}
-                    <div className="rounded-[4rem] overflow-hidden shadow-2xl rotate-2 hover:rotate-0 transition-all duration-700 border-[12px] border-white relative z-10">
+                    <div className="group rounded-[4rem] overflow-hidden shadow-2xl rotate-2 hover:rotate-0 transition-all duration-700 border-[12px] border-white relative z-10">
                         <img
-                            src="hhttps://res.cloudinary.com/dutabdorh/image/upload/v1768835321/kkkb_mwy2wf.png"
+                            src="https://res.cloudinary.com/dutabdorh/image/upload/v1768835321/kkkb_mwy2wf.png"
                             alt="Chef KKB"
-                            className="w-full aspect-[4/5] object-cover"
+                            className="w-full aspect-[4/5] object-cover transform transition-transform duration-700 group-hover:scale-110"
                         />
+                        {/* Subtle Inner Shadow for Depth */}
+                        <div className="absolute inset-0 shadow-[inset_0_0_40px_rgba(0,0,0,0.1)] pointer-events-none"></div>
                     </div>
 
                     {/* Floating Handwritten Badge */}
