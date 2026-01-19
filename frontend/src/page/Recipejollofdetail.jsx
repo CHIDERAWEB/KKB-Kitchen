@@ -85,7 +85,7 @@ const Recipejollofdetail = ({ showToast }) => {
 
         if (id) fetchRecipeData();
         window.scrollTo(0, 0);
-    }, [id, navigate, showToast]);
+    }, [id, navigate]);
 
     // --- HANDLE RATING ---
     const handleRating = async (val) => {
