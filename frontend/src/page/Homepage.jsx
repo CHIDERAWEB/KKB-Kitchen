@@ -250,7 +250,7 @@ const Homepage = () => {
                     </Link>
                 </div>
                 <div className="absolute top-0 right-0 w-1/2 h-full hidden lg:block">
-                    <img src="https://images.unsplash.com/photo-1567073383164-ce59bda79c0e?q=80&w=2000&auto=format&fit=crop" className="h-full w-full object-cover opacity-40 mix-blend-overlay grayscale" alt="Jollof" />
+                    <img src="https://res.cloudinary.com/dutabdorh/image/upload/v1768835321/kkkb_mwy2wf.png" className="h-full w-full object-cover opacity-40 mix-blend-overlay grayscale" alt="Jollof" />
                     <div className="absolute inset-0 bg-gradient-to-r from-gray-900 via-gray-900/40 to-transparent" />
                 </div>
             </motion.section>
