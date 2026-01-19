@@ -1,9 +1,9 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  FiUsers, FiClock, FiCheckCircle, FiDatabase, FiRefreshCw, 
-  FiAlertCircle, FiList, FiDownload, FiSearch, FiShield, 
-  FiUser, FiArrowUpCircle 
+import {
+    FiUsers, FiClock, FiCheckCircle, FiDatabase, FiRefreshCw,
+    FiAlertCircle, FiList, FiDownload, FiSearch, FiShield,
+    FiUser, FiArrowUpCircle
 } from 'react-icons/fi';
 import toast, { Toaster } from 'react-hot-toast';
 import confetti from 'canvas-confetti';
@@ -16,7 +16,7 @@ const AdminDashboard = () => {
     const [stats, setStats] = useState({ total: 0, pending: 0, approved: 0 });
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
-    
+
     const [history, setHistory] = useState([]);
     const [historySearch, setHistorySearch] = useState("");
 
@@ -53,10 +53,10 @@ const AdminDashboard = () => {
             const userData = await userRes.json();
 
             setPendingRecipes(data.pendingRecipes || []);
-            setStats({ 
-                total: data.total || 0, 
-                pending: data.pendingRecipes?.length || 0, 
-                approved: data.approved || 0 
+            setStats({
+                total: data.total || 0,
+                pending: data.pendingRecipes?.length || 0,
+                approved: data.approved || 0
             });
             setAllUsers(userData || []);
         } catch (err) {
@@ -84,12 +84,12 @@ const AdminDashboard = () => {
             notificationSound.current.play().catch(() => {
                 console.log("Audio playback blocked by browser.");
             });
-            toast.success(`New Recipe: ${data.title}`, { 
+            toast.success(`New Recipe: ${data.title}`, {
                 icon: '🔥',
                 style: { borderRadius: '15px', background: '#333', color: '#fff' }
             });
             addtoHistory(`Chef ${data.author?.name || 'Unknown'} submitted ${data.title}`, 'new');
-            fetchData(true); 
+            fetchData(true);
         });
 
         fetchData();
@@ -104,7 +104,7 @@ const AdminDashboard = () => {
         try {
             const res = await fetch(`https://kkb-kitchen-api.onrender.com/api/admin/users/${userId}/role`, {
                 method: 'PUT',
-                headers: { 
+                headers: {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'
                 },
@@ -128,15 +128,15 @@ const AdminDashboard = () => {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             if (res.ok) {
-                confetti({ 
-                    particleCount: 150, 
-                    spread: 80, 
-                    origin: { y: 0.7 }, 
-                    colors: ['#f97316', '#fbbf24', '#ffffff'] 
+                confetti({
+                    particleCount: 150,
+                    spread: 80,
+                    origin: { y: 0.7 },
+                    colors: ['#f97316', '#fbbf24', '#ffffff']
                 });
                 toast.success('Recipe Approved!');
                 addtoHistory(`Approved: ${title}`, 'success');
-                fetchData(true); 
+                fetchData(true);
             }
         } catch (err) {
             toast.error("Approval failed");
@@ -153,9 +153,9 @@ const AdminDashboard = () => {
         try {
             const res = await fetch(`https://kkb-kitchen-api.onrender.com/api/admin/reject/${recipeId}`, {
                 method: 'PUT',
-                headers: { 
-                    'Authorization': `Bearer ${token}`, 
-                    'Content-Type': 'application/json' 
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({ adminNote: rejectionReason })
             });
@@ -164,11 +164,11 @@ const AdminDashboard = () => {
 
             toast.error('Recipe Rejected & Feedback Sent');
             addtoHistory(`Rejected: ${selectedRecipe.title}`, 'error');
-            
+
             setShowRejectModal(false);
             setRejectionReason('');
-            fetchData(true); 
-            
+            fetchData(true);
+
         } catch (err) {
             toast.error("Rejection Sync Failed.");
         }
@@ -191,7 +191,7 @@ const AdminDashboard = () => {
         toast.success("Report exported!");
     };
 
-    const filteredHistory = history.filter(item => 
+    const filteredHistory = history.filter(item =>
         item.msg.toLowerCase().includes(historySearch.toLowerCase())
     );
 
@@ -214,7 +214,7 @@ const AdminDashboard = () => {
                 <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/40 backdrop-blur-md animate-in fade-in duration-300">
                     <div className="bg-white w-full max-w-md rounded-[2.5rem] p-8 shadow-2xl animate-in zoom-in-95 duration-200">
                         <div className="flex items-center gap-3 mb-6">
-                            <div className="p-3 bg-red-100 text-red-600 rounded-2xl"><FiAlertCircle size={24}/></div>
+                            <div className="p-3 bg-red-100 text-red-600 rounded-2xl"><FiAlertCircle size={24} /></div>
                             <h3 className="text-2xl font-black text-red-600 uppercase tracking-tighter">Reject Recipe?</h3>
                         </div>
                         <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 px-1">Chef's Feedback Statement</p>
@@ -242,11 +242,11 @@ const AdminDashboard = () => {
                     <h1 className="text-5xl font-black uppercase tracking-tighter text-gray-900">Command <span className="text-orange-500">Center</span></h1>
                     <p className="text-gray-400 text-[11px] font-bold uppercase tracking-widest mt-1">KKB Kitchen • Security & Moderation</p>
                 </div>
-                <button 
-                    onClick={() => fetchData(true)} 
+                <button
+                    onClick={() => fetchData(true)}
                     className={`p-5 bg-white rounded-2xl border border-gray-100 shadow-sm transition-all duration-700 ${refreshing ? 'rotate-180 text-orange-500 shadow-orange-100' : 'hover:shadow-lg text-gray-400'}`}
                 >
-                    <FiRefreshCw className={refreshing ? 'animate-spin' : ''}/>
+                    <FiRefreshCw className={refreshing ? 'animate-spin' : ''} />
                 </button>
             </div>
 
@@ -270,12 +270,12 @@ const AdminDashboard = () => {
                     <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
                         {pendingRecipes.length === 0 ? (
                             <div className="flex flex-col items-center justify-center py-32 bg-white rounded-[3rem] border-2 border-dashed border-gray-100">
-                                <div className="p-6 bg-gray-50 rounded-full text-gray-300 mb-4 animate-bounce"><FiCheckCircle size={40}/></div>
+                                <div className="p-6 bg-gray-50 rounded-full text-gray-300 mb-4 animate-bounce"><FiCheckCircle size={40} /></div>
                                 <p className="text-gray-400 font-black uppercase text-xs tracking-widest">The queue is empty.</p>
                             </div>
                         ) : (
                             pendingRecipes.map((recipe, idx) => (
-                                <div key={recipe.id || recipe._id} style={{animationDelay: `${idx * 50}ms`}} className="bg-white rounded-[2.5rem] p-6 shadow-sm border border-gray-100 flex flex-col md:flex-row justify-between items-center gap-6 group hover:shadow-xl transition-all animate-in slide-in-from-bottom-2">
+                                <div key={recipe.id || recipe._id} style={{ animationDelay: `${idx * 50}ms` }} className="bg-white rounded-[2.5rem] p-6 shadow-sm border border-gray-100 flex flex-col md:flex-row justify-between items-center gap-6 group hover:shadow-xl transition-all animate-in slide-in-from-bottom-2">
                                     <div className="flex items-center gap-6 w-full">
                                         <div className="relative shrink-0">
                                             <img src={recipe.imageUrl || 'https://via.placeholder.com/150'} className="w-20 h-20 rounded-[1.8rem] object-cover border-4 border-gray-50" alt="" />
@@ -283,7 +283,7 @@ const AdminDashboard = () => {
                                         <div className="flex-1">
                                             <h3 className="text-2xl font-black text-gray-800 tracking-tight leading-tight mb-2 group-hover:text-orange-500 transition-colors">{recipe.title}</h3>
                                             <div className="flex items-center gap-2">
-                                                <div className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center text-gray-400"><FiUser size={12}/></div>
+                                                <div className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center text-gray-400"><FiUser size={12} /></div>
                                                 <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">By Chef <span className="text-gray-900 font-black">{recipe.author?.name || 'Anonymous'}</span></p>
                                             </div>
                                         </div>
@@ -326,7 +326,7 @@ const AdminDashboard = () => {
                                                 </span>
                                             </td>
                                             <td className="p-8">
-                                                <button 
+                                                <button
                                                     onClick={() => handleRoleUpdate(u.id || u._id, u.role, u.name)}
                                                     className={`flex items-center gap-2 px-4 py-3 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all active:scale-95 ${u.role === 'admin' ? 'bg-red-50 text-red-500 hover:bg-red-100' : 'bg-orange-50 text-orange-600 hover:bg-orange-100'}`}
                                                 >
@@ -347,24 +347,24 @@ const AdminDashboard = () => {
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-6 gap-6">
                     <div>
                         <div className="flex items-center gap-2 text-orange-500 mb-2">
-                            <FiList size={18}/>
+                            <FiList size={18} />
                             <h4 className="text-[11px] font-black uppercase tracking-[0.2em]">Session Logs</h4>
                         </div>
                         <p className="text-gray-400 text-[10px] font-medium max-w-xs uppercase leading-relaxed">System activity is stored temporarily for this session only.</p>
                     </div>
-                    
+
                     <div className="flex items-center gap-4 w-full md:w-auto">
                         <div className="relative flex-1 md:w-72">
                             <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
-                            <input 
-                                type="text" 
+                            <input
+                                type="text"
                                 placeholder="FILTER ACTIVITY..."
                                 className="w-full pl-12 pr-4 py-4 bg-white border border-gray-100 rounded-2xl text-[10px] font-black uppercase tracking-widest outline-none focus:ring-2 focus:ring-orange-500 transition-all shadow-sm"
                                 value={historySearch}
                                 onChange={(e) => setHistorySearch(e.target.value)}
                             />
                         </div>
-                        <button 
+                        <button
                             onClick={downloadReport}
                             className="flex items-center gap-2 h-14 px-6 bg-gray-900 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-orange-500 active:scale-95 transition-all shadow-xl"
                         >
@@ -398,30 +398,30 @@ const AdminDashboard = () => {
 /* --- SUB-COMPONENTS --- */
 
 const StatCard = ({ icon, label, value, color, active, delay }) => {
-  const colorMap = {
-    blue: 'bg-blue-50 text-blue-500',
-    orange: 'bg-orange-50 text-orange-500',
-    green: 'bg-green-50 text-green-500',
-    purple: 'bg-purple-50 text-purple-500'
-  };
+    const colorMap = {
+        blue: 'bg-blue-50 text-blue-500',
+        orange: 'bg-orange-50 text-orange-500',
+        green: 'bg-green-50 text-green-500',
+        purple: 'bg-purple-50 text-purple-500'
+    };
 
-  return (
-    <div 
-        style={{animationDelay: `${delay}ms`}}
-        className={`${active ? 'bg-orange-500 text-white shadow-2xl shadow-orange-200' : 'bg-white border border-gray-100 shadow-sm'} p-8 rounded-[2.8rem] transition-all duration-500 hover:-translate-y-2 animate-in slide-in-from-bottom-4`}
-    >
-        <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mb-6 ${active ? 'bg-white/20' : colorMap[color]}`}>
-            {React.cloneElement(icon, { size: 24 })}
+    return (
+        <div
+            style={{ animationDelay: `${delay}ms` }}
+            className={`${active ? 'bg-orange-500 text-white shadow-2xl shadow-orange-200' : 'bg-white border border-gray-100 shadow-sm'} p-8 rounded-[2.8rem] transition-all duration-500 hover:-translate-y-2 animate-in slide-in-from-bottom-4`}
+        >
+            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mb-6 ${active ? 'bg-white/20' : colorMap[color]}`}>
+                {React.cloneElement(icon, { size: 24 })}
+            </div>
+            <p className={`text-[10px] font-black uppercase tracking-widest mb-1 ${active ? 'text-white/70' : 'text-gray-400'}`}>{label}</p>
+            <h2 className="text-4xl font-black tracking-tighter tabular-nums">{value}</h2>
         </div>
-        <p className={`text-[10px] font-black uppercase tracking-widest mb-1 ${active ? 'text-white/70' : 'text-gray-400'}`}>{label}</p>
-        <h2 className="text-4xl font-black tracking-tighter tabular-nums">{value}</h2>
-    </div>
-  );
+    );
 };
 
 const TabButton = ({ label, active, onClick }) => (
-    <button 
-        onClick={onClick} 
+    <button
+        onClick={onClick}
         className={`pb-4 px-2 font-black text-xs uppercase tracking-widest transition-all relative ${active ? 'text-orange-500' : 'text-gray-300 hover:text-gray-400'}`}
     >
         {label}

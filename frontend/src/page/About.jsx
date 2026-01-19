@@ -32,7 +32,7 @@ const About = () => {
                     {/* The "Doll" Frame */}
                     <div className="rounded-[4rem] overflow-hidden shadow-2xl rotate-2 hover:rotate-0 transition-all duration-700 border-[12px] border-white relative z-10">
                         <img
-                            src="https://res.cloudinary.com/dutabdorh/image/upload/v1757552996/cld-sample-4.jpg"
+                            src="hhttps://res.cloudinary.com/dutabdorh/image/upload/v1768835321/kkkb_mwy2wf.png"
                             alt="Chef KKB"
                             className="w-full aspect-[4/5] object-cover"
                         />
