@@ -41,7 +41,7 @@ const Navbar = ({ user, pendingCount, handleLogout }) => {
     };
 
     checkRejections();
-  }, [user]); 
+  }, [user]);
   // ------------------------------------------
 
   // Voice Search Logic
@@ -166,6 +166,7 @@ const Navbar = ({ user, pendingCount, handleLogout }) => {
                 {/* 3. PRIMARY NAVIGATION LINKS */}
                 <div className="space-y-2">
                   <MobileLink variants={itemVariants} icon={<FiHome />} label="Home" subtitle="Back to start" onClick={() => handleLink('/')} />
+                  <MobileLink variants={itemVariants} icon={<FiAbout />} label="About" subtitle="Learn more" onClick={() => handleLink('/about')} />
 
                   {/* DISCOVER ACCORDION */}
                   <div className="flex flex-col">

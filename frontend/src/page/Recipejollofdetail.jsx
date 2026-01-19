@@ -21,7 +21,9 @@ const Recipejollofdetail = ({ showToast }) => {
     const user = JSON.parse(localStorage.getItem('user'));
     const token = localStorage.getItem('token');
 
+    // --- MAIN DATA FETCHING EFFECT ---
     useEffect(() => {
+        // 1. Auth Check
         if (!token) {
             if (showToast) showToast("Please login or register to view full recipes! 🔐");
             navigate('/login');
@@ -38,6 +40,7 @@ const Recipejollofdetail = ({ showToast }) => {
                 if (!response.ok) throw new Error("Recipe not found");
                 const data = await response.json();
 
+                // Format the data once here
                 const formattedData = {
                     ...data,
                     ingredients: Array.isArray(data.ingredients)
@@ -52,7 +55,7 @@ const Recipejollofdetail = ({ showToast }) => {
 
                 setRecipe(formattedData);
 
-                // --- LOAD USER'S RATING ---
+                // Set initial UI states
                 const userId = user?.id || user?._id;
                 if (data.ratings && userId) {
                     const existingRating = data.ratings.find(r => (r.userId || r.user) === userId);
@@ -66,6 +69,7 @@ const Recipejollofdetail = ({ showToast }) => {
                     }));
                 }
 
+                // Recommendations
                 const recRes = await fetch(`https://kkb-kitchen-api.onrender.com/api/recipes/all`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
@@ -85,9 +89,12 @@ const Recipejollofdetail = ({ showToast }) => {
 
         if (id) fetchRecipeData();
         window.scrollTo(0, 0);
+
+        // STABILITY FIX: We only want this to run when the ID changes.
+        // We do NOT include showToast here to prevent re-fetching on toasts.
     }, [id, navigate]);
 
-    // --- HANDLE RATING ---
+    // --- HANDLERS ---
     const handleRating = async (val) => {
         const userId = user?.id || user?._id;
         if (!userId) return showToast("Login to rate! 🔐");
@@ -110,13 +117,17 @@ const Recipejollofdetail = ({ showToast }) => {
 
     const handleShare = () => {
         navigator.clipboard.writeText(window.location.href);
-        if (showToast) showToast("Link copied to clipboard! 📋");
+        showToast("Link copied to clipboard! 📋");
     };
 
     const handleLike = async () => {
         const userId = user?.id || user?._id;
         if (!userId) return showToast("Please login to like recipes! 🔐");
+
         try {
+            // Optimistic Update: Change UI immediately
+            setIsLiked(!isLiked);
+
             const response = await fetch(`https://kkb-kitchen-api.onrender.com/api/recipes/${id}/like`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
@@ -124,16 +135,15 @@ const Recipejollofdetail = ({ showToast }) => {
             });
 
             if (response.ok) {
-                setIsLiked(!isLiked);
-                setRecipe(prev => ({
-                    ...prev,
-                    likedBy: !isLiked
-                        ? [...(prev.likedBy || []), userId]
-                        : prev.likedBy.filter(u => (typeof u === 'object' ? (u.id !== userId && u._id !== userId) : u !== userId))
-                }));
                 showToast(!isLiked ? "Added to favorites! ❤️" : "Removed from favorites");
+            } else {
+                // Revert if failed
+                setIsLiked(isLiked);
             }
-        } catch (err) { console.error(err); }
+        } catch (err) {
+            console.error(err);
+            setIsLiked(isLiked);
+        }
     };
 
     const handlePostComment = async () => {
@@ -199,6 +209,7 @@ const Recipejollofdetail = ({ showToast }) => {
                 {`@media print { .no-print { display: none !important; } .print-area { margin: 0; padding: 0; box-shadow: none; border: none; } }`}
             </style>
 
+            {/* HEADER IMAGE */}
             <div className="relative h-96 w-full no-print">
                 <img src={recipe.imageUrl || recipe.image} className="w-full h-full object-cover" alt={recipe.title} />
                 <button onClick={() => navigate(-1)} className="absolute top-6 left-6 bg-white/80 p-2 rounded-full shadow-lg hover:bg-white transition-colors"><ChevronLeft /></button>
@@ -206,6 +217,7 @@ const Recipejollofdetail = ({ showToast }) => {
 
             <div className="max-w-4xl mx-auto -mt-24 relative bg-white rounded-t-[3rem] p-8 md:p-12 shadow-2xl print-area">
 
+                {/* ADMIN REJECTION ALERT */}
                 {recipe.status === 'rejected' && (
                     <div className="mb-10 no-print border-2 border-red-100 bg-red-50 p-6 rounded-[2rem] shadow-sm">
                         <div className="flex items-center justify-between mb-4">
@@ -229,6 +241,7 @@ const Recipejollofdetail = ({ showToast }) => {
                     </div>
                 )}
 
+                {/* ACTION BAR */}
                 <div className="flex justify-between items-center mb-8 pb-6 border-b no-print">
                     <div className="flex gap-4">
                         <div className="bg-blue-50 px-4 py-2 rounded-full text-xs font-bold flex items-center gap-2 text-blue-600"><Eye size={14} /> {recipe.views || 0}</div>
@@ -243,7 +256,7 @@ const Recipejollofdetail = ({ showToast }) => {
 
                 <h1 className="text-5xl md:text-7xl font-black mb-6 italic uppercase leading-none tracking-tighter text-gray-900">{recipe.title}</h1>
 
-                {/* --- METADATA BAR (Now matches your CreateRecipe fields) --- */}
+                {/* METADATA BAR */}
                 <div className="flex flex-wrap gap-6 mb-10 bg-gray-50 p-6 rounded-[2rem]">
                     <div className="flex items-center gap-3">
                         <div className="bg-orange-500 p-2 rounded-lg text-white"><Flame size={18} /></div>
@@ -268,7 +281,7 @@ const Recipejollofdetail = ({ showToast }) => {
                     </div>
                 </div>
 
-                {/* --- STAR RATING SYSTEM --- */}
+                {/* RATING SECTION */}
                 <div className="mb-12 no-print p-6 bg-yellow-50/50 rounded-3xl border border-yellow-100">
                     <p className="font-black italic uppercase text-sm text-orange-600 mb-3">Rate this Kitchen Masterpiece</p>
                     <div className="flex items-center gap-2">
@@ -290,6 +303,7 @@ const Recipejollofdetail = ({ showToast }) => {
                     </div>
                 </div>
 
+                {/* INGREDIENTS & METHOD */}
                 <div className="grid md:grid-cols-2 gap-12 mb-20">
                     <div>
                         <h3 className="text-2xl font-black mb-6 italic text-orange-600 uppercase tracking-widest flex items-center gap-2"><Utensils /> Ingredients</h3>
@@ -315,7 +329,7 @@ const Recipejollofdetail = ({ showToast }) => {
                     </div>
                 </div>
 
-                {/* --- COMMENTS SECTION --- */}
+                {/* COMMENTS SECTION */}
                 <div className="no-print border-t-4 border-dashed border-gray-100 pt-10">
                     <h3 className="text-3xl font-black mb-8 italic flex items-center gap-3">
                         <MessageSquare size={32} className="text-orange-500" /> Kitchen Chatter
@@ -396,7 +410,7 @@ const Recipejollofdetail = ({ showToast }) => {
                     </div>
                 </div>
 
-                {/* --- RECOMMENDATIONS --- */}
+                {/* RECOMMENDATIONS */}
                 <div className="no-print mt-20">
                     <h3 className="text-3xl font-black mb-8 italic uppercase tracking-tighter">You might also like...</h3>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-6">

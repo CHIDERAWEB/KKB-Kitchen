@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
-import { CheckCircle, Bell } from 'lucide-react'; 
+import { CheckCircle, Bell } from 'lucide-react';
 import io from 'socket.io-client';
 
 // COMPONENTS
@@ -27,8 +27,7 @@ import Homepage from './page/Homepage';
 import Revisions from './page/Revisions';
 
 // Initialize Socket.io 
-// Note: Ensure this URL matches your backend exactly
-const socket = io('https://kkb-kitchen-api.onrender.com'); 
+const socket = io('https://kkb-kitchen-api.onrender.com');
 
 const PageWrapper = ({ children }) => (
   <motion.div
@@ -58,34 +57,41 @@ function App() {
     return savedUser ? JSON.parse(savedUser) : null;
   });
 
+  // --- STABLE TOAST LOGIC ---
+  // useCallback prevents Recipejollofdetail from re-fetching every time a toast is shown
+  const showToast = useCallback((msg, type = "success") => {
+    setToast({ show: true, message: msg, type: type });
+    const duration = type === "error" ? 7000 : 5000;
+    const timer = setTimeout(() => {
+      setToast({ show: false, message: "", type: "success" });
+    }, duration);
+    return () => clearTimeout(timer);
+  }, []);
+
   // --- SOCKET NOTIFICATION LOGIC ---
   useEffect(() => {
-    // Check for user and either id or _id (to support MongoDB/Prisma variations)
     const userId = user?.id || user?._id;
 
     if (userId && socket) {
-      // 1. Join the private room so the server can find this specific user
       socket.emit("join_room", userId.toString());
-      console.log(`Chef connected to private room: ${userId}`);
 
-      // 2. Listen for the recipe_update event from the backend
-      socket.on("recipe_update", (data) => {
+      const handleUpdate = (data) => {
         if (data.type === 'REJECTED') {
-          // Play a subtle notification sound (optional)
           const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3');
           audio.play().catch(() => console.log("Audio blocked"));
-          
           showToast(`REJECTED: "${data.title}". Reason: ${data.message}`, "error");
         } else if (data.type === 'APPROVED') {
           showToast(`CONGRATS! Your recipe "${data.title}" is now live!`, "success");
         }
-      });
-    }
+      };
 
-    return () => {
-      socket.off("recipe_update");
-    };
-  }, [user]);
+      socket.on("recipe_update", handleUpdate);
+
+      return () => {
+        socket.off("recipe_update", handleUpdate);
+      };
+    }
+  }, [user, showToast]);
 
   useEffect(() => {
     const syncUser = () => {
@@ -112,13 +118,6 @@ function App() {
     setTimeout(() => setIsLoading(false), duration);
   };
 
-  const showToast = (msg, type = "success") => {
-    setToast({ show: true, message: msg, type: type });
-    // Keep error messages on screen longer (7 seconds) so users can read the reason
-    const duration = type === "error" ? 7000 : 5000;
-    setTimeout(() => setToast({ show: false, message: "", type: "success" }), duration);
-  };
-
   const handleAuthSuccess = (userData) => {
     setUser(userData);
     localStorage.setItem('user', JSON.stringify(userData));
@@ -139,7 +138,7 @@ function App() {
           animate={{ opacity: 1 }}
           className="min-h-screen flex flex-col bg-white relative"
         >
-          {/* GLOBAL TOAST - SUPPORTS ERROR (RED) AND SUCCESS (DARK) */}
+          {/* GLOBAL TOAST */}
           <div className={`fixed top-24 left-1/2 -translate-x-1/2 z-[200] transition-all duration-500 transform ${toast.show ? "translate-y-0 opacity-100" : "-translate-y-12 opacity-0 pointer-events-none"}`}>
             <div className={`${toast.type === 'error' ? 'bg-red-600' : 'bg-gray-900/95'} backdrop-blur-md text-white px-6 py-4 rounded-[2rem] shadow-2xl flex items-center gap-3 border border-white/10 max-w-md`}>
               {toast.type === 'error' ? <Bell className="text-white animate-ring" size={20} /> : <CheckCircle className="text-green-400" size={20} />}
