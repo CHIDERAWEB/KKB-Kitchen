@@ -113,7 +113,7 @@ const Homepage = () => {
                     <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} className="flex-1 relative hidden lg:block">
                         <div className="relative w-full aspect-square max-w-md mx-auto">
                             <div className="img-reveal-container h-full w-full">
-                                <img src="https://images.unsplash.com/photo-1504674900247-0877df9cc836?q=80&w=1000&auto=format&fit=crop" className="w-full h-full object-cover shadow-2xl rotate-3 hover:rotate-0 transition-transform duration-700 border-[12px] border-white rounded-2xl" alt="Chef's Special" />
+                                <img src="https://res.cloudinary.com/dutabdorh/image/upload/v1768835321/kkkb_mwy2wf.png" className="w-full h-full object-cover shadow-2xl rotate-3 hover:rotate-0 transition-transform duration-700 border-[12px] border-white rounded-2xl" alt="Chef's Special" />
                             </div>
                             <motion.div animate={{ y: [0, -10, 0] }} transition={{ repeat: Infinity, duration: 3 }} className="absolute -top-6 -right-6 bg-white p-4 rounded-3xl shadow-xl flex items-center gap-3 border border-gray-50">
                                 <div className="h-3 w-3 bg-green-500 rounded-full animate-pulse" />
