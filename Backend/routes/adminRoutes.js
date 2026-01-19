@@ -1,5 +1,4 @@
 import express from 'express';
-// 1. Fixed the import - Changed authenticateToken to protect
 import { protect, isAdmin } from '../middleware/authMiddleware.js';
 
 import {
@@ -8,30 +7,46 @@ import {
     getAdminData,
     updateRecipeByAdmin,
     getAllUsers,
-    toggleUserRole
+    toggleUserRole,
+    getPendingCount 
 } from '../controllers/adminController.js';
 
 const router = express.Router();
 
-// --- ALL ADMIN ROUTES ARE NOW PROTECTED ---
+/**
+ * --- MONITORING & ANALYTICS ---
+ */
 
-// 1. Get Dashboard Stats & Pending Recipes
+// Get full dashboard statistics and pending recipe list
 router.get('/data', protect, isAdmin, getAdminData);
 
-// 2. Approve a recipe
+// Quick check for pending count (ideal for navbar notification badges)
+router.get('/pending-count', protect, isAdmin, getPendingCount);
+
+
+/**
+ * --- RECIPE MODERATION ---
+ */
+
+// Approve a recipe: Changes status to 'approved' and notifies Chef
 router.put('/approve/:id', protect, isAdmin, approveRecipe);
 
-// 3. Delete a recipe
-// Better to use PUT for rejection feedback
+// Reject a recipe: Changes status to 'rejected' and sends admin feedback
 router.put('/reject/:id', protect, isAdmin, rejectRecipe);
 
-// 4. Update/Fix a recipe
+// Admin Edit: Fixes typos or ingredient lists directly
 router.put('/update/:id', protect, isAdmin, updateRecipeByAdmin);
 
-// 5. User Management
+
+/**
+ * --- USER & PERMISSIONS MANAGEMENT ---
+ */
+
+// Fetch all registered users for the management directory
 router.get('/users', protect, isAdmin, getAllUsers);
 
-// 6. Change User Roles
-router.put('/users/role/:id', protect, isAdmin, toggleUserRole);
+// Toggle roles: Promote to 'admin' or demote to 'user'
+// Note: URL structure matches the fetch call in your React component
+router.put('/users/:id/role', protect, isAdmin, toggleUserRole);
 
 export default router;

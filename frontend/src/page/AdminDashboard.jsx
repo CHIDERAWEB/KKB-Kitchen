@@ -36,6 +36,144 @@ const AdminDashboard = () => {
         setHistory(prev => [{ msg, time, type }, ...prev].slice(0, 20));
     };
 
+    const fetchData = async (isSoftRefresh = false) => {
+        if (!isSoftRefresh) setLoading(true);
+        setRefreshing(true);
+        try {
+            const [dataRes, userRes] = await Promise.all([
+                fetch('https://kkb-kitchen-api.onrender.com/api/admin/data', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                }),
+                fetch('https://kkb-kitchen-api.onrender.com/api/admin/users', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                })
+            ]);
+
+            const data = await dataRes.json();
+            const userData = await userRes.json();
+
+            setPendingRecipes(data.pendingRecipes || []);
+            setStats({ 
+                total: data.total || 0, 
+                pending: data.pendingRecipes?.length || 0, 
+                approved: data.approved || 0 
+            });
+            setAllUsers(userData || []);
+        } catch (err) {
+            toast.error("Sync failed with command server");
+        } finally {
+            setLoading(false);
+            setRefreshing(false);
+        }
+    };
+
+    useEffect(() => {
+        if (!user || user.role !== 'admin') {
+            navigate('/');
+            return;
+        }
+
+        socketRef.current = io('https://kkb-kitchen-api.onrender.com');
+
+        socketRef.current.on("connect", () => {
+            socketRef.current.emit("join_room", user.id || user._id);
+            addtoHistory("Socket Connection Established", "success");
+        });
+
+        socketRef.current.on("recipeCreated", (data) => {
+            notificationSound.current.play().catch(() => {
+                console.log("Audio playback blocked by browser.");
+            });
+            toast.success(`New Recipe: ${data.title}`, { 
+                icon: '🔥',
+                style: { borderRadius: '15px', background: '#333', color: '#fff' }
+            });
+            addtoHistory(`Chef ${data.author?.name || 'Unknown'} submitted ${data.title}`, 'new');
+            fetchData(true); 
+        });
+
+        fetchData();
+
+        return () => {
+            if (socketRef.current) socketRef.current.disconnect();
+        };
+    }, []);
+
+    const handleRoleUpdate = async (userId, currentRole, userName) => {
+        const newRole = currentRole === 'admin' ? 'user' : 'admin';
+        try {
+            const res = await fetch(`https://kkb-kitchen-api.onrender.com/api/admin/users/${userId}/role`, {
+                method: 'PUT',
+                headers: { 
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ role: newRole })
+            });
+
+            if (res.ok) {
+                toast.success(`${userName} updated to ${newRole}`);
+                addtoHistory(`${userName} updated to ${newRole}`, 'info');
+                fetchData(true);
+            }
+        } catch (err) {
+            toast.error("Role update failed");
+        }
+    };
+
+    const handleApprove = async (id, title) => {
+        try {
+            const res = await fetch(`https://kkb-kitchen-api.onrender.com/api/admin/approve/${id}`, {
+                method: 'PUT',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (res.ok) {
+                confetti({ 
+                    particleCount: 150, 
+                    spread: 80, 
+                    origin: { y: 0.7 }, 
+                    colors: ['#f97316', '#fbbf24', '#ffffff'] 
+                });
+                toast.success('Recipe Approved!');
+                addtoHistory(`Approved: ${title}`, 'success');
+                fetchData(true); 
+            }
+        } catch (err) {
+            toast.error("Approval failed");
+        }
+    };
+
+    const handleRejectSubmit = async () => {
+        if (!rejectionReason.trim()) {
+            toast.error("Please provide a reason for the Chef!");
+            return;
+        }
+
+        const recipeId = selectedRecipe._id || selectedRecipe.id;
+        try {
+            const res = await fetch(`https://kkb-kitchen-api.onrender.com/api/admin/reject/${recipeId}`, {
+                method: 'PUT',
+                headers: { 
+                    'Authorization': `Bearer ${token}`, 
+                    'Content-Type': 'application/json' 
+                },
+                body: JSON.stringify({ adminNote: rejectionReason })
+            });
+
+            if (!res.ok) throw new Error("Rejection failed");
+
+            toast.error('Recipe Rejected & Feedback Sent');
+            addtoHistory(`Rejected: ${selectedRecipe.title}`, 'error');
+            
+            setShowRejectModal(false);
+            setRejectionReason('');
+            fetchData(true); 
+            
+        } catch (err) {
+            toast.error("Rejection Sync Failed.");
+        }
+    };
+
     const downloadReport = () => {
         if (history.length === 0) {
             toast.error("No activity to download");
@@ -52,137 +190,6 @@ const AdminDashboard = () => {
         URL.revokeObjectURL(url);
         toast.success("Report exported!");
     };
-
-    useEffect(() => {
-        if (!user || user.role !== 'admin') {
-            navigate('/');
-            return;
-        }
-
-        socketRef.current = io('https://kkb-kitchen-api.onrender.com');
-
-        socketRef.current.on("recipeCreated", (data) => {
-            notificationSound.current.play().catch(() => {});
-            toast.success(`New Recipe: ${data.title}`, { 
-                icon: '🔥',
-                style: { borderRadius: '15px', background: '#333', color: '#fff' }
-            });
-            addtoHistory(`Chef ${data.author?.name || 'Unknown'} submitted ${data.title}`, 'new');
-            fetchData(true); 
-        });
-
-        fetchData();
-
-        return () => {
-            if (socketRef.current) socketRef.current.disconnect();
-        };
-    }, []);
-
-    const fetchData = async (isSoftRefresh = false) => {
-        if (!isSoftRefresh) setLoading(true);
-        setRefreshing(true);
-        try {
-            const res = await fetch('https://kkb-kitchen-api.onrender.com/api/admin/data', {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            const data = await res.json();
-            setPendingRecipes(data.pendingRecipes || []);
-            setStats(data.stats || { total: 0, pending: data.pendingRecipes?.length || 0, approved: 0 });
-
-            const userRes = await fetch('https://kkb-kitchen-api.onrender.com/api/admin/users', {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            const userData = await userRes.json();
-            setAllUsers(userData || []);
-        } catch (err) {
-            toast.error("Sync failed");
-        } finally {
-            setLoading(false);
-            setRefreshing(false);
-        }
-    };
-
-    const handleRoleUpdate = async (userId, currentRole, userName) => {
-        const newRole = currentRole === 'admin' ? 'user' : 'admin';
-        try {
-            const res = await fetch(`https://kkb-kitchen-api.onrender.com/api/admin/users/${userId}/role`, {
-                method: 'PUT',
-                headers: { 
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ role: newRole })
-            });
-
-            if (res.ok) {
-                toast.success(`${userName} is now ${newRole}`);
-                addtoHistory(`${userName} updated to ${newRole}`, 'info');
-                fetchData(true);
-            }
-        } catch (err) {
-            toast.error("Role update failed");
-        }
-    };
-
-    const handleApprove = async (id, title) => {
-        try {
-            const res = await fetch(`https://kkb-kitchen-api.onrender.com/api/admin/approve/${id}`, {
-                method: 'PUT',
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            if (res.ok) {
-                confetti({ particleCount: 150, spread: 80, origin: { y: 0.7 }, colors: ['#f97316', '#fbbf24', '#ffffff'] });
-                toast.success('Recipe Approved!');
-                addtoHistory(`Approved: ${title}`, 'success');
-                fetchData(true); 
-            }
-        } catch (err) {
-            toast.error("Failed");
-        }
-    };
-
-    // --- UPDATED REJECT SUBMIT ---
-const handleRejectSubmit = async () => {
-    if (!rejectionReason.trim()) {
-        toast.error("Please provide a reason for the Chef!");
-        return;
-    }
-
-    // Check if ID is stored as _id or id
-    const recipeId = selectedRecipe._id || selectedRecipe.id;
-
-    try {
-        // CHANGED: URL updated to match your backend router.put('/reject/:id', ...)
-        const res = await fetch(`https://kkb-kitchen-api.onrender.com/api/admin/reject/${recipeId}`, {
-            method: 'PUT',
-            headers: { 
-                'Authorization': `Bearer ${token}`, 
-                'Content-Type': 'application/json' 
-            },
-            // CHANGED: Only sending the adminNote as expected by a standard controller
-            body: JSON.stringify({ 
-                adminNote: rejectionReason 
-            })
-        });
-
-        // Add this to debug if it fails again
-        if (!res.ok) {
-            const errorText = await res.text();
-            console.error("Server says:", errorText);
-            throw new Error("Rejection failed");
-        }
-
-        toast.error('Recipe Rejected & Feedback Sent');
-        addtoHistory(`Rejected with Feedback: ${selectedRecipe.title}`, 'error');
-        setShowRejectModal(false);
-        setRejectionReason('');
-        fetchData(true); 
-        
-    } catch (err) {
-        console.error("Reject Error:", err);
-        toast.error("Rejection Sync Failed. Check Console.");
-    }
-};
 
     const filteredHistory = history.filter(item => 
         item.msg.toLowerCase().includes(historySearch.toLowerCase())
@@ -268,7 +275,7 @@ const handleRejectSubmit = async () => {
                             </div>
                         ) : (
                             pendingRecipes.map((recipe, idx) => (
-                                <div key={recipe.id} style={{animationDelay: `${idx * 50}ms`}} className="bg-white rounded-[2.5rem] p-6 shadow-sm border border-gray-100 flex flex-col md:flex-row justify-between items-center gap-6 group hover:shadow-xl transition-all animate-in slide-in-from-bottom-2">
+                                <div key={recipe.id || recipe._id} style={{animationDelay: `${idx * 50}ms`}} className="bg-white rounded-[2.5rem] p-6 shadow-sm border border-gray-100 flex flex-col md:flex-row justify-between items-center gap-6 group hover:shadow-xl transition-all animate-in slide-in-from-bottom-2">
                                     <div className="flex items-center gap-6 w-full">
                                         <div className="relative shrink-0">
                                             <img src={recipe.imageUrl || 'https://via.placeholder.com/150'} className="w-20 h-20 rounded-[1.8rem] object-cover border-4 border-gray-50" alt="" />
@@ -282,7 +289,7 @@ const handleRejectSubmit = async () => {
                                         </div>
                                     </div>
                                     <div className="flex gap-3 w-full md:w-auto">
-                                        <button onClick={() => handleApprove(recipe.id, recipe.title)} className="flex-1 md:w-32 bg-green-500 text-white h-14 rounded-2xl text-[11px] font-black uppercase tracking-widest shadow-lg hover:bg-green-600 active:scale-95 transition-all">Approve</button>
+                                        <button onClick={() => handleApprove(recipe.id || recipe._id, recipe.title)} className="flex-1 md:w-32 bg-green-500 text-white h-14 rounded-2xl text-[11px] font-black uppercase tracking-widest shadow-lg hover:bg-green-600 active:scale-95 transition-all">Approve</button>
                                         <button onClick={() => { setSelectedRecipe(recipe); setShowRejectModal(true); }} className="flex-1 md:w-32 bg-red-50 text-red-500 h-14 rounded-2xl text-[11px] font-black uppercase tracking-widest hover:bg-red-100 active:scale-95 transition-all">Reject</button>
                                     </div>
                                 </div>
@@ -303,11 +310,11 @@ const handleRejectSubmit = async () => {
                                 </thead>
                                 <tbody className="divide-y divide-gray-50">
                                     {allUsers.map(u => (
-                                        <tr key={u.id} className="hover:bg-orange-50/30 transition-colors group">
+                                        <tr key={u.id || u._id} className="hover:bg-orange-50/30 transition-colors group">
                                             <td className="p-8">
                                                 <div className="flex items-center gap-3">
                                                     <div className={`w-10 h-10 rounded-2xl flex items-center justify-center font-black text-sm ${u.role === 'admin' ? 'bg-orange-500 text-white' : 'bg-gray-100 text-gray-400'}`}>
-                                                        {u.name.charAt(0)}
+                                                        {u.name?.charAt(0) || 'U'}
                                                     </div>
                                                     <span className="font-black text-gray-800 uppercase tracking-tight">{u.name}</span>
                                                 </div>
@@ -320,7 +327,7 @@ const handleRejectSubmit = async () => {
                                             </td>
                                             <td className="p-8">
                                                 <button 
-                                                    onClick={() => handleRoleUpdate(u.id, u.role, u.name)}
+                                                    onClick={() => handleRoleUpdate(u.id || u._id, u.role, u.name)}
                                                     className={`flex items-center gap-2 px-4 py-3 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all active:scale-95 ${u.role === 'admin' ? 'bg-red-50 text-red-500 hover:bg-red-100' : 'bg-orange-50 text-orange-600 hover:bg-orange-100'}`}
                                                 >
                                                     {u.role === 'admin' ? <><FiUser /> Revoke Admin</> : <><FiArrowUpCircle /> Promote</>}
@@ -387,6 +394,8 @@ const handleRejectSubmit = async () => {
         </div>
     );
 };
+
+/* --- SUB-COMPONENTS --- */
 
 const StatCard = ({ icon, label, value, color, active, delay }) => {
   const colorMap = {

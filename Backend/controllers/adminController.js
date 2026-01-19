@@ -1,11 +1,11 @@
 import { prisma } from '../config/db.js';
 
-// 1. GET ALL PENDING + STATS
+/**
+ * 1. GET ALL PENDING + STATS
+ * Fetches dashboard statistics and the list of recipes awaiting review.
+ */
 export const getAdminData = async (req, res) => {
     try {
-        console.log("Fetching admin stats and recipes...");
-
-        // Optimized: Fetch counts and recipes in parallel to speed up dashboard load
         const [total, pendingCount, approvedCount, pendingRecipes] = await Promise.all([
             prisma.recipe.count(),
             prisma.recipe.count({ where: { status: 'pending' } }),
@@ -14,7 +14,7 @@ export const getAdminData = async (req, res) => {
                 where: { status: 'pending' },
                 include: {
                     author: {
-                        select: { name: true, email: true }
+                        select: { id: true, name: true, email: true }
                     }
                 },
                 orderBy: { createdAt: 'desc' }
@@ -22,21 +22,22 @@ export const getAdminData = async (req, res) => {
         ]);
 
         return res.status(200).json({
-            stats: {
-                total,
-                pending: pendingCount,
-                approved: approvedCount
-            },
+            total,
+            pending: pendingCount,
+            approved: approvedCount,
             pendingRecipes: pendingRecipes || []
         });
 
     } catch (error) {
         console.error("Admin Data Error:", error);
-        return res.status(500).json({ error: "Failed to fetch admin data" });
+        return res.status(500).json({ error: "Failed to fetch admin dashboard data" });
     }
 };
 
-// 2. APPROVE RECIPE
+/**
+ * 2. APPROVE RECIPE
+ * Moves recipe to 'approved' status and notifies the author via Socket.io.
+ */
 export const approveRecipe = async (req, res) => {
     try {
         const { id } = req.params;
@@ -47,13 +48,13 @@ export const approveRecipe = async (req, res) => {
             data: { status: 'approved' }
         });
 
-        // TRIGGER SOCKET NOTIFICATION
+        // Emit real-time notification to the author's private room
         const io = req.app.get('socketio');
         if (io) {
-            io.emit('recipeApproved', {
-                id: updatedRecipe.id,
+            io.to(updatedRecipe.authorId.toString()).emit('recipe_update', {
+                type: 'APPROVED',
                 title: updatedRecipe.title,
-                message: "New masterpiece approved!"
+                message: "Your recipe has been approved and is now live!"
             });
         }
 
@@ -68,12 +69,14 @@ export const approveRecipe = async (req, res) => {
     }
 };
 
-// 3. DELETE RECIPE (Rejection)
-// Change deleteRecipe to rejectRecipe
+/**
+ * 3. REJECT RECIPE
+ * Sets status to 'rejected', saves the admin feedback, and notifies the author.
+ */
 export const rejectRecipe = async (req, res) => {
     try {
         const { id } = req.params;
-        const { reason } = req.body; // This is the "statement" you wrote
+        const { adminNote } = req.body; 
 
         if (!id || isNaN(id)) return res.status(400).json({ error: "Invalid recipe ID" });
 
@@ -81,17 +84,17 @@ export const rejectRecipe = async (req, res) => {
             where: { id: parseInt(id) },
             data: { 
                 status: 'rejected',
-                adminNote: reason || "No reason provided by admin." 
+                adminNote: adminNote || "No reason provided by admin." 
             }
         });
 
-        // Optional: Notify the user via Socket if they are online
+        // Notify user of rejection with the specific reason
         const io = req.app.get('socketio');
         if (io) {
-            io.emit('recipeRejected', {
-                recipeId: updated.id,
-                authorId: updated.authorId,
-                reason: reason
+            io.to(updated.authorId.toString()).emit('recipe_update', {
+                type: 'REJECTED',
+                title: updated.title,
+                message: adminNote || "No reason provided."
             });
         }
 
@@ -101,7 +104,11 @@ export const rejectRecipe = async (req, res) => {
         return res.status(500).json({ error: "Failed to process rejection" });
     }
 };
-// 4. UPDATE/EDIT
+
+/**
+ * 4. UPDATE/EDIT BY ADMIN
+ * Allows admins to fix typos or adjust recipe details directly.
+ */
 export const updateRecipeByAdmin = async (req, res) => {
     try {
         const { id } = req.params;
@@ -128,7 +135,10 @@ export const updateRecipeByAdmin = async (req, res) => {
     }
 };
 
-// 6. GET ALL USERS
+/**
+ * 5. GET ALL USERS
+ * Provides data for the User Management / Staff tab.
+ */
 export const getAllUsers = async (req, res) => {
     try {
         const users = await prisma.user.findMany({
@@ -142,7 +152,10 @@ export const getAllUsers = async (req, res) => {
     }
 };
 
-// 7. TOGGLE USER ROLE
+/**
+ * 6. TOGGLE USER ROLE
+ * Updates user permissions (e.g., promoting a User to Admin).
+ */
 export const toggleUserRole = async (req, res) => {
     try {
         const { id } = req.params;
@@ -158,5 +171,21 @@ export const toggleUserRole = async (req, res) => {
     } catch (error) {
         console.error("Toggle Role Error:", error);
         return res.status(500).json({ error: "Failed to update role" });
+    }
+};
+
+/**
+ * 7. GET PENDING COUNT
+ * Simple helper for notification badges on the admin icon.
+ */
+export const getPendingCount = async (req, res) => {
+    try {
+        const count = await prisma.recipe.count({
+            where: { status: 'pending' }
+        });
+        return res.status(200).json({ count });
+    } catch (error) {
+        console.error("Count Error:", error);
+        return res.status(500).json({ error: "Failed to fetch pending count" });
     }
 };

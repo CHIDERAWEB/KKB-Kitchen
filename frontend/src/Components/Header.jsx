@@ -312,7 +312,7 @@ function Header() {
                 <DropdownItem onClick={(e) => handleRestrictedAction(e, '/create')} to="/create" icon={<FiPlusCircle />} title="Create" subtitle="New magic" />
                 <DropdownItem onClick={(e) => handleRestrictedAction(e, '/favorites')} to="/favorites" icon={<FiHeart />} title="Favourite" subtitle="Your Loves" />
                 <DropdownItem onClick={(e) => handleRestrictedAction(e, '/planner')} to="/planner" icon={<FiBarChart2 />} title="Meal Planner" subtitle="Schedule" />
-                <DropdownItem onClick={(e) => handleRestrictedAction(e, '/revisions')} to="/revisions" icon={<FiHeart />} title="Revison Recipe" subtitle="Your Loves" />
+                <DropdownItem onClick={(e) => handleRestrictedAction(e, '/revisions')} to="/revisions" icon={<FiHeart />} title="Revison Recipe" subtitle="Edit Loves" />
               </div>
             </div>
           </motion.div>
