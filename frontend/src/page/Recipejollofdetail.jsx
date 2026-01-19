@@ -10,7 +10,7 @@ const Recipejollofdetail = ({ showToast }) => {
     const [loading, setLoading] = useState(true);
     const [isLiked, setIsLiked] = useState(false);
     const [newCommentText, setNewCommentText] = useState("");
-    
+
     // Rating State
     const [hoverRating, setHoverRating] = useState(0);
     const [userRating, setUserRating] = useState(0);
@@ -51,7 +51,7 @@ const Recipejollofdetail = ({ showToast }) => {
                 };
 
                 setRecipe(formattedData);
-                
+
                 // --- LOAD USER'S RATING ---
                 const userId = user?.id || user?._id;
                 if (data.ratings && userId) {
@@ -85,13 +85,13 @@ const Recipejollofdetail = ({ showToast }) => {
 
         if (id) fetchRecipeData();
         window.scrollTo(0, 0);
-    }, [id, navigate, token, showToast]);
+    }, [id, navigate, showToast]);
 
     // --- HANDLE RATING ---
     const handleRating = async (val) => {
         const userId = user?.id || user?._id;
         if (!userId) return showToast("Login to rate! 🔐");
-        
+
         try {
             const response = await fetch(`https://kkb-kitchen-api.onrender.com/api/recipes/${id}/rate`, {
                 method: 'POST',
@@ -127,8 +127,8 @@ const Recipejollofdetail = ({ showToast }) => {
                 setIsLiked(!isLiked);
                 setRecipe(prev => ({
                     ...prev,
-                    likedBy: !isLiked 
-                        ? [...(prev.likedBy || []), userId] 
+                    likedBy: !isLiked
+                        ? [...(prev.likedBy || []), userId]
                         : prev.likedBy.filter(u => (typeof u === 'object' ? (u.id !== userId && u._id !== userId) : u !== userId))
                 }));
                 showToast(!isLiked ? "Added to favorites! ❤️" : "Removed from favorites");
@@ -205,7 +205,7 @@ const Recipejollofdetail = ({ showToast }) => {
             </div>
 
             <div className="max-w-4xl mx-auto -mt-24 relative bg-white rounded-t-[3rem] p-8 md:p-12 shadow-2xl print-area">
-                
+
                 {recipe.status === 'rejected' && (
                     <div className="mb-10 no-print border-2 border-red-100 bg-red-50 p-6 rounded-[2rem] shadow-sm">
                         <div className="flex items-center justify-between mb-4">
@@ -246,21 +246,21 @@ const Recipejollofdetail = ({ showToast }) => {
                 {/* --- METADATA BAR (Now matches your CreateRecipe fields) --- */}
                 <div className="flex flex-wrap gap-6 mb-10 bg-gray-50 p-6 rounded-[2rem]">
                     <div className="flex items-center gap-3">
-                        <div className="bg-orange-500 p-2 rounded-lg text-white"><Flame size={18}/></div>
+                        <div className="bg-orange-500 p-2 rounded-lg text-white"><Flame size={18} /></div>
                         <div>
                             <p className="text-[10px] font-black text-gray-400 uppercase">Difficulty</p>
                             <p className="font-bold text-gray-700">{recipe.difficulty || "Medium"}</p>
                         </div>
                     </div>
                     <div className="flex items-center gap-3">
-                        <div className="bg-orange-500 p-2 rounded-lg text-white"><Users size={18}/></div>
+                        <div className="bg-orange-500 p-2 rounded-lg text-white"><Users size={18} /></div>
                         <div>
                             <p className="text-[10px] font-black text-gray-400 uppercase">Servings</p>
                             <p className="font-bold text-gray-700">{recipe.servings || "4"}</p>
                         </div>
                     </div>
                     <div className="flex items-center gap-3">
-                        <div className="bg-orange-500 p-2 rounded-lg text-white"><Clock size={18}/></div>
+                        <div className="bg-orange-500 p-2 rounded-lg text-white"><Clock size={18} /></div>
                         <div>
                             <p className="text-[10px] font-black text-gray-400 uppercase">Cook Time</p>
                             <p className="font-bold text-gray-700">{recipe.cookingTime || "45 mins"}</p>
@@ -280,9 +280,9 @@ const Recipejollofdetail = ({ showToast }) => {
                                 onClick={() => handleRating(star)}
                                 className="transition-transform hover:scale-125"
                             >
-                                <Star 
-                                    size={36} 
-                                    className={`${(hoverRating || userRating) >= star ? 'text-yellow-400 fill-yellow-400' : 'text-gray-200'} transition-colors`} 
+                                <Star
+                                    size={36}
+                                    className={`${(hoverRating || userRating) >= star ? 'text-yellow-400 fill-yellow-400' : 'text-gray-200'} transition-colors`}
                                 />
                             </button>
                         ))}
@@ -339,9 +339,9 @@ const Recipejollofdetail = ({ showToast }) => {
                                     <div className="flex justify-between items-center mb-4">
                                         <div className="flex items-center gap-3">
                                             <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-orange-100 shadow-sm bg-gray-100 shrink-0">
-                                                <img 
-                                                    src={c.userImage || `https://ui-avatars.com/api/?name=${c.userName}&background=random`} 
-                                                    alt={c.userName} 
+                                                <img
+                                                    src={c.userImage || `https://ui-avatars.com/api/?name=${c.userName}&background=random`}
+                                                    alt={c.userName}
                                                     className="w-full h-full object-cover"
                                                 />
                                             </div>
