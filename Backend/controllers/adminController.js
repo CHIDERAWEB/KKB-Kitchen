@@ -88,14 +88,18 @@ export const rejectRecipe = async (req, res) => {
             }
         });
 
-        // Notify user of rejection with the specific reason
         const io = req.app.get('socketio');
         if (io) {
+            // MATCHING YOUR SERVER: Sending to the room named exactly by the ID string
             io.to(updated.authorId.toString()).emit('recipe_update', {
                 type: 'REJECTED',
                 title: updated.title,
                 message: adminNote || "No reason provided."
             });
+
+            // Update pending count for admins
+            const pendingCount = await prisma.recipe.count({ where: { status: 'pending' } });
+            io.emit('updatePendingCount', { count: pendingCount });
         }
 
         return res.status(200).json({ message: "Recipe rejected and feedback sent! 📩" });

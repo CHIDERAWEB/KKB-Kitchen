@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
-import { CheckCircle } from 'lucide-react';
+import { CheckCircle, Bell } from 'lucide-react'; 
+import io from 'socket.io-client';
 
 // COMPONENTS
 import Header from './Components/Header';
@@ -23,9 +24,12 @@ import MealPlanner from './page/MealPlanner';
 import AdminDashboard from './page/AdminDashboard';
 import UploadRecipe from './page/UploadRecipe';
 import Homepage from './page/Homepage';
-import Revisions from './page/Revisions'
+import Revisions from './page/Revisions';
 
-// Animation wrapper for page content
+// Initialize Socket.io 
+// Note: Ensure this URL matches your backend exactly
+const socket = io('https://kkb-kitchen-api.onrender.com'); 
+
 const PageWrapper = ({ children }) => (
   <motion.div
     initial={{ opacity: 0, y: 10 }}
@@ -46,13 +50,42 @@ function ScrollToTop() {
 }
 
 function App() {
-  const [toast, setToast] = useState({ show: false, message: "" });
+  const [toast, setToast] = useState({ show: false, message: "", type: "success" });
   const [isLoading, setIsLoading] = useState(true);
 
   const [user, setUser] = useState(() => {
     const savedUser = localStorage.getItem('user');
     return savedUser ? JSON.parse(savedUser) : null;
   });
+
+  // --- SOCKET NOTIFICATION LOGIC ---
+  useEffect(() => {
+    // Check for user and either id or _id (to support MongoDB/Prisma variations)
+    const userId = user?.id || user?._id;
+
+    if (userId && socket) {
+      // 1. Join the private room so the server can find this specific user
+      socket.emit("join_room", userId.toString());
+      console.log(`Chef connected to private room: ${userId}`);
+
+      // 2. Listen for the recipe_update event from the backend
+      socket.on("recipe_update", (data) => {
+        if (data.type === 'REJECTED') {
+          // Play a subtle notification sound (optional)
+          const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3');
+          audio.play().catch(() => console.log("Audio blocked"));
+          
+          showToast(`REJECTED: "${data.title}". Reason: ${data.message}`, "error");
+        } else if (data.type === 'APPROVED') {
+          showToast(`CONGRATS! Your recipe "${data.title}" is now live!`, "success");
+        }
+      });
+    }
+
+    return () => {
+      socket.off("recipe_update");
+    };
+  }, [user]);
 
   useEffect(() => {
     const syncUser = () => {
@@ -79,9 +112,11 @@ function App() {
     setTimeout(() => setIsLoading(false), duration);
   };
 
-  const showToast = (msg) => {
-    setToast({ show: true, message: msg });
-    setTimeout(() => setToast({ show: false, message: "" }), 3000);
+  const showToast = (msg, type = "success") => {
+    setToast({ show: true, message: msg, type: type });
+    // Keep error messages on screen longer (7 seconds) so users can read the reason
+    const duration = type === "error" ? 7000 : 5000;
+    setTimeout(() => setToast({ show: false, message: "", type: "success" }), duration);
   };
 
   const handleAuthSuccess = (userData) => {
@@ -104,18 +139,17 @@ function App() {
           animate={{ opacity: 1 }}
           className="min-h-screen flex flex-col bg-white relative"
         >
-          {/* GLOBAL TOAST */}
+          {/* GLOBAL TOAST - SUPPORTS ERROR (RED) AND SUCCESS (DARK) */}
           <div className={`fixed top-24 left-1/2 -translate-x-1/2 z-[200] transition-all duration-500 transform ${toast.show ? "translate-y-0 opacity-100" : "-translate-y-12 opacity-0 pointer-events-none"}`}>
-            <div className="bg-gray-900/95 backdrop-blur-md text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-3 border border-white/10">
-              <CheckCircle className="text-green-400" size={18} />
-              <span className="text-sm font-bold uppercase tracking-widest">{toast.message}</span>
+            <div className={`${toast.type === 'error' ? 'bg-red-600' : 'bg-gray-900/95'} backdrop-blur-md text-white px-6 py-4 rounded-[2rem] shadow-2xl flex items-center gap-3 border border-white/10 max-w-md`}>
+              {toast.type === 'error' ? <Bell className="text-white animate-ring" size={20} /> : <CheckCircle className="text-green-400" size={20} />}
+              <span className="text-[11px] font-black uppercase tracking-widest leading-tight">{toast.message}</span>
             </div>
           </div>
 
           <Header user={user} setUser={setUser} />
 
           <main className="flex-grow pt-20 lg:pt-24">
-            {/* Added AnimatePresence for smooth page-to-page transitions */}
             <AnimatePresence mode="wait">
               <Routes>
                 <Route path="/" element={
@@ -133,17 +167,13 @@ function App() {
                 <Route path="/recipe/:id" element={<Recipejollofdetail showToast={showToast} user={user} />} />
                 <Route path="/revisions" element={<Revisions user={user} />} />
 
-                {/* ADMIN & PROTECTED ROUTES MAINTAINED */}
                 <Route path="/admin" element={user?.role === 'admin' ? <AdminDashboard /> : <Navigate to="/" />} />
                 <Route path="/create" element={<PageWrapper><CreateRecipe showToast={showToast} user={user} /></PageWrapper>} />
                 <Route path="/upload-recipe" element={<ProtectedRoutes><UploadRecipe showToast={showToast} triggerLoading={triggerLoading} /></ProtectedRoutes>} />
 
                 <Route path="/planner" element={<PageWrapper><MealPlanner user={user} /></PageWrapper>} />
                 <Route path="/shopping-list" element={<PageWrapper><ShoppingList user={user} /></PageWrapper>} />
-
-                {/* ABOUT SECTION ANIMATED */}
                 <Route path="/about" element={<PageWrapper><About /></PageWrapper>} />
-
                 <Route path="/favorites" element={<PageWrapper><Favorites user={user} /></PageWrapper>} />
 
                 <Route path="*" element={<Navigate to="/" replace />} />
