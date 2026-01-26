@@ -13,9 +13,9 @@ const Contact = () => {
 
         // REPLACE THESE WITH YOUR ACTUAL IDS FROM EMAILJS DASHBOARD
         const SERVICE_ID = 'service_nvd924f';
-        const PUBLIC_KEY = 'YOUR_PUBLIC_KEY'; // Found in Account Settings
-        const ADMIN_TEMPLATE_ID = 'template_original_id'; // Your notification
-        const AUTO_REPLY_TEMPLATE_ID = 'template_auto_reply_id'; // The "Hi {{from_name}}" template
+        const PUBLIC_KEY = '8eHXm5PYnJroNlTvW'; // Found in Account Settings
+        const ADMIN_TEMPLATE_ID = 'template_sqd0ct2'; // Your notification
+        const AUTO_REPLY_TEMPLATE_ID = 'template_nauelmg'; // The "Hi {{from_name}}" template
 
         // Trigger both emails
         const sendToAdmin = emailjs.sendForm(SERVICE_ID, ADMIN_TEMPLATE_ID, form.current, PUBLIC_KEY);
