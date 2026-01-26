@@ -1,49 +1,55 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react'; // Added useEffect
 import emailjs from '@emailjs/browser';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiMail, FiMapPin, FiPhone, FiSend, FiCheckCircle, FiLoader, FiInstagram, FiTwitter, FiFacebook } from 'react-icons/fi';
 
 const Contact = () => {
     const form = useRef();
-    const [status, setStatus] = useState('idle'); // idle, sending, success
+    const [status, setStatus] = useState('idle');
+
+    // CRITICAL: Initialize EmailJS when the component loads
+    useEffect(() => {
+        emailjs.init("bjcPAKsChHcddh8l1");
+    }, []);
 
     const sendEmail = (e) => {
         e.preventDefault();
         setStatus('sending');
 
-        // REPLACE THESE WITH YOUR LATEST IDS
         const SERVICE_ID = 'service_0bbjmal';
         const PUBLIC_KEY = 'bjcPAKsChHcddh8l1';
         const ADMIN_TEMPLATE_ID = 'template_e5j0ihp';
         const AUTO_REPLY_TEMPLATE_ID = 'template_eqpmbl8';
 
-        // REAL ENGINE ENABLED: Sending both emails simultaneously
+        // Execute sends
         const sendToAdmin = emailjs.sendForm(SERVICE_ID, ADMIN_TEMPLATE_ID, form.current, PUBLIC_KEY);
         const sendAutoReply = emailjs.sendForm(SERVICE_ID, AUTO_REPLY_TEMPLATE_ID, form.current, PUBLIC_KEY);
 
         Promise.all([sendToAdmin, sendAutoReply])
-            .then(() => {
-                console.log("SUCCESS! Real emails sent.");
+            .then((responses) => {
+                console.log("SUCCESS!", responses[0].status, responses[1].status);
                 setStatus('success');
             })
             .catch((error) => {
-                console.error("EmailJS Error:", error);
+                console.error("EmailJS Error Object:", error);
                 setStatus('idle');
-                // This alert will tell us EXACTLY why it failed (e.g., "Account limit reached")
-                alert("Failed to send: " + (error?.text || "Unknown Error"));
+                
+                // Detailed error messaging
+                if (error?.text === "The template ID not found") {
+                    alert("Template Error: One of your IDs (template_e5j0ihp or template_eqpmbl8) is incorrect in the code. Please double-check the 'ID' column in EmailJS.");
+                } else {
+                    alert("Failed to send: " + (error?.text || "Check your internet connection"));
+                }
             });
     };
 
     return (
         <div className="min-h-screen bg-white selection:bg-orange-500 selection:text-white pt-32 pb-16 px-6 overflow-x-hidden">
             <div className="max-w-7xl mx-auto">
-
-                {/* --- DECORATIVE BACKGROUND TEXT --- */}
                 <div className="fixed top-20 right-[-5vw] text-[25vw] font-black text-gray-50 -z-10 select-none italic leading-none opacity-50">
                     KKB
                 </div>
 
-                {/* --- HEADER --- */}
                 <header className="mb-24 relative">
                     <motion.div
                         initial={{ width: 0 }}
@@ -61,8 +67,6 @@ const Contact = () => {
                 </header>
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-20">
-
-                    {/* --- LEFT SIDE: INFO --- */}
                     <div className="space-y-12">
                         <p className="text-2xl text-gray-400 font-medium leading-relaxed max-w-md italic">
                             "Great recipes are meant to be shared. Great ideas are meant to be built."
@@ -87,7 +91,6 @@ const Contact = () => {
                         </div>
                     </div>
 
-                    {/* --- RIGHT SIDE: FORM --- */}
                     <motion.div
                         initial={{ opacity: 0, y: 30 }}
                         animate={{ opacity: 1, y: 0 }}
