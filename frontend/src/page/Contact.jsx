@@ -13,7 +13,7 @@ const Contact = () => {
 
         // REPLACE THESE WITH YOUR LATEST IDS
         const SERVICE_ID = 'service_0bbjmal';
-        const PUBLIC_KEY = 'mhz6NKPfbX6qQAugs';
+        const PUBLIC_KEY = 'bjcPAKsChHcddh8l1';
         const ADMIN_TEMPLATE_ID = 'template_6al4lnb';
         const AUTO_REPLY_TEMPLATE_ID = 'template_xtue735';
 
