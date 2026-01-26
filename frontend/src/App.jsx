@@ -25,6 +25,7 @@ import AdminDashboard from './page/AdminDashboard';
 import UploadRecipe from './page/UploadRecipe';
 import Homepage from './page/Homepage';
 import Revisions from './page/Revisions';
+import Contact from './page/Contact'
 
 // Initialize Socket.io 
 const socket = io('https://kkb-kitchen-api.onrender.com');
@@ -173,6 +174,7 @@ function App() {
                 <Route path="/planner" element={<PageWrapper><MealPlanner user={user} /></PageWrapper>} />
                 <Route path="/shopping-list" element={<PageWrapper><ShoppingList user={user} /></PageWrapper>} />
                 <Route path="/about" element={<PageWrapper><About /></PageWrapper>} />
+                <Route path="/contact" element={<PageWrapper><Contact /></PageWrapper>} />
                 <Route path="/favorites" element={<PageWrapper><Favorites user={user} /></PageWrapper>} />
 
                 <Route path="*" element={<Navigate to="/" replace />} />
