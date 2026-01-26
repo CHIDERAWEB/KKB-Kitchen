@@ -11,36 +11,27 @@ const Contact = () => {
         e.preventDefault();
         setStatus('sending');
 
-        // IDs from your EmailJS Dashboard
+        // REPLACE THESE WITH YOUR LATEST IDS
         const SERVICE_ID = 'service_nvd924f';
         const PUBLIC_KEY = '8eHXm5PYnJroNlTvW';
         const ADMIN_TEMPLATE_ID = 'template_sqd0ct2';
         const AUTO_REPLY_TEMPLATE_ID = 'template_nauelmg';
 
-        /* NOTE: Since you reached your EmailJS monthly limit, 
-           I have added a 1.5-second "Fake" success delay below 
-           so you can test your masterpiece UI right now.
-        */
+        // REAL ENGINE ENABLED: Sending both emails simultaneously
+        const sendToAdmin = emailjs.sendForm(SERVICE_ID, ADMIN_TEMPLATE_ID, form.current, PUBLIC_KEY);
+        const sendAutoReply = emailjs.sendForm(SERVICE_ID, AUTO_REPLY_TEMPLATE_ID, form.current, PUBLIC_KEY);
 
-        setTimeout(() => {
-            console.log("UI Test: Successfully bypassed limit for preview!");
-            setStatus('success');
-
-            // To go back to real EmailJS later, uncomment the block below 
-            // and delete this setTimeout.
-            /*
-            const sendToAdmin = emailjs.sendForm(SERVICE_ID, ADMIN_TEMPLATE_ID, form.current, PUBLIC_KEY);
-            const sendAutoReply = emailjs.sendForm(SERVICE_ID, AUTO_REPLY_TEMPLATE_ID, form.current, PUBLIC_KEY);
-
-            Promise.all([sendToAdmin, sendAutoReply])
-                .then(() => setStatus('success'))
-                .catch((error) => {
-                    console.error("EmailJS Error:", error);
-                    setStatus('idle');
-                    alert("Limit reached or configuration error. Check console.");
-                });
-            */
-        }, 1500);
+        Promise.all([sendToAdmin, sendAutoReply])
+            .then(() => {
+                console.log("SUCCESS! Real emails sent.");
+                setStatus('success');
+            })
+            .catch((error) => {
+                console.error("EmailJS Error:", error);
+                setStatus('idle');
+                // This alert will tell us EXACTLY why it failed (e.g., "Account limit reached")
+                alert("Failed to send: " + (error?.text || "Unknown Error"));
+            });
     };
 
     return (
@@ -71,7 +62,7 @@ const Contact = () => {
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-20">
 
-                    {/* --- LEFT SIDE: BRANDING & INFO --- */}
+                    {/* --- LEFT SIDE: INFO --- */}
                     <div className="space-y-12">
                         <p className="text-2xl text-gray-400 font-medium leading-relaxed max-w-md italic">
                             "Great recipes are meant to be shared. Great ideas are meant to be built."
@@ -96,7 +87,7 @@ const Contact = () => {
                         </div>
                     </div>
 
-                    {/* --- RIGHT SIDE: INTERACTIVE FORM --- */}
+                    {/* --- RIGHT SIDE: FORM --- */}
                     <motion.div
                         initial={{ opacity: 0, y: 30 }}
                         animate={{ opacity: 1, y: 0 }}
@@ -132,7 +123,6 @@ const Contact = () => {
                                     exit={{ opacity: 0 }}
                                 >
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                        {/* IMPORTANT: name must match your EmailJS {{variable}} */}
                                         <FloatingInput name="from_name" label="Chef Name" placeholder="Gordon Ramsay" />
                                         <FloatingInput name="from_email" label="Your Email" placeholder="chef@example.com" type="email" />
                                     </div>
@@ -168,7 +158,7 @@ const Contact = () => {
     );
 };
 
-// Helper Components
+// Sub-components
 const ContactDetail = ({ icon, label, value }) => (
     <div className="flex items-center gap-6 group">
         <div className="w-14 h-14 bg-gray-50 rounded-2xl flex items-center justify-center text-xl text-gray-900 group-hover:bg-orange-600 group-hover:text-white transition-all duration-500 shadow-sm">
