@@ -14,8 +14,8 @@ const Contact = () => {
         // REPLACE THESE WITH YOUR LATEST IDS
         const SERVICE_ID = 'service_0bbjmal';
         const PUBLIC_KEY = 'bjcPAKsChHcddh8l1';
-        const ADMIN_TEMPLATE_ID = 'template_6al4lnb';
-        const AUTO_REPLY_TEMPLATE_ID = 'template_xtue735';
+        const ADMIN_TEMPLATE_ID = 'template_e5j0ihp';
+        const AUTO_REPLY_TEMPLATE_ID = 'template_eqpmbl8';
 
         // REAL ENGINE ENABLED: Sending both emails simultaneously
         const sendToAdmin = emailjs.sendForm(SERVICE_ID, ADMIN_TEMPLATE_ID, form.current, PUBLIC_KEY);
