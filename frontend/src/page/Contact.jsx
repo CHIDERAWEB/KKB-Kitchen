@@ -11,25 +11,36 @@ const Contact = () => {
         e.preventDefault();
         setStatus('sending');
 
-        // REPLACE THESE WITH YOUR ACTUAL IDS FROM EMAILJS DASHBOARD
+        // IDs from your EmailJS Dashboard
         const SERVICE_ID = 'service_nvd924f';
-        const PUBLIC_KEY = '8eHXm5PYnJroNlTvW'; // Found in Account Settings
-        const ADMIN_TEMPLATE_ID = 'template_sqd0ct2'; // Your notification
-        const AUTO_REPLY_TEMPLATE_ID = 'template_nauelmg'; // The "Hi {{from_name}}" template
+        const PUBLIC_KEY = '8eHXm5PYnJroNlTvW';
+        const ADMIN_TEMPLATE_ID = 'template_sqd0ct2';
+        const AUTO_REPLY_TEMPLATE_ID = 'template_nauelmg';
 
-        // Trigger both emails
-        const sendToAdmin = emailjs.sendForm(SERVICE_ID, ADMIN_TEMPLATE_ID, form.current, PUBLIC_KEY);
-        const sendAutoReply = emailjs.sendForm(SERVICE_ID, AUTO_REPLY_TEMPLATE_ID, form.current, PUBLIC_KEY);
+        /* NOTE: Since you reached your EmailJS monthly limit, 
+           I have added a 1.5-second "Fake" success delay below 
+           so you can test your masterpiece UI right now.
+        */
 
-        Promise.all([sendToAdmin, sendAutoReply])
-            .then(() => {
-                setStatus('success');
-            })
-            .catch((error) => {
-                console.error("EmailJS Error:", error);
-                setStatus('idle');
-                alert("Something went wrong. Check the console for errors.");
-            });
+        setTimeout(() => {
+            console.log("UI Test: Successfully bypassed limit for preview!");
+            setStatus('success');
+
+            // To go back to real EmailJS later, uncomment the block below 
+            // and delete this setTimeout.
+            /*
+            const sendToAdmin = emailjs.sendForm(SERVICE_ID, ADMIN_TEMPLATE_ID, form.current, PUBLIC_KEY);
+            const sendAutoReply = emailjs.sendForm(SERVICE_ID, AUTO_REPLY_TEMPLATE_ID, form.current, PUBLIC_KEY);
+
+            Promise.all([sendToAdmin, sendAutoReply])
+                .then(() => setStatus('success'))
+                .catch((error) => {
+                    console.error("EmailJS Error:", error);
+                    setStatus('idle');
+                    alert("Limit reached or configuration error. Check console.");
+                });
+            */
+        }, 1500);
     };
 
     return (
@@ -121,6 +132,7 @@ const Contact = () => {
                                     exit={{ opacity: 0 }}
                                 >
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                        {/* IMPORTANT: name must match your EmailJS {{variable}} */}
                                         <FloatingInput name="from_name" label="Chef Name" placeholder="Gordon Ramsay" />
                                         <FloatingInput name="from_email" label="Your Email" placeholder="chef@example.com" type="email" />
                                     </div>
@@ -131,7 +143,7 @@ const Contact = () => {
                                             name="message"
                                             required
                                             rows="5"
-                                            placeholder="Tell us your recipe ideas or feedback..."
+                                            placeholder="Tell us your recipe ideas..."
                                             className="w-full bg-gray-800 border-2 border-transparent focus:border-orange-600 rounded-[2rem] p-6 text-white outline-none transition-all placeholder:text-gray-600 font-medium"
                                         />
                                     </div>
