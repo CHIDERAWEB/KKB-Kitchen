@@ -33,21 +33,29 @@ const Register = ({ triggerLoading, showToast }) => {
     };
 
     // --- 3. EMAIL AUTOMATION ---
-    const triggerWelcomeEmail = (name, email) => {
-        const templateParams = {
-            user_name: name,
-            user_email: email,
-        };
-
-        emailjs.send(
-            EMAILJS_CONFIG.SERVICE_ID,
-            EMAILJS_CONFIG.TEMPLATE_ID,
-            templateParams,
-            EMAILJS_CONFIG.PUBLIC_KEY
-        )
-            .then((res) => console.log('Welcome email sent!', res.status))
-            .catch((err) => console.error('Email failed:', err));
+const triggerWelcomeEmail = (name, email) => {
+    const templateParams = {
+        user_name: name,
+        user_email: email,
     };
+
+    console.log("📨 Attempting EmailJS send with params:", templateParams);
+
+    emailjs.send(
+        EMAILJS_CONFIG.SERVICE_ID,
+        EMAILJS_CONFIG.TEMPLATE_ID,
+        templateParams,
+        EMAILJS_CONFIG.PUBLIC_KEY
+    )
+    .then((res) => {
+        console.log('✅ SUCCESS: Welcome email sent!', res.status, res.text);
+    })
+    .catch((err) => {
+        // This will print the exact reason (e.g., "The service ID is invalid")
+        console.error('❌ FAILED: EmailJS Error:', err);
+        showToast("Email automation failed: " + (err.text || "Check console"));
+    });
+};
 
     // --- 4. FORM SUBMISSION ---
     const handleSubmit = async (e) => {
