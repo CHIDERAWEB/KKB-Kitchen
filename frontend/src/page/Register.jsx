@@ -7,12 +7,13 @@ import emailjs from '@emailjs/browser';
 
 const Register = ({ triggerLoading, showToast }) => {
     const navigate = useNavigate();
+    // Maintain state but ensure keys match what your backend expects
     const [formData, setFormData] = useState({ name: '', email: '', password: '' });
 
     // --- 1. CONFIGURATION ---
     const EMAILJS_CONFIG = {
         SERVICE_ID: 'service_sfmp6aa',
-        TEMPLATE_ID: 'template_fpi87ui', // Update this!
+        TEMPLATE_ID: 'template_fpi87ui',
         PUBLIC_KEY: '3lP6lGl7a3HYu-fJb'
     };
 
@@ -33,35 +34,30 @@ const Register = ({ triggerLoading, showToast }) => {
     };
 
     // --- 3. EMAIL AUTOMATION ---
-const triggerWelcomeEmail = (name, email) => {
-    const templateParams = {
-        user_name: name,
-        user_email: email,
+    const triggerWelcomeEmail = (name, email) => {
+        const templateParams = {
+            user_name: name,
+            user_email: email,
+        };
+
+        emailjs.send(
+            EMAILJS_CONFIG.SERVICE_ID,
+            EMAILJS_CONFIG.TEMPLATE_ID,
+            templateParams,
+            EMAILJS_CONFIG.PUBLIC_KEY
+        )
+            .then((res) => {
+                console.log('✅ SUCCESS: Welcome email sent!', res.status, res.text);
+            })
+            .catch((err) => {
+                console.error('❌ FAILED: EmailJS Error:', err);
+            });
     };
-
-    console.log("📨 Attempting EmailJS send with params:", templateParams);
-
-    emailjs.send(
-        EMAILJS_CONFIG.SERVICE_ID,
-        EMAILJS_CONFIG.TEMPLATE_ID,
-        templateParams,
-        EMAILJS_CONFIG.PUBLIC_KEY
-    )
-    .then((res) => {
-        console.log('✅ SUCCESS: Welcome email sent!', res.status, res.text);
-    })
-    .catch((err) => {
-        // This will print the exact reason (e.g., "The service ID is invalid")
-        console.error('❌ FAILED: EmailJS Error:', err);
-        showToast("Email automation failed: " + (err.text || "Check console"));
-    });
-};
 
     // --- 4. FORM SUBMISSION ---
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        // Safety check
         if (strengthScore < 4) {
             showToast("Please make your password stronger! 💪");
             return;
@@ -70,42 +66,45 @@ const triggerWelcomeEmail = (name, email) => {
         triggerLoading(2500);
 
         try {
+            // FIX: If your backend expects 'username', map it here:
+            const payload = {
+                username: formData.name, // Mapping 'name' to 'username'
+                email: formData.email,
+                password: formData.password
+            };
+
             const response = await fetch('https://kkb-kitchen-api.onrender.com/api/auth/register', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(formData)
+                body: JSON.stringify(payload) // Sending the mapped payload
             });
 
             const data = await response.json();
 
             if (response.ok) {
-                // Store Auth Data
                 localStorage.setItem('token', data.token);
 
-                // Handle User Roles
                 const userWithRole = {
                     ...data.user,
                     role: data.user.email === 'gluno5191@gmail.com' ? 'admin' : (data.user.role || 'user')
                 };
                 localStorage.setItem('user', JSON.stringify(userWithRole));
 
-                // Automation
                 triggerWelcomeEmail(formData.name, formData.email);
 
-                // UI Feedback & Navigation
                 setTimeout(() => {
                     showToast(`Welcome to the community, ${formData.name}! 🍳`);
                     navigate('/');
                 }, 2500);
             } else {
-                showToast(data.error || "Registration failed.");
+                // This will now show the specific error from your backend
+                showToast(data.message || data.error || "Registration failed.");
             }
         } catch (err) {
             showToast("Connection error. Is the server running?");
             console.error("Register Error:", err);
         }
     };
-
 
     return (
         <div className="min-h-screen flex bg-white overflow-hidden">
@@ -134,7 +133,6 @@ const triggerWelcomeEmail = (name, email) => {
 
                     <div className="bg-white p-10 rounded-[3rem] shadow-xl border border-orange-100">
                         <h2 className="text-3xl font-black text-gray-900 text-center uppercase tracking-tighter">Create Account</h2>
-                        <p className="text-center text-gray-500 mt-2 font-medium">Join Mummy's special kitchen</p>
 
                         <form className="mt-10 space-y-5" onSubmit={handleSubmit}>
                             {/* Name Input */}
@@ -142,7 +140,15 @@ const triggerWelcomeEmail = (name, email) => {
                                 <label className="block text-xs font-black uppercase text-gray-400 ml-2 mb-2">Full Name</label>
                                 <div className="relative group">
                                     <User className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-orange-500" size={18} />
-                                    <input type="text" required value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} className="w-full pl-12 pr-4 py-4 bg-gray-50 rounded-2xl outline-none focus:ring-2 focus:ring-orange-500 transition-all" placeholder="Mummy Doe" />
+                                    <input
+                                        type="text"
+                                        required
+                                        autoComplete="name"
+                                        value={formData.name}
+                                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                                        className="w-full pl-12 pr-4 py-4 bg-gray-50 rounded-2xl outline-none focus:ring-2 focus:ring-orange-500 transition-all"
+                                        placeholder="Mummy Doe"
+                                    />
                                 </div>
                             </div>
 
@@ -151,7 +157,15 @@ const triggerWelcomeEmail = (name, email) => {
                                 <label className="block text-xs font-black uppercase text-gray-400 ml-2 mb-2">Email</label>
                                 <div className="relative group">
                                     <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-orange-500" size={18} />
-                                    <input type="email" required value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} className="w-full pl-12 pr-4 py-4 bg-gray-50 rounded-2xl outline-none focus:ring-2 focus:ring-orange-500 transition-all" placeholder="mummy@kitchen.com" />
+                                    <input
+                                        type="email"
+                                        required
+                                        autoComplete="email"
+                                        value={formData.email}
+                                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                                        className="w-full pl-12 pr-4 py-4 bg-gray-50 rounded-2xl outline-none focus:ring-2 focus:ring-orange-500 transition-all"
+                                        placeholder="mummy@kitchen.com"
+                                    />
                                 </div>
                             </div>
 
@@ -160,10 +174,17 @@ const triggerWelcomeEmail = (name, email) => {
                                 <label className="block text-xs font-black uppercase text-gray-400 ml-2 mb-2">Password</label>
                                 <div className="relative group">
                                     <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-orange-500" size={18} />
-                                    <input type="password" required value={formData.password} onChange={(e) => setFormData({ ...formData, password: e.target.value })} className="w-full pl-12 pr-4 py-4 bg-gray-50 rounded-2xl outline-none focus:ring-2 focus:ring-orange-500 transition-all" placeholder="••••••••" />
+                                    <input
+                                        type="password"
+                                        required
+                                        autoComplete="new-password"
+                                        value={formData.password}
+                                        onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                                        className="w-full pl-12 pr-4 py-4 bg-gray-50 rounded-2xl outline-none focus:ring-2 focus:ring-orange-500 transition-all"
+                                        placeholder="••••••••"
+                                    />
                                 </div>
 
-                                {/* Password Strength Meter */}
                                 <AnimatePresence>
                                     {formData.password.length > 0 && (
                                         <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mt-4 p-4 bg-gray-50 rounded-2xl border border-gray-100">
@@ -187,7 +208,6 @@ const triggerWelcomeEmail = (name, email) => {
                             </motion.button>
                         </form>
 
-                        {/* Social Login Section */}
                         <div className="mt-8">
                             <div className="relative flex items-center justify-center mb-6">
                                 <div className="w-full border-t border-gray-100"></div>
@@ -206,13 +226,11 @@ const triggerWelcomeEmail = (name, email) => {
                                             const data = await response.json();
                                             if (response.ok) {
                                                 localStorage.setItem('token', data.token);
-
                                                 const googleUserWithRole = {
                                                     ...data.user,
                                                     role: data.user.email === 'gluno5191@gmail.com' ? 'admin' : (data.user.role || 'user')
                                                 };
                                                 localStorage.setItem('user', JSON.stringify(googleUserWithRole));
-
                                                 showToast(`Welcome, ${data.user.name}! 🍳`);
                                                 navigate('/');
                                             } else {
@@ -225,7 +243,7 @@ const triggerWelcomeEmail = (name, email) => {
                                     onError={() => showToast("Google Login Failed")}
                                     theme="outline"
                                     shape="pill"
-                                    width="100%"
+                                    width="350" // FIX: Use a number (string format is okay but no %)
                                 />
                             </div>
                         </div>
