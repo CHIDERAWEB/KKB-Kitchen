@@ -3,12 +3,20 @@ import { Mail, Lock, User, ArrowRight, ChefHat, Check, X } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { GoogleLogin } from '@react-oauth/google';
+import emailjs from '@emailjs/browser';
 
 const Register = ({ triggerLoading, showToast }) => {
     const navigate = useNavigate();
     const [formData, setFormData] = useState({ name: '', email: '', password: '' });
 
-    // 1. Password Validation Logic
+    // --- 1. CONFIGURATION ---
+    const EMAILJS_CONFIG = {
+        SERVICE_ID: 'service_sfmp6aa',
+        TEMPLATE_ID: 'template_fpi87ui', // Update this!
+        PUBLIC_KEY: '3lP6lGl7a3HYu-fJb'
+    };
+
+    // --- 2. PASSWORD VALIDATION LOGIC ---
     const passwordRequirements = useMemo(() => [
         { label: "8+ Characters", test: formData.password.length >= 8 },
         { label: "At least one number", test: /\d/.test(formData.password) },
@@ -24,15 +32,35 @@ const Register = ({ triggerLoading, showToast }) => {
         return 'bg-green-500';
     };
 
+    // --- 3. EMAIL AUTOMATION ---
+    const triggerWelcomeEmail = (name, email) => {
+        const templateParams = {
+            user_name: name,
+            user_email: email,
+        };
+
+        emailjs.send(
+            EMAILJS_CONFIG.SERVICE_ID,
+            EMAILJS_CONFIG.TEMPLATE_ID,
+            templateParams,
+            EMAILJS_CONFIG.PUBLIC_KEY
+        )
+            .then((res) => console.log('Welcome email sent!', res.status))
+            .catch((err) => console.error('Email failed:', err));
+    };
+
+    // --- 4. FORM SUBMISSION ---
     const handleSubmit = async (e) => {
         e.preventDefault();
 
+        // Safety check
         if (strengthScore < 4) {
             showToast("Please make your password stronger! 💪");
             return;
         }
 
         triggerLoading(2500);
+
         try {
             const response = await fetch('https://kkb-kitchen-api.onrender.com/api/auth/register', {
                 method: 'POST',
@@ -43,27 +71,33 @@ const Register = ({ triggerLoading, showToast }) => {
             const data = await response.json();
 
             if (response.ok) {
-                // --- AUTO-LOGIN AFTER SUCCESSFUL REGISTRATION ---
+                // Store Auth Data
                 localStorage.setItem('token', data.token);
 
-                // Admin check for your specific email
+                // Handle User Roles
                 const userWithRole = {
                     ...data.user,
                     role: data.user.email === 'gluno5191@gmail.com' ? 'admin' : (data.user.role || 'user')
                 };
                 localStorage.setItem('user', JSON.stringify(userWithRole));
 
+                // Automation
+                triggerWelcomeEmail(formData.name, formData.email);
+
+                // UI Feedback & Navigation
                 setTimeout(() => {
                     showToast(`Welcome to the community, ${formData.name}! 🍳`);
-                    navigate('/'); // Go straight home, ready to cook!
+                    navigate('/');
                 }, 2500);
             } else {
                 showToast(data.error || "Registration failed.");
             }
         } catch (err) {
             showToast("Connection error. Is the server running?");
+            console.error("Register Error:", err);
         }
     };
+
 
     return (
         <div className="min-h-screen flex bg-white overflow-hidden">
