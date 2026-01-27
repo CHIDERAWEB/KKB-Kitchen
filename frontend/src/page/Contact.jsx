@@ -18,8 +18,8 @@ const Contact = () => {
 
         const SERVICE_ID = 'service_0bbjmal';
         const PUBLIC_KEY = 'bjcPAKsChHcddh8l1';
-        const ADMIN_TEMPLATE_ID = 'template_e5j0ihp';
-        const AUTO_REPLY_TEMPLATE_ID = 'template_eqpmbl8';
+        const ADMIN_TEMPLATE_ID = 'template_2cv7huj';
+        const AUTO_REPLY_TEMPLATE_ID = 'template_0yzy0ve';
 
         // Execute sends
         const sendToAdmin = emailjs.sendForm(SERVICE_ID, ADMIN_TEMPLATE_ID, form.current, PUBLIC_KEY);
@@ -33,7 +33,7 @@ const Contact = () => {
             .catch((error) => {
                 console.error("EmailJS Error Object:", error);
                 setStatus('idle');
-                
+
                 // Detailed error messaging
                 if (error?.text === "The template ID not found") {
                     alert("Template Error: One of your IDs (template_e5j0ihp or template_eqpmbl8) is incorrect in the code. Please double-check the 'ID' column in EmailJS.");
