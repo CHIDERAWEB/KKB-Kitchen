@@ -66,9 +66,9 @@ const Register = ({ triggerLoading, showToast }) => {
         triggerLoading(2500);
 
         try {
-            // FIX: If your backend expects 'username', map it here:
+            // MATCHING YOUR BACKEND: Using 'name' instead of 'username'
             const payload = {
-                username: formData.name, // Mapping 'name' to 'username'
+                name: formData.name,
                 email: formData.email,
                 password: formData.password
             };
@@ -76,7 +76,7 @@ const Register = ({ triggerLoading, showToast }) => {
             const response = await fetch('https://kkb-kitchen-api.onrender.com/api/auth/register', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload) // Sending the mapped payload
+                body: JSON.stringify(payload)
             });
 
             const data = await response.json();
@@ -97,7 +97,9 @@ const Register = ({ triggerLoading, showToast }) => {
                     navigate('/');
                 }, 2500);
             } else {
-                // This will now show the specific error from your backend
+                // IMPORTANT: This log will tell you if the error is "Email already exists"
+                // or a specific validation error from your backend.
+                console.log("Registration Error Details:", data);
                 showToast(data.message || data.error || "Registration failed.");
             }
         } catch (err) {

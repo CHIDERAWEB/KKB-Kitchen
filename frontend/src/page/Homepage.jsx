@@ -4,6 +4,7 @@ import { Flame, ArrowRight, Trophy, Clock, Zap, Star, Search, MapPin, Truck, Ute
 import { Link } from 'react-router-dom';
 import PopularRecipes from '../Components/PopularRecipes';
 import ScrollToTop from '../Components/ScrollToTop';
+import CreateRecipes from './CreateRecipes';
 
 const Homepage = () => {
     const [recipes, setRecipes] = useState([]);
@@ -245,7 +246,7 @@ const Homepage = () => {
                     <div className="inline-flex items-center gap-2 bg-orange-500 px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-[0.2em] mb-10 shadow-lg"><Trophy size={16} /> Jollof Wars 2026</div>
                     <h2 className="text-6xl md:text-7xl font-black mb-8 leading-[0.9] italic tracking-tighter">Show us your <br /> Smoky Flavor.</h2>
                     <p className="text-gray-400 mb-12 text-xl font-medium max-w-md">Upload your best recipe and compete for the "Golden Ladle" award.</p>
-                    <Link to="/add-recipe" className="bg-white text-black px-14 py-6 rounded-[2.5rem] font-black uppercase text-xs tracking-[0.2em] hover:bg-orange-500 hover:text-white transition-all shadow-xl flex items-center gap-3 w-fit">
+                    <Link to="/CreateRecipes" className="bg-white text-black px-14 py-6 rounded-[2.5rem] font-black uppercase text-xs tracking-[0.2em] hover:bg-orange-500 hover:text-white transition-all shadow-xl flex items-center gap-3 w-fit">
                         Join Challenge <ArrowRight size={18} />
                     </Link>
                 </div>
