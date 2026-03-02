@@ -90,7 +90,7 @@ const CreateRecipe = ({ showToast }) => {
                 try {
                     const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3');
                     audio.play();
-                } catch (err) { console.log("Audio block") }
+                } catch (error) { console.log("Audio block") }
 
                 if (socketRef.current) {
                     socketRef.current.emit("recipeCreated", {
