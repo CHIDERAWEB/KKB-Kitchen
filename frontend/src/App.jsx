@@ -26,6 +26,7 @@ import UploadRecipe from './page/UploadRecipe';
 import Homepage from './page/Homepage';
 import Revisions from './page/Revisions';
 import Contact from './page/Contact'
+import VerifyEmail from './page/VerifyEmail'
 
 // Initialize Socket.io 
 const socket = io('https://kkb-kitchen-api.onrender.com');
@@ -176,6 +177,7 @@ function App() {
                 <Route path="/about" element={<PageWrapper><About /></PageWrapper>} />
                 <Route path="/contact" element={<PageWrapper><Contact /></PageWrapper>} />
                 <Route path="/favorites" element={<PageWrapper><Favorites user={user} /></PageWrapper>} />
+                <Route path="/verify-email" element={<VerifyEmail showToast={showToast} />} />
 
                 <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>

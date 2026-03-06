@@ -21,10 +21,12 @@ const httpServer = createServer(app);
 const io = new Server(httpServer, {
   cors: {
     origin: [
-      'https://kkb-kitchen-frontend.onrender.com',
-      'http://localhost:3000'
+      'http://localhost:5173', 
+      'http://localhost:3000', 
+      'https://kkb-kitchen-frontend.onrender.com'
     ],
-    methods: ['GET', 'POST']
+    methods: ['GET', 'POST'],
+    credentials: true
   }
 });
 
@@ -32,12 +34,14 @@ app.set('socketio', io);
 
 app.use(cors({
   origin: [
-    'https://kkb-kitchen-frontend.onrender.com',
-    'http://localhost:3000'
+    'http://localhost:5173', 
+    'http://localhost:3000', 
+    'https://kkb-kitchen-frontend.onrender.com'
   ],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  optionsSuccessStatus: 200
 }));
 
 app.use(express.json());

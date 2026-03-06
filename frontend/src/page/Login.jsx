@@ -3,6 +3,7 @@ import { Mail, Lock, ArrowRight, ChefHat } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { GoogleLogin } from '@react-oauth/google';
+import { FiEye, FiEyeOff } from 'react-icons/fi';
 
 const Login = ({ triggerLoading, showToast }) => {
   const navigate = useNavigate();
@@ -10,7 +11,9 @@ const Login = ({ triggerLoading, showToast }) => {
     email: '',
     password: ''
   });
-
+  
+  const [showPassword,setShowPassword]=useState(false)
+  console.log(showPassword)
   const handleSubmit = async (e) => {
     e.preventDefault();
     triggerLoading(2000);
@@ -74,7 +77,9 @@ const Login = ({ triggerLoading, showToast }) => {
             className="text-white text-6xl font-black leading-tight"
           >
             WELCOME <br />
-            <span className="text-orange-500 font-signature text-8xl lowercase">Back home</span>
+            <span className="text-orange-500 font-signature text-8xl lowercase">
+              Back home
+            </span>
           </motion.h2>
         </div>
         <div className="absolute inset-0 bg-gradient-to-r from-gray-900/80 to-transparent" />
@@ -99,39 +104,73 @@ const Login = ({ triggerLoading, showToast }) => {
           </div>
 
           <div className="bg-white p-10 rounded-[3rem] shadow-[0_20px_50px_rgba(251,146,60,0.1)] border border-orange-100">
-            <h2 className="text-3xl font-black text-gray-900 text-center uppercase tracking-tighter">Login</h2>
-            <p className="text-center text-gray-500 mt-2 font-medium">Manage your secret recipes</p>
+            <h2 className="text-3xl font-black text-gray-900 text-center uppercase tracking-tighter">
+              Login
+            </h2>
+            <p className="text-center text-gray-500 mt-2 font-medium">
+              Manage your secret recipes
+            </p>
 
             <form className="mt-10 space-y-6" onSubmit={handleSubmit}>
               <div>
-                <label className="block text-xs font-black uppercase tracking-widest text-gray-400 ml-2 mb-2">Email Address</label>
+                <label className="block text-xs font-black uppercase tracking-widest text-gray-400 ml-2 mb-2">
+                  Email Address
+                </label>
                 <div className="relative group">
-                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-orange-500 transition-colors" size={18} />
+                  <Mail
+                    className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-orange-500 transition-colors"
+                    size={18}
+                  />
                   <input
                     type="email"
                     required
                     value={formData.email}
                     className="w-full pl-12 pr-4 py-4 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-orange-500 outline-none transition-all"
                     placeholder="mummy@example.com"
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, email: e.target.value })
+                    }
                   />
                 </div>
               </div>
 
               <div>
                 <div className="flex justify-between items-center mb-2 px-2">
-                  <label className="text-xs font-black uppercase tracking-widest text-gray-400">Password</label>
-                  <button type="button" className="text-xs font-bold text-orange-600 hover:underline">Forgot?</button>
+                  <label className="text-xs font-black uppercase tracking-widest text-gray-400">
+                    Password
+                  </label>
+                  <button
+                    type="button"
+                    className="text-xs font-bold text-orange-600 hover:underline"
+                  >
+                    Forgot?
+                  </button>
                 </div>
                 <div className="relative group">
-                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-orange-500 transition-colors" size={18} />
+                  <Lock
+                    className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-orange-500 transition-colors"
+                    size={18}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-orange-500"
+                  >
+                    {showPassword ? (
+                      <FiEyeOff size={20} />
+                    ) : (
+                      <FiEye size={20} />
+                    )}
+                  </button>
                   <input
-                    type="password"
+                    type={showPassword ? "text" : "password"}
                     required
                     value={formData.password}
                     className="w-full pl-12 pr-4 py-4 bg-gray-50 border-none rounded-2xl focus:ring-2 focus:ring-orange-500 outline-none transition-all"
                     placeholder="••••••••"
-                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, password: e.target.value })
+                    }
                   />
                 </div>
               </div>
@@ -150,33 +189,46 @@ const Login = ({ triggerLoading, showToast }) => {
             <div className="mt-8">
               <div className="relative flex items-center justify-center mb-6">
                 <div className="w-full border-t border-gray-100"></div>
-                <span className="bg-white px-4 text-xs font-black text-gray-400 uppercase absolute">Or continue with</span>
+                <span className="bg-white px-4 text-xs font-black text-gray-400 uppercase absolute">
+                  Or continue with
+                </span>
               </div>
 
               <div className="flex flex-col items-center gap-4">
                 <GoogleLogin
                   onSuccess={async (credentialResponse) => {
                     try {
-                      const response = await fetch('https://kkb-kitchen-api.onrender.com/api/auth/google-login', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ idToken: credentialResponse.credential })
-                      });
+                      const response = await fetch(
+                        "https://kkb-kitchen-api.onrender.com/api/auth/google-login",
+                        {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({
+                            idToken: credentialResponse.credential,
+                          }),
+                        },
+                      );
 
                       const data = await response.json();
 
                       if (response.ok) {
-                        localStorage.setItem('token', data.token);
+                        localStorage.setItem("token", data.token);
 
                         // Force admin role for your email via Google Login too
                         const googleUserWithRole = {
                           ...data.user,
-                          role: data.user.email === 'gluno5191@gmail.com' ? 'admin' : (data.user.role || 'user')
+                          role:
+                            data.user.email === "gluno5191@gmail.com"
+                              ? "admin"
+                              : data.user.role || "user",
                         };
 
-                        localStorage.setItem('user', JSON.stringify(googleUserWithRole));
+                        localStorage.setItem(
+                          "user",
+                          JSON.stringify(googleUserWithRole),
+                        );
                         showToast(`Welcome back, ${data.user.name}! 🍳`);
-                        navigate('/');
+                        navigate("/");
                       } else {
                         showToast(data.message || "Google Login failed");
                       }
@@ -194,8 +246,13 @@ const Login = ({ triggerLoading, showToast }) => {
 
               <div className="mt-8 text-center">
                 <p className="text-sm text-gray-500 font-medium">
-                  New to the kitchen?{' '}
-                  <Link to="/register" className="text-orange-600 font-black hover:underline ml-1">JOIN NOW</Link>
+                  New to the kitchen?{" "}
+                  <Link
+                    to="/register"
+                    className="text-orange-600 font-black hover:underline ml-1"
+                  >
+                    JOIN NOW
+                  </Link>
                 </p>
               </div>
             </div>

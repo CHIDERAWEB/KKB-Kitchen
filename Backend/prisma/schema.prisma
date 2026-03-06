@@ -13,6 +13,8 @@ model User {
   password  String
   createdAt DateTime @default(now())
   role      String   @default("user")
+  otp       String?
+  isVerified  Boolean  @default(false)
   recipes   Recipe[]
 }
 

@@ -191,13 +191,15 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { FiClock, FiChevronRight, FiLock, FiEye, FiStar } from "react-icons/fi";
-import { io } from "socket.io-client";
+import { FiClock, FiChevronRight, FiLock, FiEye, FiStar, FiEyeOff } from "react-icons/fi";
+import { io } from "socket.io-client"; 
+
 
 const RecipeGrid = ({ user }) => {
   const [recipes, setRecipes] = useState([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+
 
   // realtime rejection listener
   useEffect(() => {
