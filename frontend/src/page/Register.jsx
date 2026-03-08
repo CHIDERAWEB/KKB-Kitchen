@@ -107,6 +107,7 @@ const Register = ({ triggerLoading, showToast }) => {
 
                 triggerWelcomeEmail(formData.name, formData.email);
 
+
                 setTimeout(() => {
                     showToast(`Chef ${formData.name}, check your email for the 4-digit code! 🍳`);
                     setIsLoading(false);
@@ -117,10 +118,14 @@ const Register = ({ triggerLoading, showToast }) => {
             } else {
                 setIsLoading(false);
                 showToast(data.message || data.error || "Registration failed.");
+                console.error("SERVER ERROR:", data);
+        alert("SERVER SAYS: " + (data.message || data.error || JSON.stringify(data)));
+    }
             }
         } catch (err) {
             setIsLoading(false);
             showToast("Connection error. Is the server running?");
+            alert("CONNECTION ERROR: " + err.message);
         }
     };
 
