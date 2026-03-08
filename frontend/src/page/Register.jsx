@@ -125,7 +125,7 @@ const Register = ({ triggerLoading, showToast }) => {
         } catch (err) {
             setIsLoading(false);
             showToast("Connection error. Is the server running?");
-            alert("CONNECTION ERROR: " + err.message);
+            alert("CONNECTION ERROR: " + err.message)
         }
     };
 
