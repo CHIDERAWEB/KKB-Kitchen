@@ -120,7 +120,8 @@ const Register = ({ triggerLoading, showToast }) => {
                 showToast(data.message || data.error || "Registration failed.");
                 console.error("SERVER ERROR:", data);
                 alert("SERVER SAYS: " + (data.message || data.error || JSON.stringify(data)));
-        
+            }
+            
             } catch (err) {
             setIsLoading(false);
             showToast("Connection error. Is the server running?");
