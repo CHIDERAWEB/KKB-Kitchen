@@ -63,71 +63,75 @@ const Register = ({ triggerLoading, showToast }) => {
 
     // --- 4. FORM SUBMISSION ---
     const handleSubmit = async (e) => {
-        e.preventDefault();
-        
-        if (!isFormValid) {
-            showToast("Please fill in the password, email and username! 💪");
-            return;
+      e.preventDefault();
+
+      // 1. Validation Checks
+      if (!isFormValid) {
+        showToast("Please fill in the password, email and username! 💪");
+        return;
+      }
+
+      if (strengthScore < 4) {
+        showToast("Please make your password stronger! 💪");
+        return;
+      }
+
+      setIsLoading(true);
+
+      try {
+        const payload = {
+          name: formData.name,
+          email: formData.email.toLowerCase().trim(), // Clean email before sending
+          password: formData.password,
+        };
+
+        const response = await fetch(
+          "https://kkb-kitchen-api.onrender.com/api/auth/register",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          },
+        );
+
+        const data = await response.json();
+
+        if (response.ok) {
+          // 2. Save essential data to LocalStorage
+          localStorage.setItem("temp_email", payload.email);
+          localStorage.setItem("token", data.token);
+
+          const userWithRole = {
+            ...data.user,
+            role:
+              data.user.email === "gluno5191@gmail.com"
+                ? "admin"
+                : data.user.role || "user",
+          };
+          localStorage.setItem("user", JSON.stringify(userWithRole));
+
+          // 3. Fire-and-forget the Welcome Email (don't wait for it)
+          triggerWelcomeEmail(formData.name, payload.email);
+
+          // 4. IMMEDIATE REDIRECT (No 2-second delay)
+          showToast(
+            `Chef ${formData.name}, check your email for the 4-digit code! 🍳`,
+          );
+          setIsLoading(false);
+          navigate("/verify-email");
+        } else {
+          // Server returned an error (like Email already exists)
+          setIsLoading(false);
+          showToast(data.message || "Registration failed.");
+          console.error("SERVER ERROR:", data);
         }
-
-        if (strengthScore < 4) {
-            showToast("Please make your password stronger! 💪");
-            return;
-        }
-
-        setIsLoading(true);
-        // triggerLoading(2500); // Keeping this hidden as you requested
-
-        try {
-            const payload = {
-                name: formData.name,
-                email: formData.email,
-                password: formData.password
-            };
-
-            const response = await fetch('https://kkb-kitchen-api.onrender.com/api/auth/register', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-
-            const data = await response.json();
-
-            if (response.ok) {
-                // Store the email temporarily so the OTP page knows who is verifying
-                localStorage.setItem('temp_email', formData.email);
-                
-                // We still save the user data but they aren't "verified" yet
-                localStorage.setItem('token', data.token);
-                const userWithRole = {
-                    ...data.user,
-                    role: data.user.email === 'gluno5191@gmail.com' ? 'admin' : (data.user.role || 'user')
-                };
-                localStorage.setItem('user', JSON.stringify(userWithRole));
-
-                triggerWelcomeEmail(formData.name, formData.email);
-
-
-                setTimeout(() => {
-                    showToast(`Chef ${formData.name}, check your email for the 4-digit code! 🍳`);
-                    setIsLoading(false);
-                    // REDIRECT TO OTP PAGE
-                    localStorage.setItem('temp_email', formData.email);
-                    navigate('/verify-email'); 
-                }, 2000);
-            } else {
-                setIsLoading(false);
-                showToast(data.message || data.error || "Registration failed.");
-                console.error("SERVER ERROR:", data);
-                alert("SERVER SAYS: " + (data.message || data.error || JSON.stringify(data)));
-            }
-            
-            } catch (err) {
-            setIsLoading(false);
-            showToast("Connection error. Is the server running?");
-            alert("CONNECTION ERROR: " + err.message)
-          }
-       };
+      } catch (err) {
+        // Network or connection error
+        setIsLoading(false);
+        showToast("Connection error. Check your internet or server status.");
+        console.error("CONNECTION ERROR:", err.message);
+      }
+    };
 
     return (
         <div className="min-h-screen flex bg-white overflow-hidden">
