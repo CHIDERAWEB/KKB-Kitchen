@@ -5,55 +5,62 @@ import { OAuth2Client } from 'google-auth-library';
 import { sendVerificationEmail } from '../utils/emailService.js'; // Make sure the path is correct
 
 export const register = async (req, res) => {
-    try {
-        const { name, email, password } = req.body;
-        
-        const cleanEmail = email.toLowerCase().trim();
+  try {
+    const { name, email, password } = req.body;
 
-        const existingUser = await prisma.user.findUnique({
-            where: { email: cleanEmail }
-        });
+    // 1. Clean the email to prevent accidental spaces or case issues
+    const cleanEmail = email.toLowerCase().trim();
 
-        if (existingUser) {
-            return res.status(400).json({ message: "Email already exists. Try logging in! 🍳" });
-        }
+    // 2. Check if user already exists BEFORE trying to create
+    const existingUser = await prisma.user.findUnique({
+      where: { email: cleanEmail },
+    });
 
-        // 2. Hash password and generate 4-digit OTP
-        const hashedPassword = await bcrypt.hash(password, 10);
-        const otpCode = Math.floor(1000 + Math.random() * 9000).toString();
-
-        // 3. Save the user (Fixed the name and missing comma here)
-        const user = await prisma.user.create({
-            data: {
-                name: name,             // Fixed: Using the name from req.body
-                email: email.toLowerCase(),
-                password: hashedPassword,
-                role: 'user',
-                otp: otpCode,           
-                isVerified: false       
-            }
-        });
-
-        // 4. Send the OTP email
-        try {
-            await sendVerificationEmail(user.email, user.name, otpCode);
-        } catch (emailErr) {
-            console.error("Email failed but user was created:", emailErr);
-            // We don't stop the process, but we log it
-        }
-
-        // 5. Send Success Response
-        return res.status(201).json({ 
-            message: "User registered! Check your email for the code.",
-            user: { id: user.id, name: user.name, email: user.email } 
-        });
-
-    } catch (error) {
-        console.error("Registration Error:", error);
-        return res.status(500).json({ 
-            message: "Internal server error. Please try again.",
-            error: error.message });
+    if (existingUser) {
+      return res.status(400).json({
+        message: "Email already exists. Try logging in! 🍳",
+      });
     }
+
+    // 3. Hash password and generate 4-digit OTP
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const otpCode = Math.floor(1000 + Math.random() * 9000).toString();
+
+    // 4. Save the user to the database
+    const user = await prisma.user.create({
+      data: {
+        name: name,
+        email: cleanEmail,
+        password: hashedPassword,
+        role: "user",
+        otp: otpCode,
+        isVerified: false,
+      },
+    });
+
+    // 5. Send the OTP email (wrapped in its own try/catch so it doesn't break registration)
+    try {
+      await sendVerificationEmail(user.email, user.name, otpCode);
+    } catch (emailErr) {
+      console.error(
+        "Email service failed, but user record was created:",
+        emailErr.message,
+      );
+    }
+
+    // 6. Send Success Response
+    return res.status(201).json({
+      message: "User registered! Check your email for the code.",
+      user: { id: user.id, name: user.name, email: user.email },
+    });
+  } catch (error) {
+    // If it reaches here, it means Prisma or the Server crashed
+    console.error("CRITICAL REGISTRATION ERROR:", error);
+    return res.status(500).json({
+      message: "Something went wrong in the kitchen (Server Error).",
+      error: error.message, // This will tell us if columns are missing
+    });
+  }
 };
 
      
