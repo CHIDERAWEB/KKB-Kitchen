@@ -7,10 +7,11 @@ import { sendVerificationEmail } from '../utils/emailService.js'; // Make sure t
 export const register = async (req, res) => {
     try {
         const { name, email, password } = req.body;
+        
+        const cleanEmail = email.toLowerCase().trim();
 
-        // 1. Check if user already exists BEFORE trying to create
         const existingUser = await prisma.user.findUnique({
-            where: { email: email.toLowerCase() }
+            where: { email: cleanEmail }
         });
 
         if (existingUser) {
