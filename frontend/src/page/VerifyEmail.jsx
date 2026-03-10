@@ -72,8 +72,9 @@ const VerifyEmail = ({ showToast }) => {
         } catch (err) {
             setIsLoading(false);
             showToast("Connection error. Is the server running?");
+            console.error(err);
         }
-    };
+    }; 
 
     return (
         <div className="min-h-screen bg-orange-50/30 flex items-center justify-center p-6">
