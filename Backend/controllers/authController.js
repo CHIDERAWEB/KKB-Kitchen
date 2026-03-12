@@ -1,69 +1,69 @@
 import bcrypt from 'bcryptjs';
+import { OAuth2Client } from 'google-auth-library';
 import jwt from 'jsonwebtoken';
 import { prisma } from '../config/db.js';
-import { OAuth2Client } from 'google-auth-library';
 import { sendVerificationEmail } from '../utils/emailService.js'; // Make sure the path is correct
 
 export const register = async (req, res) => {
-  try {
-    const { name, email, password } = req.body;
-
-    // 1. Clean the email to prevent accidental spaces or case issues
-    const cleanEmail = email.toLowerCase().trim();
-
-    // 2. Check if user already exists BEFORE trying to create
-    const existingUser = await prisma.user.findUnique({
-      where: { email: cleanEmail },
-    });
-
-    if (existingUser) {
-      return res.status(400).json({
-        message: "Email already exists. Try logging in! 🍳",
-      });
-    }
-
-    // 3. Hash password and generate 4-digit OTP
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const otpCode = Math.floor(1000 + Math.random() * 9000).toString();
-
-    // 4. Save the user to the database
-    const user = await prisma.user.create({
-      data: {
-        name: name,
-        email: cleanEmail,
-        password: hashedPassword,
-        role: "user",
-        otp: otpCode,
-        isVerified: false,
-      },
-    });
-
-    // 5. Send the OTP email (wrapped in its own try/catch so it doesn't break registration)
     try {
-      await sendVerificationEmail(user.email, user.name, otpCode);
-    } catch (emailErr) {
-      console.error(
-        "Email service failed, but user record was created:",
-        emailErr.message,
-      );
-    }
+        const { name, email, password } = req.body;
 
-    // 6. Send Success Response
-    return res.status(201).json({
-      message: "User registered! Check your email for the code.",
-      user: { id: user.id, name: user.name, email: user.email },
-    });
-  } catch (error) {
-    // If it reaches here, it means Prisma or the Server crashed
-    console.error("CRITICAL REGISTRATION ERROR:", error);
-    return res.status(500).json({
-      message: "Something went wrong in the kitchen (Server Error).",
-      error: error.message, // This will tell us if columns are missing
-    });
-  }
+        // 1. Clean the email to prevent accidental spaces or case issues
+        const cleanEmail = email.toLowerCase().trim();
+
+        // 2. Check if user already exists BEFORE trying to create
+        const existingUser = await prisma.user.findUnique({
+            where: { email: cleanEmail },
+        });
+
+        if (existingUser) {
+            return res.status(400).json({
+                message: "Email already exists. Try logging in! 🍳",
+            });
+        }
+
+        // 3. Hash password and generate 4-digit OTP
+        const hashedPassword = await bcrypt.hash(password, 10);
+        const otpCode = Math.floor(1000 + Math.random() * 9000).toString();
+
+        // 4. Save the user to the database
+        const user = await prisma.user.create({
+            data: {
+                name: name,
+                email: cleanEmail,
+                password: hashedPassword,
+                role: "user",
+                otp: otpCode,
+                isVerified: false,
+            },
+        });
+
+        // 5. Send the OTP email (wrapped in its own try/catch so it doesn't break registration)
+        try {
+            await sendVerificationEmail(user.email, user.name, otpCode);
+        } catch (emailErr) {
+            console.error(
+                "Email service failed, but user record was created:",
+                emailErr.message,
+            );
+        }
+
+        // 6. Send Success Response
+        return res.status(201).json({
+            message: "User registered! Check your email for the code.",
+            user: { id: user.id, name: user.name, email: user.email },
+        });
+    } catch (error) {
+        // If it reaches here, it means Prisma or the Server crashed
+        console.error("CRITICAL REGISTRATION ERROR:", error);
+        return res.status(500).json({
+            message: "Something went wrong in the kitchen (Server Error).",
+            error: error.message, // This will tell us if columns are missing
+        });
+    }
 };
 
-     
+
 export const login = async (req, res) => {
     try {
         const { email, password } = req.body;
@@ -186,18 +186,18 @@ export const verifyOTP = async (req, res) => {
             // 3. Update the user and clear the OTP field
             const updatedUser = await prisma.user.update({
                 where: { email },
-                data: { 
-                    isVerified: true, 
+                data: {
+                    isVerified: true,
                     otp: null // Clearing the OTP so it can't be used again
                 }
             });
 
             // Return success with user data (excluding password for security)
             const { password, ...userWithoutPassword } = updatedUser;
-            
-            return res.status(200).json({ 
+
+            return res.status(200).json({
                 message: "Email verified successfully! Welcome to the kitchen! 🍳",
-                user: userWithoutPassword 
+                user: userWithoutPassword
             });
         } else {
             // If the code is wrong
@@ -206,5 +206,28 @@ export const verifyOTP = async (req, res) => {
     } catch (error) {
         console.error("Verification Error:", error);
         res.status(500).json({ message: "Server error during verification. Try again later." });
+    }
+};
+
+export const resendOTP = async (req, res) => {
+    try {
+        const { email } = req.body;
+        const user = await prisma.user.findUnique({ where: { email: email.toLowerCase() } });
+
+        if (!user) return res.status(404).json({ message: "User not found!" });
+
+        // Generate new 4-digit code
+        const newOtp = Math.floor(1000 + Math.random() * 9000).toString();
+
+        await prisma.user.update({
+            where: { email: user.email },
+            data: { otp: newOtp },
+        });
+
+        await sendVerificationEmail(user.email, user.name, newOtp);
+
+        res.status(200).json({ message: "New code sent to your email! 📩" });
+    } catch (error) {
+        res.status(500).json({ message: "Error resending code" });
     }
 };
