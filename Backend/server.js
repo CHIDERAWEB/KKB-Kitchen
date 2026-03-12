@@ -50,6 +50,12 @@ app.use('/api/auth', authRoutes);
 app.use('/api/recipes', recipeRoutes);
 app.use('/api/admin', adminRoutes);
 
+// Add this right above app.use('/api/auth', authRoutes);
+app.use((req, res, next) => {
+  console.log(`📡 Incoming: ${req.method} ${req.url}`);
+  console.log(`📦 Body:`, req.body);
+  next();
+});
 app.get('/', (req, res) => {
   res.status(200).json({
     message: "Chef, the kitchen is open! 👨‍🍳",
