@@ -1,11 +1,23 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
+import React, { useEffect, useRef, useState } from 'react';
 import {
-  FiSearch, FiX, FiChevronDown, FiPlusCircle, FiHeart,
-  FiCoffee, FiSmile, FiZap, FiBarChart2, FiLogOut,
-  FiLayout, FiUser, FiCheckCircle, FiMic, FiClock, FiTrendingUp, FiLock
+  FiBarChart2,
+  FiCheckCircle,
+  FiChevronDown,
+  FiClock,
+  FiCoffee,
+  FiHeart,
+  FiLayout,
+  FiLock,
+  FiLogOut,
+  FiMic,
+  FiPlusCircle,
+  FiSearch,
+  FiSmile,
+  FiX,
+  FiZap
 } from 'react-icons/fi';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { io } from 'socket.io-client';
 import image from '../assets/image.png';
 import Navbar from './Navbar';
@@ -51,13 +63,13 @@ function Header() {
   // --- 1. UPDATED IDENTITY LOGIC (FIXED) ---
   const [user, setUser] = useState(null);
 
-  // 1. Keep your existing user sync effect
   useEffect(() => {
     const syncUser = () => {
       const savedUser = JSON.parse(localStorage.getItem('user'));
       const token = localStorage.getItem('token');
 
-      if (savedUser && token) {
+      // FIX: Check for isVerified so non-verified users don't see the 'Chief' profile
+      if (savedUser && token && savedUser.isVerified) {
         setUser({
           ...savedUser,
           displayName: savedUser.name?.toLowerCase().startsWith('chief')
@@ -76,9 +88,8 @@ function Header() {
     return () => window.removeEventListener('storage', syncUser);
   }, [location.pathname]);
 
-  // 2. ADD THIS: Dedicated Socket Effect for Notifications
+  // 2. Socket Effect for Notifications
   useEffect(() => {
-    // Only connect if the user is an admin
     const savedUser = JSON.parse(localStorage.getItem('user'));
     if (savedUser?.role !== 'admin') return;
 
@@ -89,24 +100,21 @@ function Header() {
     });
 
     socket.on("recipeCreated", (data) => {
-      console.log("New recipe event received:", data);
-
-      // Update the badge count directly from the server data
       if (data.pendingCount !== undefined) {
         setPendingCount(data.pendingCount);
       }
-
-      // Show the popup
-      showToast(`New Recipe: "${data.title}" by ${data.author} 🚀`);
+      setToastMessage(`New Recipe: "${data.title}" by ${data.author} 🚀`);
+      setShowToast(true);
+      setTimeout(() => setShowToast(false), 5000);
     });
 
     return () => {
       socket.off("recipeCreated");
       socket.disconnect();
     };
-  }, []); // Empty dependency array means this stays alive throughout the session
+  }, []);
 
-  // --- 2. RESTRICTION GATEKEEPER ---
+  // --- 2. RESTRICTION GATEKEEPER (FIXED DELAY) ---
   const handleRestrictedAction = (e, destination) => {
     if (user) return;
 
@@ -128,13 +136,12 @@ function Header() {
       setTimeout(() => {
         setShowToast(false);
         navigate('/register');
-      }, 2000);
+      }, 3000); // FIXED: Changed from 90000 to 3000
     }
   };
 
   // --- 3. ADMIN STATS FETCH ---
   const fetchAdminStats = async () => {
-    // Check localStorage directly to ensure we have the latest token for the fetch
     const savedToken = user?.token || localStorage.getItem('token');
     const savedUser = JSON.parse(localStorage.getItem('user'));
 
@@ -193,16 +200,14 @@ function Header() {
     return () => clearTimeout(debounce);
   }, [query]);
 
-  // --- 6. FIXED NOTIFICATION & REAL-TIME LOGIC ---
+  // --- 6. NOTIFICATION & REAL-TIME LOGIC ---
   useEffect(() => {
-    // Initial fetch when user object is available
     if (user?.role === 'admin') fetchAdminStats();
 
     const handleNotification = (data, messagePrefix) => {
       setToastMessage(`${messagePrefix}: "${data.title}"`);
       setShowToast(true);
 
-      // INSTANT FIX: If admin, refresh the badge count right now
       const currentStoredUser = JSON.parse(localStorage.getItem('user'));
       if (currentStoredUser?.role === 'admin') {
         fetchAdminStats();
@@ -218,7 +223,7 @@ function Header() {
       socket.off("recipeApproved");
       socket.off("recipeCreated");
     };
-  }, [user]); // Runs when user logs in or state changes
+  }, [user]);
 
   useEffect(() => {
     if (user?.role === 'admin') {
@@ -281,15 +286,12 @@ function Header() {
           <motion.div variants={navItemVariants}><Link to="/" className="nav-link">Home</Link></motion.div>
           <motion.div variants={navItemVariants}><Link to="/about" className="nav-link">About</Link></motion.div>
 
-
           {/* DISCOVER DROPDOWN */}
           <motion.div variants={navItemVariants} className="relative group h-full flex items-center">
             <div className="flex items-center gap-1 cursor-pointer py-2 group-hover:text-orange-600 transition-all">
               <span className="nav-link">Discover</span>
               <FiChevronDown className="text-gray-400 transition-transform duration-300 group-hover:rotate-180 group-hover:text-orange-600" />
             </div>
-
-            {/* Fixed Dropdown Container */}
             <div className="absolute top-full left-0 mt-2 w-64 bg-white rounded-3xl shadow-2xl border border-gray-100 p-4 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-50">
               <div className="flex flex-col gap-2">
                 <DropdownItem onClick={(e) => handleRestrictedAction(e, '/discover')} to="/discover?cat=junk" icon={<FiSmile />} title="Junk" subtitle="Quick Treats" />
@@ -305,8 +307,6 @@ function Header() {
               <span className="nav-link">Kitchen</span>
               <FiChevronDown className="text-gray-400 transition-transform duration-300 group-hover:rotate-180 group-hover:text-orange-600" />
             </div>
-
-            {/* Fixed Dropdown Container */}
             <div className="absolute top-full left-0 mt-2 w-64 bg-white rounded-3xl shadow-2xl border border-gray-100 p-4 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 z-50">
               <div className="flex flex-col gap-2">
                 <DropdownItem onClick={(e) => handleRestrictedAction(e, '/create')} to="/create" icon={<FiPlusCircle />} title="Create" subtitle="New magic" />
@@ -346,10 +346,7 @@ function Header() {
                 {profileOpen && (
                   <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 15 }}
                     className="absolute top-[120%] right-0 w-64 bg-white rounded-[2.5rem] shadow-2xl border border-gray-50 p-3 z-[300]">
-
-                    {/* Added Profile Arrow for consistency */}
                     <div className="absolute -top-2 right-6 w-4 h-4 bg-white rotate-45 border-t border-l border-gray-50"></div>
-
                     {user.role === 'admin' && (
                       <DropdownItem to="/admin" icon={<FiLayout />} title="Admin Panel" subtitle={`Manage (${pendingCount})`} />
                     )}
@@ -374,6 +371,8 @@ function Header() {
           )}
           <Navbar user={user} />
         </div>
+
+        {/* SEARCH OVERLAY */}
         <AnimatePresence>
           {searchOpen && (
             <motion.div ref={searchWrapperRef} initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}
