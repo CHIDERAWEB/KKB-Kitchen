@@ -287,7 +287,7 @@ const RecipeGrid = ({ user }) => {
       </div>
 
       {/* grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-2 space-x-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
         {recipes.length > 0 ? (
           recipes.map((recipe, index) => {
             const isPending = recipe.status === "pending";
