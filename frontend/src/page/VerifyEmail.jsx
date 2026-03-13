@@ -56,12 +56,13 @@ const VerifyEmail = ({ showToast }) => {
       }
     } catch (err) {
       showToast("Connection error. Is the server awake? 😴");
+      console.error(err)
     }
   };
 
   const handleVerify = async (e) => {
     e.preventDefault();
-    const finalOtp = otp.join('');
+    const finalOtp = otp.join("");
 
     if (finalOtp.length < 4) {
       showToast("Please enter the full 4-digit code! 🔢");
@@ -70,31 +71,50 @@ const VerifyEmail = ({ showToast }) => {
 
     if (!email) {
       showToast("Session expired. Please register again. ⏳");
-      navigate('/register');
+      navigate("/register");
       return;
     }
 
     setIsLoading(true);
 
     try {
-      const response = await fetch('https://kkb-kitchen-api.onrender.com/api/auth/verify-otp', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, otp: finalOtp }),
-      });
+      // Type this out manually to ensure no hidden characters!
+      const response = await fetch(
+        "https://kkb-kitchen-api.onrender.com/api/auth/verify-otp",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, otp: finalOtp }),
+        },
+      );
 
-      const data = await response.json();
+      // --- SAFETY CHECK FOR JSON ---
+      const contentType = response.headers.get("content-type");
+      let data;
+
+      if (contentType && contentType.includes("application/json")) {
+        data = await response.json();
+      } else {
+        // If server sends HTML error instead of JSON
+        const errorText = await response.text();
+        console.error("Server Error Response:", errorText);
+        throw new Error(
+          "Server returned a non-JSON response. Check backend routes.",
+        );
+      }
 
       if (response.ok) {
         showToast("Email Verified! Welcome Chef! 🍳");
-        localStorage.removeItem('temp_email');
-        navigate('/login');
+        localStorage.removeItem("temp_email");
+        navigate("/login");
       } else {
         showToast(data.message || "Invalid code. Please check again!");
       }
     } catch (err) {
-      showToast("Connection error. Server might be waking up...");
-      console.error(err);
+      console.error("Fetch Error:", err);
+      showToast(
+        "Connection error. Is the server route /api/auth/verify-otp active?",
+      );
     } finally {
       setIsLoading(false);
     }

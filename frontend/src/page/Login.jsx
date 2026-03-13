@@ -240,7 +240,7 @@ const Login = ({ triggerLoading, showToast }) => {
                   onError={() => showToast("Google Login Failed")}
                   theme="outline"
                   shape="pill"
-                  width="100%"
+                  width="350"
                 />
               </div>
 

@@ -46,9 +46,6 @@ app.use(cors({
 
 app.use(express.json());
 
-app.use('/api/auth', authRoutes);
-app.use('/api/recipes', recipeRoutes);
-app.use('/api/admin', adminRoutes);
 
 // Add this right above app.use('/api/auth', authRoutes);
 app.use((req, res, next) => {
@@ -63,6 +60,10 @@ app.get('/', (req, res) => {
     timestamp: new Date().toISOString()
   });
 });
+
+app.use('/api/auth', authRoutes);
+app.use('/api/recipes', recipeRoutes);
+app.use('/api/admin', adminRoutes);
 
 // --- UPDATED SOCKET LOGIC ---
 io.on("connection", (socket) => {

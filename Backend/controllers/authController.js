@@ -160,52 +160,45 @@ export const googleLogin = async (req, res) => {
     }
 };
 // This goes in your Backend (e.g., authController.js)
+// THIS IS FOR YOUR BACKEND authController.js
 export const verifyOTP = async (req, res) => {
     const { email, otp } = req.body;
 
-    // Basic validation to ensure both fields are sent
     if (!email || !otp) {
         return res.status(400).json({ message: "Email and OTP are required" });
     }
 
     try {
-        // 1. Find the user
-        const user = await prisma.user.findUnique({ where: { email } });
+        const cleanEmail = email.toLowerCase().trim();
+        const user = await prisma.user.findUnique({ where: { email: cleanEmail } });
 
         if (!user) {
             return res.status(404).json({ message: "Chef not found! 🧐" });
         }
 
-        // Check if they are already verified
         if (user.isVerified) {
-            return res.status(400).json({ message: "This account is already verified. Please log in." });
+            return res.status(400).json({ message: "Already verified. Please log in." });
         }
 
-        // 2. Compare the OTP (Important: ensure types match, usually string to string)
+        // Check if OTP matches
         if (user.otp === otp) {
-            // 3. Update the user and clear the OTP field
-            const updatedUser = await prisma.user.update({
-                where: { email },
+            await prisma.user.update({
+                where: { email: cleanEmail },
                 data: {
                     isVerified: true,
-                    otp: null // Clearing the OTP so it can't be used again
+                    otp: null 
                 }
             });
 
-            // Return success with user data (excluding password for security)
-            const { password, ...userWithoutPassword } = updatedUser;
-
             return res.status(200).json({
-                message: "Email verified successfully! Welcome to the kitchen! 🍳",
-                user: userWithoutPassword
+                message: "Email verified successfully! Welcome Chef! 🍳"
             });
         } else {
-            // If the code is wrong
-            return res.status(400).json({ message: "Invalid OTP code. Please check your email again! ❌" });
+            return res.status(400).json({ message: "Invalid OTP code. ❌" });
         }
     } catch (error) {
         console.error("Verification Error:", error);
-        res.status(500).json({ message: "Server error during verification. Try again later." });
+        res.status(500).json({ message: "Server error during verification." });
     }
 };
 
