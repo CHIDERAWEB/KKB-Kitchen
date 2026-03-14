@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from "framer-motion";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useCallback } from "react";
 import {
   FiBarChart2,
   FiCheckCircle,
@@ -50,6 +50,7 @@ function Header() {
   const [pendingCount, setPendingCount] = useState(0);
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
+  const [user, setUser] = useState(null);
 
   const [recentSearches, setRecentSearches] = useState(() => {
     return JSON.parse(localStorage.getItem("recentSearches") || "[]");
@@ -60,44 +61,42 @@ function Header() {
   const profileRef = useRef(null);
   const searchWrapperRef = useRef(null);
 
-  // --- 1. UPDATED IDENTITY LOGIC (RESTRICTS BY VERIFICATION) ---
-  const [user, setUser] = useState(null);
+  // --- 1. IDENTITY LOGIC ---
+  const syncUser = useCallback(() => {
+    const savedUser = JSON.parse(localStorage.getItem("user"));
+    const token = localStorage.getItem("token");
+
+    if (savedUser && token) {
+      setUser({
+        ...savedUser,
+        displayName: savedUser.name?.toLowerCase().startsWith("chief")
+          ? savedUser.name
+          : `Chief ${savedUser.name?.split(" ")[0] || "KKB"}`,
+        picture:
+          savedUser.picture ||
+          savedUser.avatar ||
+          `https://ui-avatars.com/api/?name=${savedUser.name}&background=ea580c&color=fff`,
+        token,
+      });
+    } else {
+      setUser(null);
+    }
+  }, []);
 
   useEffect(() => {
-    const syncUser = () => {
-      const savedUser = JSON.parse(localStorage.getItem("user"));
-      const token = localStorage.getItem("token");
-
-      // FIX: Only set user if they have finished verification
-      if (savedUser && token && savedUser.isVerified === true) {
-        setUser({
-          ...savedUser,
-          displayName: savedUser.name?.toLowerCase().startsWith("chief")
-            ? savedUser.name
-            : `Chief ${savedUser.name?.split(" ")[0] || "KKB"}`,
-          picture:
-            savedUser.avatar ||
-            savedUser.picture ||
-            `https://ui-avatars.com/api/?name=${savedUser.name}&background=ea580c&color=fff`,
-          token,
-        });
-      } else {
-        setUser(null);
-      }
-    };
-
     syncUser();
-    window.addEventListener("storage", syncUser);
-    return () => window.removeEventListener("storage", syncUser);
-  }, [location.pathname]);
+  }, [location.pathname, syncUser]);
 
-  // --- 2. RESTRICTION GATEKEEPER (Using 'destination' correctly) ---
+  // --- 2. RESTRICTION GATEKEEPER ---
   const handleRestrictedAction = (e, destination) => {
-    if (user) return;
+    if (user) {
+      // If user exists, just let the link work or navigate
+      if (destination) navigate(destination);
+      return;
+    }
 
     e.preventDefault();
     setSearchOpen(false);
-
     const isReturningUser = localStorage.getItem("was_user_before");
 
     if (isReturningUser === "true") {
@@ -114,24 +113,19 @@ function Header() {
       setShowToast(true);
       setTimeout(() => {
         setShowToast(false);
-        // Uses the 'destination' variable to know where the user wanted to go
-        console.log("User tried to go to:", destination);
         navigate("/register");
       }, 3000);
     }
   };
 
-  // --- 3. ADMIN STATS FETCH ---
-  const fetchAdminStats = async () => {
-    const savedToken = user?.token || localStorage.getItem("token");
-    const savedUser = JSON.parse(localStorage.getItem("user"));
-    if (!savedToken || savedUser?.role !== "admin") return;
-
+  // --- 3. ADMIN STATS ---
+  const fetchAdminStats = useCallback(async () => {
+    if (!user || user.role !== "admin") return;
     try {
       const res = await fetch(
         "https://kkb-kitchen-api.onrender.com/api/admin/pending-count",
         {
-          headers: { Authorization: `Bearer ${savedToken}` },
+          headers: { Authorization: `Bearer ${user.token}` },
         },
       );
       const data = await res.json();
@@ -139,24 +133,22 @@ function Header() {
     } catch (err) {
       console.error("Admin API Error:", err);
     }
-  };
+  }, [user]);
 
   // --- 4. VOICE SEARCH ---
   const handleVoiceSearch = () => {
     const SpeechRecognition =
       window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRecognition) {
-      alert("Voice Search not supported in this browser.");
+      alert("Voice Search not supported.");
       return;
     }
     const recognition = new SpeechRecognition();
     recognition.start();
-    recognition.onresult = (event) => {
-      setQuery(event.results[0][0].transcript);
-    };
+    recognition.onresult = (event) => setQuery(event.results[0][0].transcript);
   };
 
-  // --- 5. SEARCH LOGIC ---
+  // --- 5. SEARCH LOGIC (FIXED INFINITE LOOP) ---
   useEffect(() => {
     const fetchResults = async () => {
       if (query.length < 2) {
@@ -172,12 +164,15 @@ function Header() {
         setSearchResults(data);
 
         if (data.length > 0) {
-          const updated = [
-            query,
-            ...recentSearches.filter((s) => s !== query),
-          ].slice(0, 5);
-          setRecentSearches(updated);
-          localStorage.setItem("recentSearches", JSON.stringify(updated));
+          // We use functional update to avoid adding recentSearches to dependency array
+          setRecentSearches((prev) => {
+            const updated = [query, ...prev.filter((s) => s !== query)].slice(
+              0,
+              5,
+            );
+            localStorage.setItem("recentSearches", JSON.stringify(updated));
+            return updated;
+          });
         }
       } catch (err) {
         console.error("Search Error:", err);
@@ -185,41 +180,30 @@ function Header() {
         setIsSearching(false);
       }
     };
-
     const debounce = setTimeout(fetchResults, 300);
     return () => clearTimeout(debounce);
-  }, [query]);
+  }, [query]); // Removed recentSearches from here to fix the loop!
 
-  // --- 6. NOTIFICATION & REAL-TIME LOGIC ---
+  // --- 6. NOTIFICATIONS ---
   useEffect(() => {
     if (user?.role === "admin") fetchAdminStats();
-
     const handleNotification = (data, messagePrefix) => {
       setToastMessage(`${messagePrefix}: "${data.title}"`);
       setShowToast(true);
       if (user?.role === "admin") fetchAdminStats();
       setTimeout(() => setShowToast(false), 5000);
     };
-
     socket.on("recipeApproved", (data) =>
       handleNotification(data, "Recipe Approved"),
     );
     socket.on("recipeCreated", (data) =>
       handleNotification(data, "New Recipe Created"),
     );
-
     return () => {
       socket.off("recipeApproved");
       socket.off("recipeCreated");
     };
-  }, [user]);
-
-  useEffect(() => {
-    if (user?.role === "admin") {
-      const interval = setInterval(fetchAdminStats, 30000);
-      return () => clearInterval(interval);
-    }
-  }, [user, location.pathname]);
+  }, [user, fetchAdminStats]);
 
   useEffect(() => {
     const handleClick = (e) => {
@@ -240,7 +224,7 @@ function Header() {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
     setUser(null);
-    window.location.href = "/login";
+    navigate("/login");
   };
 
   const clearRecent = () => {
@@ -312,7 +296,6 @@ function Header() {
             </Link>
           </motion.div>
 
-          {/* DISCOVER DROPDOWN */}
           <motion.div
             variants={navItemVariants}
             className="relative group h-full flex items-center"
@@ -354,7 +337,6 @@ function Header() {
             </div>
           </motion.div>
 
-          {/* KITCHEN DROPDOWN */}
           <motion.div
             variants={navItemVariants}
             className="relative group h-full flex items-center"
@@ -386,13 +368,6 @@ function Header() {
                   title="Meal Planner"
                   subtitle="Schedule"
                 />
-                <DropdownItem
-                  onClick={(e) => handleRestrictedAction(e, "/revisions")}
-                  to="/revisions"
-                  icon={<FiHeart />}
-                  title="Revison Recipe"
-                  subtitle="Edit Loves"
-                />
               </div>
             </div>
           </motion.div>
@@ -406,29 +381,17 @@ function Header() {
           >
             <FiSearch size={22} />
           </motion.button>
-
           {user ? (
             <div className="relative" ref={profileRef}>
               <motion.button
-                whileHover={{ scale: 1.02 }}
                 onClick={() => setProfileOpen(!profileOpen)}
                 className="flex items-center gap-3 bg-white border border-gray-100 p-1.5 pr-4 rounded-full shadow-sm cursor-pointer"
               >
-                <div className="relative">
-                  <img
-                    src={user.picture}
-                    className="h-9 w-9 rounded-full object-cover border-2 border-orange-50"
-                    alt="Avatar"
-                  />
-                  {user.role === "admin" && pendingCount > 0 && (
-                    <span className="absolute -top-1 -right-1 flex h-4 w-4">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                      <span className="relative flex items-center justify-center rounded-full h-4 w-4 bg-red-600 text-white font-black text-[8px]">
-                        {pendingCount}
-                      </span>
-                    </span>
-                  )}
-                </div>
+                <img
+                  src={user.picture}
+                  className="h-9 w-9 rounded-full object-cover border-2 border-orange-50"
+                  alt="Avatar"
+                />
                 <div className="text-left hidden md:block">
                   <p className="text-[10px] font-black uppercase text-gray-800 leading-none">
                     {user.displayName}
@@ -446,7 +409,6 @@ function Header() {
                     exit={{ opacity: 0, y: 15 }}
                     className="absolute top-[120%] right-0 w-64 bg-white rounded-[2.5rem] shadow-2xl border border-gray-50 p-3 z-[300]"
                   >
-                    <div className="absolute -top-2 right-6 w-4 h-4 bg-white rotate-45 border-t border-l border-gray-50"></div>
                     {user.role === "admin" && (
                       <DropdownItem
                         to="/admin"
@@ -496,7 +458,7 @@ function Header() {
           <Navbar user={user} />
         </div>
 
-        {/* SEARCH OVERLAY (FULLY RESTORED) */}
+        {/* --- FIXED SEARCH OVERLAY UI --- */}
         <AnimatePresence>
           {searchOpen && (
             <motion.div
@@ -539,47 +501,53 @@ function Header() {
                   />
                 </div>
 
+                {/* --- THIS SECTION WAS MISSING IN YOUR PREVIOUS PASTE --- */}
                 <div className="p-6 grid grid-cols-1 md:grid-cols-4 gap-8 max-h-[500px] overflow-y-auto">
                   <div className="md:col-span-3 space-y-3">
-                    <h3 className="text-[10px] font-black uppercase text-gray-400">
-                      Results
+                    <h3 className="text-[10px] font-black uppercase text-gray-400 tracking-widest">
+                      Search Results
                     </h3>
-                    {searchResults.map((recipe) => (
-                      <Link
-                        key={recipe._id}
-                        to={`/recipe/${recipe._id}`}
-                        onClick={(e) =>
-                          handleRestrictedAction(e, `/recipe/${recipe._id}`)
-                        }
-                        className="flex items-center gap-4 p-3 hover:bg-orange-50 rounded-2xl transition-all group"
-                      >
-                        <img
-                          src={recipe.image || recipe.imageUrl}
-                          className="w-14 h-14 rounded-xl object-cover shadow-sm"
-                          alt=""
-                        />
-                        <div>
-                          <p className="text-sm font-black text-gray-800 group-hover:text-orange-600">
-                            {recipe.title}
+                    {searchResults.length > 0
+                      ? searchResults.map((recipe) => (
+                          <Link
+                            key={recipe._id}
+                            to={`/recipe/${recipe._id}`}
+                            onClick={(e) => {
+                              setSearchOpen(false);
+                              handleRestrictedAction(
+                                e,
+                                `/recipe/${recipe._id}`,
+                              );
+                            }}
+                            className="flex items-center gap-4 p-3 hover:bg-orange-50 rounded-2xl transition-all group"
+                          >
+                            <img
+                              src={recipe.image || recipe.imageUrl}
+                              className="w-14 h-14 rounded-xl object-cover shadow-sm"
+                              alt=""
+                            />
+                            <div>
+                              <p className="text-sm font-black text-gray-800 group-hover:text-orange-600">
+                                {recipe.title}
+                              </p>
+                              <p className="text-[10px] text-gray-400 uppercase font-bold">
+                                {recipe.category} • Chef{" "}
+                                {recipe.author?.name || "KKB"}
+                              </p>
+                            </div>
+                          </Link>
+                        ))
+                      : query.length > 1 &&
+                        !isSearching && (
+                          <p className="text-xs font-bold text-gray-400 italic p-4">
+                            No recipes found for "{query}"
                           </p>
-                          <p className="text-[10px] text-gray-400 uppercase font-bold">
-                            {recipe.category} • Chef{" "}
-                            {recipe.author?.name || "KKB"}
-                          </p>
-                        </div>
-                      </Link>
-                    ))}
-                    {query.length > 2 &&
-                      searchResults.length === 0 &&
-                      !isSearching && (
-                        <p className="text-xs font-bold text-gray-400 italic">
-                          No matches...
-                        </p>
-                      )}
+                        )}
                   </div>
-                  <div className="space-y-8 border-l border-gray-50 pl-6">
-                    <div className="flex justify-between items-center mb-4">
-                      <h3 className="text-[10px] font-black uppercase text-gray-400">
+
+                  <div className="space-y-6 border-l border-gray-50 pl-6">
+                    <div className="flex justify-between items-center">
+                      <h3 className="text-[10px] font-black uppercase text-gray-400 tracking-widest">
                         Recent
                       </h3>
                       <button
@@ -589,15 +557,17 @@ function Header() {
                         Clear
                       </button>
                     </div>
-                    {recentSearches.map((s) => (
-                      <button
-                        key={s}
-                        onClick={() => setQuery(s)}
-                        className="flex items-center gap-2 text-xs font-bold text-gray-600 mb-2 hover:text-orange-600"
-                      >
-                        <FiClock size={12} /> {s}
-                      </button>
-                    ))}
+                    <div className="flex flex-col gap-2">
+                      {recentSearches.map((s, index) => (
+                        <button
+                          key={index}
+                          onClick={() => setQuery(s)}
+                          className="flex items-center gap-2 text-xs font-bold text-gray-500 hover:text-orange-600 transition-colors"
+                        >
+                          <FiClock size={12} /> {s}
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -608,7 +578,6 @@ function Header() {
 
       <style>{`
         .nav-link { @apply text-[11px] font-black uppercase text-gray-400 transition-colors tracking-[0.2em] cursor-pointer hover:text-orange-600; }
-        .dropdown-menu { @apply absolute top-[100%] left-0 w-[280px] bg-white rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.15)] border border-gray-100 p-3 opacity-0 invisible translate-y-4 group-hover:opacity-100 group-hover:visible group-hover:translate-y-0 transition-all duration-300 ease-out z-[200] pointer-events-auto flex flex-col gap-1; }
       `}</style>
     </div>
   );
