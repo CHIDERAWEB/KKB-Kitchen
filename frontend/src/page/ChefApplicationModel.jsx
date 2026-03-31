@@ -41,7 +41,7 @@ const ChefApply = () => {
         });
 
         try {
-            const response = await fetch("https://kkb-kitchen-api.onrender.com/api/users/apply-chef", {
+            const response = await fetch("https://kkb-kitchen-api.onrender.com/api/user/apply-chef", {
                 method: "POST",
                 headers: {
                     Authorization: `Bearer ${localStorage.getItem("token")}`,
