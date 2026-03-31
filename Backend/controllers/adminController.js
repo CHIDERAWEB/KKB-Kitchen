@@ -1,5 +1,6 @@
+import multer from 'multer';
 import { prisma } from '../config/db.js';
-
+const upload = multer({ dest: 'uploads/' });
 /**
  * 1. GET ALL PENDING + STATS
  * Fetches dashboard statistics and the list of recipes awaiting review.
@@ -198,18 +199,35 @@ export const getPendingCount = async (req, res) => {
 
 export const applyToBeChef = async (req, res) => {
     try {
-        const { bio, specialty, location, homeServiceRate } = req.body;
-        const userId = req.user.id; // From your verifyToken middleware
+        // req.file comes from Multer middleware
+        // req.body contains the text fields
+        const {
+            bio,
+            specialty,
+            location,
+            fullName,
+            age,
+            cookTime,
+            passionReason
+        } = req.body;
 
-        // Update the user to show they have a pending application
+        const userId = req.user.id;
+
+        // If you're using Cloudinary or similar for the image:
+        const imageUrl = req.file ? req.file.path : null;
+
         const updatedUser = await prisma.user.update({
             where: { id: userId },
             data: {
+                name: fullName, // Syncing the name
                 bio,
                 specialty,
                 location,
-                homeServiceRate: parseFloat(homeServiceRate),
-                isChefApplied: true, // This flag signals the Admin
+                age: parseInt(age),
+                cookTime,
+                passionReason,
+                picture: imageUrl || undefined, // Update picture if new one uploaded
+                isChefApplied: true,
             },
         });
 
