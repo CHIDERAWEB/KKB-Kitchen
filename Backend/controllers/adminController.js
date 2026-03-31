@@ -6,31 +6,33 @@ import { prisma } from '../config/db.js';
  */
 export const getAdminData = async (req, res) => {
     try {
-        const [total, pendingCount, approvedCount, pendingRecipes] = await Promise.all([
+        const [
+            totalRecipes,
+            pendingRecipesCount,
+            pendingChefsCount,
+            pendingRecipesList
+        ] = await Promise.all([
             prisma.recipe.count(),
             prisma.recipe.count({ where: { status: 'pending' } }),
-            prisma.recipe.count({ where: { status: 'approved' } }),
+            prisma.user.count({ where: { isChefApplied: true } }), // Added this!
             prisma.recipe.findMany({
                 where: { status: 'pending' },
                 include: {
-                    author: {
-                        select: { id: true, name: true, email: true }
-                    }
+                    author: { select: { id: true, name: true, email: true } }
                 },
                 orderBy: { createdAt: 'desc' }
             })
         ]);
 
         return res.status(200).json({
-            total,
-            pending: pendingCount,
-            approved: approvedCount,
-            pendingRecipes: pendingRecipes || []
+            totalRecipes,
+            pendingRecipesCount,
+            pendingChefsCount, // Now you know how many chefs are waiting
+            pendingRecipes: pendingRecipesList || []
         });
-
     } catch (error) {
         console.error("Admin Data Error:", error);
-        return res.status(500).json({ error: "Failed to fetch admin dashboard data" });
+        res.status(500).json({ error: "Failed to fetch dashboard data" });
     }
 };
 
@@ -76,15 +78,15 @@ export const approveRecipe = async (req, res) => {
 export const rejectRecipe = async (req, res) => {
     try {
         const { id } = req.params;
-        const { adminNote } = req.body; 
+        const { adminNote } = req.body;
 
         if (!id || isNaN(id)) return res.status(400).json({ error: "Invalid recipe ID" });
 
         const updated = await prisma.recipe.update({
             where: { id: parseInt(id) },
-            data: { 
+            data: {
                 status: 'rejected',
-                adminNote: adminNote || "No reason provided by admin." 
+                adminNote: adminNote || "No reason provided by admin."
             }
         });
 
@@ -128,7 +130,7 @@ export const updateRecipeByAdmin = async (req, res) => {
                 servings,
                 ingredients: Array.isArray(ingredients) ? ingredients : [ingredients],
                 instructions: Array.isArray(instructions) ? instructions : [instructions],
-                adminNote: adminNote || "" 
+                adminNote: adminNote || ""
             }
         });
 
@@ -191,5 +193,63 @@ export const getPendingCount = async (req, res) => {
     } catch (error) {
         console.error("Count Error:", error);
         return res.status(500).json({ error: "Failed to fetch pending count" });
+    }
+};
+
+export const applyToBeChef = async (req, res) => {
+    try {
+        const { bio, specialty, location, homeServiceRate } = req.body;
+        const userId = req.user.id; // From your verifyToken middleware
+
+        // Update the user to show they have a pending application
+        const updatedUser = await prisma.user.update({
+            where: { id: userId },
+            data: {
+                bio,
+                specialty,
+                location,
+                homeServiceRate: parseFloat(homeServiceRate),
+                isChefApplied: true, // This flag signals the Admin
+            },
+        });
+
+        res.status(200).json({
+            message: "Application submitted! Wait for KKB Admin approval. ⏳",
+            user: updatedUser
+        });
+    } catch (error) {
+        console.error("Chef Application Error:", error);
+        res.status(500).json({ message: "Failed to submit application." });
+    }
+};
+
+// 1. Get all pending applications
+export const getPendingChefs = async (req, res) => {
+    try {
+        const applicants = await prisma.user.findMany({
+            where: { isChefApplied: true, role: 'user' }
+        });
+        res.status(200).json(applicants);
+    } catch (error) {
+        res.status(500).json({ message: "Error fetching applicants" });
+    }
+};
+
+// 2. Approve a Chef (The Big Move)
+export const approveChef = async (req, res) => {
+    const { applicantId } = req.body;
+
+    try {
+        const chef = await prisma.user.update({
+            where: { id: parseInt(applicantId) },
+            data: {
+                role: 'chef',        // Promote them!
+                isChefApplied: false // Clear the application flag
+            }
+        });
+
+        res.status(200).json({ message: `${chef.name} is now an official KKB Chef! 👨‍🍳` });
+    } catch (error) {
+        res.status(500).json({ message: "Approval failed" });
     }
 };

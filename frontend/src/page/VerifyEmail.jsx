@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { ArrowRight, ChefHat } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { FiRotateCw } from 'react-icons/fi';
 import { useNavigate } from 'react-router-dom';
@@ -9,6 +9,8 @@ const VerifyEmail = ({ showToast }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [timer, setTimer] = useState(59);
   const navigate = useNavigate();
+
+  // Refs for auto-focusing inputs
   const inputRefs = [useRef(), useRef(), useRef(), useRef()];
 
   // Get the email and ensure it's valid
@@ -56,7 +58,6 @@ const VerifyEmail = ({ showToast }) => {
       }
     } catch (err) {
       showToast("Connection error. Is the server awake? 😴");
-      console.error(err)
     }
   };
 
@@ -71,14 +72,14 @@ const VerifyEmail = ({ showToast }) => {
 
     if (!email) {
       showToast("Session expired. Please register again. ⏳");
-      navigate("/register");
+      // If we are embedded in Register, we should tell parent to switch back
+      window.location.reload();
       return;
     }
 
     setIsLoading(true);
 
     try {
-      // Type this out manually to ensure no hidden characters!
       const response = await fetch(
         "https://kkb-kitchen-api.onrender.com/api/auth/verify-otp",
         {
@@ -88,19 +89,13 @@ const VerifyEmail = ({ showToast }) => {
         },
       );
 
-      // --- SAFETY CHECK FOR JSON ---
       const contentType = response.headers.get("content-type");
       let data;
 
       if (contentType && contentType.includes("application/json")) {
         data = await response.json();
       } else {
-        // If server sends HTML error instead of JSON
-        const errorText = await response.text();
-        console.error("Server Error Response:", errorText);
-        throw new Error(
-          "Server returned a non-JSON response. Check backend routes.",
-        );
+        throw new Error("Server returned a non-JSON response.");
       }
 
       if (response.ok) {
@@ -111,81 +106,70 @@ const VerifyEmail = ({ showToast }) => {
         showToast(data.message || "Invalid code. Please check again!");
       }
     } catch (err) {
-      console.error("Fetch Error:", err);
-      showToast(
-        "Connection error. Is the server route /api/auth/verify-otp active?",
-      );
+      showToast("Connection error. Please try again.");
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-orange-50/30 flex items-center justify-center p-6">
-      <motion.div
-        initial={{ scale: 0.9, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        className="max-w-md w-full"
-      >
-        <div className="flex justify-center mb-8">
-          <div className="bg-orange-500 p-4 rounded-3xl shadow-xl">
-            <ChefHat className="text-white" size={40} />
-          </div>
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="text-center"
+    >
+      <h2 className="text-3xl font-black text-gray-900 uppercase tracking-tighter mb-2">Check Your Mail</h2>
+      <p className="text-sm text-gray-500 mb-8 font-medium">
+        We sent a code to <br />
+        <span className="text-orange-600 font-bold">{email || "your email"}</span>
+      </p>
+
+      <form onSubmit={handleVerify} className="space-y-8">
+        <div className="flex justify-center gap-3">
+          {otp.map((digit, index) => (
+            <input
+              key={index}
+              ref={inputRefs[index]}
+              type="text"
+              inputMode="numeric"
+              maxLength="1"
+              value={digit}
+              onChange={(e) => handleChange(e.target.value, index)}
+              onKeyDown={(e) => handleKeyDown(e, index)}
+              className="w-14 h-16 text-2xl font-black text-center bg-gray-50 border-2 border-transparent focus:border-orange-500 focus:bg-white rounded-2xl transition-all outline-none shadow-sm"
+            />
+          ))}
         </div>
 
-        <div className="bg-white p-10 rounded-[3rem] shadow-xl border border-orange-100 text-center">
-          <h2 className="text-3xl font-black text-gray-900 uppercase tracking-tighter mb-2">Check Your Mail</h2>
-          <p className="text-sm text-gray-500 mb-8 font-medium">
-            We sent a code to <br />
-            <span className="text-orange-600 font-bold">{email || "your email"}</span>
-          </p>
+        <button
+          type="submit"
+          disabled={isLoading}
+          className={`w-full flex justify-center items-center gap-3 py-5 rounded-2xl font-black uppercase tracking-widest shadow-xl transition-all ${isLoading ? "bg-orange-500 hover:bg-orange-600 text-white" : "bg-gray-400 cursor-not-allowed"
+            }`}
+        >
 
-          <form onSubmit={handleVerify} className="space-y-8">
-            <div className="flex justify-center gap-3">
-              {otp.map((digit, index) => (
-                <input
-                  key={index}
-                  ref={inputRefs[index]}
-                  type="text"
-                  inputMode="numeric"
-                  maxLength="1"
-                  value={digit}
-                  onChange={(e) => handleChange(e.target.value, index)}
-                  onKeyDown={(e) => handleKeyDown(e, index)}
-                  className="w-14 h-16 text-2xl font-black text-center bg-gray-50 border-2 border-transparent focus:border-orange-500 focus:bg-white rounded-2xl transition-all outline-none"
-                />
-              ))}
-            </div>
+          {isLoading ? "Verifying..." : "Verify Code"}
+          {isLoading ? <FiRotateCw className="animate-spin" size={20} /> : <ArrowRight size={20} />}
+        </button>
+      </form>
 
+      <div className="mt-8 text-center">
+        <p className="text-sm text-gray-500 font-medium">
+          Didn't get the code? <br />
+          {timer > 0 ? (
+            <span className="text-gray-400 italic">Resend available in {timer}s</span>
+          ) : (
             <button
-              type="submit"
-              disabled={isLoading}
-              className={`w-full flex justify-center items-center gap-3 py-5 rounded-2xl font-black uppercase tracking-widest shadow-xl transition-all ${isLoading ? "bg-gray-400 cursor-not-allowed" : "bg-orange-500 hover:bg-orange-600 text-white"
-                }`}
+              type="button"
+              onClick={handleResend}
+              className="text-orange-600 font-black hover:underline mt-2"
             >
-              {isLoading ? "Verifying..." : "Verify Code"}
-              {isLoading ? <FiRotateCw className="animate-spin" size={20} /> : <ArrowRight size={20} />}
+              RESEND CODE
             </button>
-          </form>
-
-          <div className="mt-8 text-center">
-            <p className="text-sm text-gray-500 font-medium">
-              Didn't get the code? <br />
-              {timer > 0 ? (
-                <span className="text-gray-400 italic">Resend available in {timer}s</span>
-              ) : (
-                <button
-                  onClick={handleResend}
-                  className="text-orange-600 font-black hover:underline mt-2"
-                >
-                  RESEND CODE
-                </button>
-              )}
-            </p>
-          </div>
-        </div>
-      </motion.div>
-    </div>
+          )}
+        </p>
+      </div>
+    </motion.div>
   );
 };
 

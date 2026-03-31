@@ -1,14 +1,17 @@
 import express from 'express';
-import { protect, isAdmin } from '../middleware/authMiddleware.js';
+import { isAdmin, protect } from '../middleware/authMiddleware.js';
 
 import {
+    applyToBeChef,
+    approveChef,
     approveRecipe,
-    rejectRecipe,
     getAdminData,
-    updateRecipeByAdmin,
     getAllUsers,
+    getPendingChefs,
+    getPendingCount,
+    rejectRecipe,
     toggleUserRole,
-    getPendingCount 
+    updateRecipeByAdmin
 } from '../controllers/adminController.js';
 
 const router = express.Router();
@@ -36,6 +39,12 @@ router.put('/reject/:id', protect, isAdmin, rejectRecipe);
 
 // Admin Edit: Fixes typos or ingredient lists directly
 router.put('/update/:id', protect, isAdmin, updateRecipeByAdmin);
+
+router.post('/apply-chef', protect, applyToBeChef);
+
+router.get('/pending-chefs', protect, isAdmin, getPendingChefs);
+
+router.put('/approve-chef', protect, isAdmin, approveChef);
 
 
 /**

@@ -7,15 +7,25 @@ datasource db {
 }
 
 model User {
-  id        Int      @id @default(autoincrement())
-  name      String
-  email     String   @unique
-  password  String
-  createdAt DateTime @default(now())
-  role      String   @default("user")
-  otp       String?
-  isVerified  Boolean  @default(false)
-  recipes   Recipe[]
+  id              Int       @id @default(autoincrement())
+  name            String
+  email           String    @unique
+  password        String
+  createdAt       DateTime  @default(now())
+  role            String    @default("user") // "user", "chef", "admin"
+  otp             String?
+  isVerified      Boolean   @default(false)
+  
+  // --- FIXED MARKETPLACE FIELDS ---
+  walletBalance   Float     @default(0.0)    // Changed Decimal to Float
+  bio             String?   
+  specialty       String?   
+  location        String?   
+  homeServiceRate Float?     // Changed Decimal to Float
+  isChefApplied   Boolean   @default(false)
+  purchasedItems  Int[]     // This will work if DATABASE_URL is correct
+  
+  recipes         Recipe[]
 }
 
 model Recipe {
@@ -28,9 +38,14 @@ model Recipe {
   createdAt    DateTime  @default(now())
   likedBy      Int[]
   views        Int       @default(0)
-  adminNote    String?
   updatedAt    DateTime  @updatedAt
-  status       String    @default("pending")
+  status       String    @default("pending") 
+  adminNote    String?   
+  
+  // --- FIXED PRICING FIELDS ---
+  isPremium    Boolean   @default(false) 
+  price        Float     @default(0.0)    // Changed Decimal to Float
+  
   cookingTime  String?
   difficulty   String?
   ratings      Json?

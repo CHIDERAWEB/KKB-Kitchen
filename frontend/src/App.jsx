@@ -1,32 +1,34 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { BrowserRouter as Router, Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
-import { CheckCircle, Bell } from 'lucide-react';
+import { Bell, CheckCircle } from 'lucide-react';
+import { useCallback, useEffect, useState } from 'react';
+import { Navigate, Route, BrowserRouter as Router, Routes, useLocation } from 'react-router-dom';
 import io from 'socket.io-client';
 
+
 // COMPONENTS
-import Header from './Components/Header';
 import Banner from './Components/Banner';
-import RecipeGrid from './Components/RecipeGrid';
 import Footer from './Components/Footer';
+import Header from './Components/Header';
 import Loader from './Components/Loader';
 import ProtectedRoutes from './Components/ProtectedRoutes';
+import RecipeGrid from './Components/RecipeGrid';
 
 // PAGES
-import Recipejollofdetail from './page/Recipejollofdetail';
-import Register from './page/Register';
+import About from './page/About';
+import AdminDashboard from './page/AdminDashboard';
+import ChefApplicationModal from './page/ChefApplicationModel';
+import Contact from './page/Contact';
 import CreateRecipe from './page/CreateRecipes';
 import Favorites from './page/Favorites';
-import Login from './page/Login';
-import ShoppingList from './page/ShoppingList';
-import About from './page/About';
-import MealPlanner from './page/MealPlanner';
-import AdminDashboard from './page/AdminDashboard';
-import UploadRecipe from './page/UploadRecipe';
 import Homepage from './page/Homepage';
+import Login from './page/Login';
+import MealPlanner from './page/MealPlanner';
+import Recipejollofdetail from './page/Recipejollofdetail';
+import Register from './page/Register';
 import Revisions from './page/Revisions';
-import Contact from './page/Contact'
-import VerifyEmail from './page/VerifyEmail'
+import ShoppingList from './page/ShoppingList';
+import UploadRecipe from './page/UploadRecipe';
+import VerifyEmail from './page/VerifyEmail';
 
 // Initialize Socket.io 
 const socket = io('https://kkb-kitchen-api.onrender.com');
@@ -53,6 +55,7 @@ function ScrollToTop() {
 function App() {
   const [toast, setToast] = useState({ show: false, message: "", type: "success" });
   const [isLoading, setIsLoading] = useState(true);
+  const [showChefModal, setShowChefModal] = useState(false);
 
   const [user, setUser] = useState(() => {
     const savedUser = localStorage.getItem('user');
@@ -148,7 +151,8 @@ function App() {
             </div>
           </div>
 
-          <Header user={user} setUser={setUser} />
+          <Header user={user} setUser={setUser}
+            setShowChefModal={setShowChefModal} />
 
           <main className="flex-grow pt-20 lg:pt-24">
             <AnimatePresence mode="wait">
@@ -180,6 +184,7 @@ function App() {
                 <Route path="/verify-email" element={<VerifyEmail showToast={showToast} />} />
 
                 <Route path="*" element={<Navigate to="/" replace />} />
+                <Route path="/chef-application" element={<ChefApplicationModal isOpen={showChefModal} onClose={() => setShowChefModal(false)} user={user} />} />
               </Routes>
             </AnimatePresence>
           </main>

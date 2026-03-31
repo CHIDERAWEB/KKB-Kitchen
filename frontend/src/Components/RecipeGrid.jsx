@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { FiClock, FiChevronRight, FiLock, FiEye, FiStar } from "react-icons/fi";
+import { useEffect, useState } from "react";
+import { FiChevronRight, FiClock, FiLock } from "react-icons/fi";
+import { useNavigate } from "react-router-dom";
 import { io } from "socket.io-client";
 
 const RecipeGrid = ({ user }) => {
@@ -82,7 +82,7 @@ const RecipeGrid = ({ user }) => {
 
       {/* ✅ Staggered Artistic Grid */}
       {/* We use grid-cols-2 for mobile so they are always side-by-side */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-8 items-start">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-4 md:gap-8 items-start">
         {recipes.length > 0 ? (
           recipes.map((recipe, index) => {
             const isPending = recipe.status === "pending";
@@ -90,9 +90,9 @@ const RecipeGrid = ({ user }) => {
             const rating =
               recipe.ratings?.length > 0
                 ? (
-                    recipe.ratings.reduce((acc, r) => acc + r.value, 0) /
-                    recipe.ratings.length
-                  ).toFixed(1)
+                  recipe.ratings.reduce((acc, r) => acc + r.value, 0) /
+                  recipe.ratings.length
+                ).toFixed(1)
                 : "5.0";
 
             return (

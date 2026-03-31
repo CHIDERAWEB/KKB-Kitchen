@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
-import { Mail, Lock, ArrowRight, ChefHat } from 'lucide-react';
-import { Link, useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
 import { GoogleLogin } from '@react-oauth/google';
+import { motion } from 'framer-motion';
+import { ArrowRight, ChefHat, Lock, Mail } from 'lucide-react';
+import { useState } from 'react';
 import { FiEye, FiEyeOff } from 'react-icons/fi';
+import { Link, useNavigate } from 'react-router-dom';
 
 const Login = ({ triggerLoading, showToast }) => {
   const navigate = useNavigate();
@@ -11,8 +11,8 @@ const Login = ({ triggerLoading, showToast }) => {
     email: '',
     password: ''
   });
-  
-  const [showPassword,setShowPassword]=useState(false)
+
+  const [showPassword, setShowPassword] = useState(false)
   console.log(showPassword)
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -40,7 +40,7 @@ const Login = ({ triggerLoading, showToast }) => {
         localStorage.setItem('user', JSON.stringify(userWithRole));
 
         setTimeout(() => {
-          showToast(`Welcome back, ${data.user.name || 'Chef'}! 👨‍🍳`);
+          showToast(`Welcome back, ${data.user.name}! 👨‍🍳`);
           navigate('/');
         }, 2000);
       } else {
