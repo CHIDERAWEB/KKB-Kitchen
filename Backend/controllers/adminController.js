@@ -1,6 +1,4 @@
-import multer from 'multer';
 import { prisma } from '../config/db.js';
-const upload = multer({ dest: 'uploads/' });
 /**
  * 1. GET ALL PENDING + STATS
  * Fetches dashboard statistics and the list of recipes awaiting review.

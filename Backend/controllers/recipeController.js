@@ -1,5 +1,5 @@
-import { prisma } from '../config/db.js';
 import { v2 as cloudinary } from 'cloudinary';
+import { prisma } from '../config/db.js';
 
 // --- HELPER FOR DATA PARSING ---
 // Ensures data from FormData (strings) is converted to types 
@@ -81,7 +81,7 @@ export const createRecipe = async (req, res) => {
             io.emit("recipeCreated", {
                 title: newRecipe.title,
                 author: req.user.name || "A Chef",
-                pendingCount: updatedPendingCount 
+                pendingCount: updatedPendingCount
             });
         }
 
@@ -95,17 +95,19 @@ export const createRecipe = async (req, res) => {
 // 2. GET ALL RECIPES (Public Grid)
 export const getAllRecipes = async (req, res) => {
     try {
+        console.log("Attempting to fetch recipes from DB..."); // Add this
         const recipes = await prisma.recipe.findMany({
-            where: { status: 'approved' }, 
+            where: { status: 'approved' },
             include: { author: { select: { name: true } } },
             orderBy: { createdAt: 'desc' }
         });
+        console.log(`Successfully fetched ${recipes.length} recipes`); // Add this
         res.status(200).json(recipes);
     } catch (error) {
-        res.status(500).json([]);
+        console.error("DETAILED BACKEND ERROR:", error); // THIS IS THE FIX
+        res.status(500).json({ error: error.message, stack: error.stack });
     }
 };
-
 // 3. GET RECIPE BY ID
 export const getRecipeById = async (req, res) => {
     try {
@@ -132,7 +134,7 @@ export const updateRecipe = async (req, res) => {
     try {
         const { id } = req.params;
         const recipeId = parseInt(id);
-        
+
         const existingRecipe = await prisma.recipe.findUnique({ where: { id: recipeId } });
         if (!existingRecipe) return res.status(404).json({ error: "Recipe not found" });
 
@@ -189,7 +191,7 @@ export const toggleLike = async (req, res) => {
         const { id } = req.params;
         const { userId } = req.body;
         const recipe = await prisma.recipe.findUnique({ where: { id: parseInt(id) } });
-        
+
         let likes = recipe.likedBy || [];
         const isAlreadyLiked = likes.includes(userId);
         likes = isAlreadyLiked ? likes.filter(i => i !== userId) : [...likes, userId];
@@ -244,7 +246,7 @@ export const updateComment = async (req, res) => {
         const { id } = req.params;
         const { text } = req.body;
         const comment = await prisma.comment.findUnique({ where: { id: parseInt(id) } });
-        
+
         if (comment.userId !== req.user.id && req.user.role !== 'admin') {
             return res.status(403).json({ message: "Not authorized" });
         }
@@ -306,7 +308,7 @@ export const rateRecipe = async (req, res) => {
         const { id } = req.params;
         const { rating, userId } = req.body;
         const recipe = await prisma.recipe.findUnique({ where: { id: parseInt(id) } });
-        
+
         let currentRatings = Array.isArray(recipe.ratings) ? recipe.ratings : [];
         currentRatings = currentRatings.filter(r => r.userId !== userId);
         currentRatings.push({ userId, value: parseInt(rating) });
